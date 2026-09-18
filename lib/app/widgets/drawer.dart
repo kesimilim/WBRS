@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/app/helper/helper_function.dart';
 import 'package:wbrs/presentation/screens/about_app/about_app.dart';
@@ -12,6 +11,7 @@ import 'package:wbrs/presentation/screens/shop/shop.dart';
 import 'package:wbrs/presentation/screens/list_of_visiters/visiters.dart';
 import 'package:wbrs/app/widgets/splash.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
+import 'package:wbrs/app/widgets/donate_button.dart';
 
 import '../../presentation/screens/auth/login_screen/login_page.dart';
 import '../../presentation/screens/profile/profile_page.dart';
@@ -154,22 +154,7 @@ class _MyDrawerState extends State<MyDrawer> {
                     nextScreen(context, const FirstGroupRed());
                   },
                 ),
-                GestureDetector(
-                  onTap: () async {
-                    await launchUrl(
-                            Uri.parse(
-                                'https://qr.nspk.ru/BS2A002KUIKV3G1Q8JGRDS9N32P84DCB?type=01&bank=100000000008&crc=5D81'),
-                            mode: LaunchMode.externalApplication)
-                        .then((value) {
-                      if (value) {
-                        if (context.mounted) {
-                          showSnackbar(context, Colors.lightGreen,
-                              'Спасибо за поддержку!');
-                        }
-                      }
-                      return value;
-                    });
-                  },
+                DonateButton(
                   child: Container(
                     width: double.infinity,
                     color: Colors.transparent,

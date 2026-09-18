@@ -2,13 +2,13 @@
 
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/presentation/screens/home/home_page.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/meetings.dart';
 import 'package:wbrs/presentation/screens/profile/profile_page.dart';
 import 'package:wbrs/presentation/screens/list_of_users/profiles_list.dart';
 import 'package:wbrs/app/widgets/splash.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
+import 'package:wbrs/app/widgets/donate_button.dart';
 
 import '../helper/global.dart';
 import '../helper/helper_function.dart';
@@ -134,15 +134,7 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
             onTap: _onItemTapped,
             height: MediaQuery.of(context).size.height * 0.05,
           ),
-          GestureDetector(
-            onTap: () {
-              //nextScreen(context, WebPage());
-              launchUrl(
-                  Uri.parse(
-                      'https://qr.nspk.ru/BS2A002KUIKV3G1Q8JGRDS9N32P84DCB?type=01&bank=100000000008&crc=5D81'),
-                  mode: LaunchMode.externalApplication);
-              showSnackbar(context, Colors.lightGreen, 'Спасибо за поддержку!');
-            },
+          DonateButton(
             child: Container(
               padding: EdgeInsets.zero,
               width: double.infinity,

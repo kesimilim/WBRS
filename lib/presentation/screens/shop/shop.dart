@@ -728,16 +728,7 @@ class _ShopPageState extends State<ShopPage> with TickerProviderStateMixin {
               style: const ButtonStyle(
                   backgroundColor: WidgetStatePropertyAll(Colors.orangeAccent)),
               child: const Text(
-                'Пополнить баланс (от 100 руб.)',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-            ElevatedButton(
-              onPressed: () {},
-              style: const ButtonStyle(
-                  backgroundColor: WidgetStatePropertyAll(Colors.orangeAccent)),
-              child: const Text(
-                'Отключить рекламу',
+                'Пополнить баланс (от 150 руб.)',
                 style: TextStyle(color: Colors.white),
               ),
             ),

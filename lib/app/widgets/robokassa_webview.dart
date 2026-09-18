@@ -25,6 +25,14 @@ class RobokassaWebview extends StatefulWidget {
 
 class _RobokassaWebviewState extends State<RobokassaWebview>
     with WidgetsBindingObserver {
+  static const bool isTestMode = bool.fromEnvironment('IS_TEST', defaultValue: false);
+  static const String password1Prod = 'Grebat-kopat3102-';
+  static const String password1Test = 'vcb3Ig7r50VnSXG7uXgV';
+  static const String password2Prod = 'Zhevat-kopat3103-';
+  static const String password2Test = 'IKgk1Lu6jz7V3ZvrJg6X';
+  String get password1 => isTestMode ? password1Test : password1Prod;
+  String get password2 => isTestMode ? password2Test : password2Prod;
+
   var ctrl = WebViewController();
   int _progress = 0;
   String sbpUrl = '', signature = '';
@@ -64,9 +72,10 @@ class _RobokassaWebviewState extends State<RobokassaWebview>
 
     addTransaction();
 
+    final outSum = double.parse(widget.sum).toStringAsFixed(2);
     signature = md5
         .convert(
-            utf8.encode('WBRS:0.1:${widget.count}:Grebat-kopat3102-'))
+            utf8.encode('WBRS:$outSum:${widget.count}:$password1'))
         .toString();
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -79,7 +88,6 @@ class _RobokassaWebviewState extends State<RobokassaWebview>
             });
           },
           onPageStarted: (String url) async {
-            await addTransaction();
             debugPrint('Page started loading: $url');
           },
           onPageFinished: (String url) {
@@ -148,7 +156,14 @@ class _RobokassaWebviewState extends State<RobokassaWebview>
         },
       )
       ..loadRequest(Uri.parse(
-          'https://auth.robokassa.ru/Merchant/Index.aspx?MerchantLogin=WBRS&OutSum=0.1&InvoiceID=${widget.count}&Description=test&SignatureValue=$signature'));
+          'https://auth.robokassa.ru/Merchant/Index.aspx?'
+              'MerchantLogin=WBRS'
+              '&OutSum=$outSum'
+              '&InvId=${widget.count}'
+              '&Description=${isTestMode ? "Test" : "Пополнение баланса"}'
+              '&SignatureValue=$signature'
+              '${isTestMode ? "&IsTest=1" : ""}'
+      ));
 
     // setBackgroundColor is not currently supported on macOS.
     if (kIsWeb || !Platform.isMacOS) {
@@ -221,12 +236,12 @@ class _RobokassaWebviewState extends State<RobokassaWebview>
     return PopScope(
       onPopInvokedWithResult: (value, result) async {
         String signatureStatus = md5
-            .convert(utf8.encode('WBRS:${widget.count}:Zhevat-kopat3103-'))
+            .convert(utf8.encode('WBRS:${widget.count}:$password2'))
             .toString();
         String resultCode = '';
         var res = await http.post(
           Uri.parse(
-              'https://auth.robokassa.ru/Merchant/WebService/Service.asmx/OpStateExt?MerchantLogin=WBRS&InvoiceID=${widget.count}&Signature=$signatureStatus'),
+              'https://auth.robokassa.ru/Merchant/WebService/Service.asmx/OpStateExt?MerchantLogin=WBRS&InvId=${widget.count}&Signature=$signatureStatus'),
           headers: <String, String>{'Content-Type': 'application/json'},
         );
 

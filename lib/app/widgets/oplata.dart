@@ -29,19 +29,7 @@ class _OplataPageState extends State<OplataPage> {
                     .collection('transaction')
                     .get()
                     .then((value) {
-                  setState(() {
-                    count = value.docs.length + 1;
-                  });
-                });
-                await firebaseFirestore
-                    .collection('transaction')
-                    .doc(count.toString())
-                    .set({
-                  'id': count.toString(),
-                  'sum': widget.sum,
-                  'user_email': firebaseAuth.currentUser!.email,
-                  'user_id': firebaseAuth.currentUser!.uid,
-                  'time': DateTime.now().toString(),
+                  count = value.docs.length + 1;
                 });
                 if (context.mounted) {
                   nextScreen(

@@ -209,13 +209,15 @@ void main() {
     db.documents['posts/example/comments/reply'] = {
       'authorUid': 'other', 'text': 'Comment to remove',
     };
-    await expectLater(social.deleteComment('example', 'reply'), throwsStateError);
-    expect(db.documents['posts/example']!['commentCount'], 2);
+    await expectLater(
+        social.deleteComment(postId: 'example', commentId: 'reply'),
+        throwsStateError);    expect(db.documents['posts/example']!['commentCount'], 2);
     final admin = SocialService(
         firestore: db, storage: _Storage(), currentUid: () => 'viewer',
         moderatorAccess: () async => true);
-    await admin.deleteComment('example', 'reply');
-    await admin.deleteComment('example', 'reply');
+
+    await admin.deleteComment(postId: 'example', commentId: 'reply');
+    await admin.deleteComment(postId: 'example', commentId: 'reply');
     expect(db.documents.containsKey('posts/example/comments/reply'), isFalse);
     expect(db.documents['posts/example']!['commentCount'], 1);
   });
@@ -246,7 +248,7 @@ void main() {
     final source = await File('${folder.path}/picker-photo')
         .writeAsBytes([1, 2, 3, 4], flush: true);
     final first = await journal().prepare(
-        'viewer', 'comment/example', {'text': 'draft'}, XFile(source.path));
+        'viewer', 'comment/example', {'text': 'draft'}, [XFile(source.path)]);
     await source.delete();
     final saved = await journal().load('viewer', 'comment/example');
     expect(saved!['id'], first['id']);
@@ -264,9 +266,10 @@ void main() {
       () async {
     final photo = await File('${folder.path}/photo').writeAsBytes([7, 8, 9]);
     final first = await journal()
-        .prepare('viewer', 'post', {'text': 'old'}, XFile(photo.path));
+        .prepare('viewer', 'post', {'text': 'old'}, [XFile(photo.path)]);
+    final firstPath = (first['imagePaths'] as List).first as String;
     final second = await journal().prepare(
-        'viewer', 'post', {'text': 'new'}, XFile(first['imagePath'] as String),
+        'viewer', 'post', {'text': 'new'}, [XFile(firstPath)],
         replaceRejected: true);
     expect(second['id'], isNot(first['id']));
     expect(await File(second['imagePath'] as String).readAsBytes(), [7, 8, 9]);

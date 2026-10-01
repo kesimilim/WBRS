@@ -6,9 +6,9 @@ import 'submission_journal.dart';
 
 class AuthorRequestSubmission {
   AuthorRequestSubmission(
-      {required this.text, this.image, required this.write});
+      {required this.text, this.images = const [], required this.write});
   final String text;
-  final XFile? image;
+  final List<XFile> images;
   final PendingWrite write;
 }
 
@@ -37,39 +37,38 @@ class AuthorRequestSubmissionService {
     if (pending != null) return pending;
     final saved = await _journal.load(_ownerUid!, 'author-request');
     if (!isCurrentSession || saved == null) return null;
+    final paths = (saved['imagePaths'] as List?)?.cast<String>() ?? const [];
     return start(
         text: saved['fields']['text'] as String,
-        image: saved['imagePath'] == null
-            ? null
-            : XFile(saved['imagePath'] as String));
+        images: paths.map((p) => XFile(p)).toList());
   }
 
-  AuthorRequestSubmission start({required String text, XFile? image}) {
+  AuthorRequestSubmission start({required String text, List<XFile> images = const []}) {
     if (!isCurrentSession) throw StateError('Сеанс завершён. Войдите снова.');
     final uid = _ownerUid!;
     final previous = pending;
     if (previous != null && !previous.write.failed) return previous;
     return _pending[uid] = AuthorRequestSubmission(
         text: text,
-        image: image,
+        images: images,
         write: PendingWrite(() async {
           final prior = await _journal.load(uid, 'author-request');
           final replaceRejected = previous?.write.failed == true &&
               prior != null &&
               (prior['fields']['text'] != text ||
-                  previous?.image?.path != image?.path);
+                  (previous?.images.map((e) => e.path).toList() ?? []) !=
+                      images.map((e) => e.path).toList());
           final saved = await _journal.prepare(
-              uid, 'author-request', {'text': text}, image,
+              uid, 'author-request', {'text': text}, images,
               replaceRejected: replaceRejected);
           if (!isCurrentSession) {
             throw StateError('Сеанс завершён. Войдите снова.');
           }
+          final paths = (saved['imagePaths'] as List?)?.cast<String>() ?? const [];
           await _social.requestRole('author',
               proposedText: saved['fields']['text'] as String,
               requestId: saved['id'] as String,
-              proposedImage: saved['imagePath'] == null
-                  ? null
-                  : XFile(saved['imagePath'] as String));
+              proposedImages: paths.map((p) => XFile(p)).toList());
           try {
             await _journal.acknowledge(
                 uid, 'author-request', saved['id'] as String);

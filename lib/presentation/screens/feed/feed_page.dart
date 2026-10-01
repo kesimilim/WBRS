@@ -17,7 +17,9 @@ import 'package:wbrs/app/widgets/drawer.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/screens/feed/post_detail_page.dart';
 import 'package:wbrs/presentation/screens/feed/post_author_wall.dart';
+import 'package:wbrs/presentation/screens/feed/post_editor_page.dart';
 import 'package:wbrs/presentation/screens/feed/share_to_chat_sheet.dart';
+import 'package:wbrs/service/admin_access.dart';
 import 'package:wbrs/service/social_service.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/paged_firestore_history.dart';
@@ -35,6 +37,8 @@ class _FeedPageState extends State<FeedPage> {
   late final SocialService _social;
   late Stream<QuerySnapshot<Map<String, dynamic>>> _feed;
   bool _canPublish = false;
+  bool _isAdmin = false;
+  bool _hasAnyPost = false;
   final _history = PagedFirestoreHistory(40);
   int _pageGeneration = 0;
   bool _loadingOlder = false, _olderError = false;
@@ -52,10 +56,21 @@ class _FeedPageState extends State<FeedPage> {
 
   Future<void> _loadRole() async {
     try {
-      final allowed = await _social.canPublish().timeout(Duration(seconds: 15));
-      if (mounted) setState(() => _canPublish = allowed);
+      final admin = await AdminAccess.current();
+      final allowed = admin || await _social.canPublish().timeout(const Duration(seconds: 15));
+      if (mounted) {
+        setState(() {
+          _isAdmin = admin;
+          _canPublish = allowed;
+        });
+      }
     } catch (_) {
-      if (mounted) setState(() => _canPublish = false);
+      if (mounted) {
+        setState(() {
+          _isAdmin = false;
+          _canPublish = false;
+        });
+      }
     }
   }
 
@@ -113,6 +128,21 @@ class _FeedPageState extends State<FeedPage> {
     super.dispose();
   }
 
+  Future<void> _openEditor() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PostEditorPage(
+          social: _social,
+          postSubmissions: widget.postSubmissions,
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      showSnackbar(
+          context, LrsTheme.surface, context.tr('Публикация добавлена'));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -125,6 +155,17 @@ class _FeedPageState extends State<FeedPage> {
           extendBodyBehindAppBar: true,
           drawer: MyDrawer(),
           bottomNavigationBar: MyBottomNavigationBar(),
+          floatingActionButton: (_canPublish && _hasAnyPost)
+              ? FloatingActionButton(
+            onPressed: _openEditor,
+            backgroundColor: LrsTheme.actionGlass,
+            foregroundColor: LrsTheme.peach,
+            elevation: 0,
+            shape: const CircleBorder(
+                side: BorderSide(color: LrsTheme.actionBorder)),
+            child: const Icon(Icons.add),
+          )
+              : null,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             title: const ClrsLogo(size: 34),
@@ -135,12 +176,6 @@ class _FeedPageState extends State<FeedPage> {
                   icon: Icon(Icons.notifications_none),
                   onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => NotificationsPage()))),
-              if (_canPublish)
-                IconButton(
-                  tooltip: context.tr('Новая публикация'),
-                  onPressed: _createPost,
-                  icon: Icon(Icons.add_box_outlined),
-                ),
             ],
           ),
           body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -178,6 +213,12 @@ class _FeedPageState extends State<FeedPage> {
                 );
               }
               final docs = _history.documents;
+              final hasAnyPost = docs.isNotEmpty;
+              if (_hasAnyPost != hasAnyPost) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _hasAnyPost = hasAnyPost);
+                });
+              }
               if (docs.isEmpty) return _emptyFeed();
               final hasOlder = _history.hasMore;
               return ListView.separated(
@@ -224,6 +265,8 @@ class _FeedPageState extends State<FeedPage> {
                     postId: docs[index - 1].id,
                     data: docs[index - 1].data(),
                     social: _social,
+                    isAdmin: _isAdmin,
+                    canPublish: _canPublish,
                   );
                 },
               );
@@ -274,7 +317,7 @@ class _FeedPageState extends State<FeedPage> {
                   disabledForegroundColor: LrsTheme.muted,
                   side: const BorderSide(color: LrsTheme.actionBorder),
                 ),
-                onPressed: _createPost,
+                onPressed: _openEditor,
                 icon: Icon(Icons.add),
                 label: Text(context.tr('Создать первую публикацию')),
               ),
@@ -284,177 +327,6 @@ class _FeedPageState extends State<FeedPage> {
       ),
     );
   }
-
-  Future<void> _createPost() => showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: LrsTheme.surface,
-        builder: (_) => _CreatePostSheet(
-            submissions: widget.postSubmissions ??
-                PostSubmissionService(social: _social)),
-      );
-}
-
-class _CreatePostSheet extends StatefulWidget {
-  const _CreatePostSheet({required this.submissions});
-  final PostSubmissionService submissions;
-  @override
-  State<_CreatePostSheet> createState() => _CreatePostSheetState();
-}
-
-class _CreatePostSheetState extends State<_CreatePostSheet> {
-  final _controller = TextEditingController();
-  XFile? _image;
-  bool _sending = false;
-  bool _restoring = true;
-  PostSubmission? _submission;
-  String? _notice;
-  bool get _locked => _restoring || _sending || _submission != null;
-  @override
-  void initState() {
-    super.initState();
-    _restore();
-  }
-
-  Future<void> _restore() async {
-    try {
-      final saved = await widget.submissions.restore();
-      if (!mounted) return;
-      if (saved != null)
-        setState(() {
-          _submission = saved;
-          _controller.text = saved.text;
-          _image = saved.image;
-          _notice =
-              'Предыдущая отправка ожидает подтверждения. Проверьте результат.';
-        });
-    } catch (_) {
-      if (mounted)
-        setState(() =>
-            _notice = 'Не удалось восстановить отправку. Попробуйте ещё раз.');
-    } finally {
-      if (mounted) setState(() => _restoring = false);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickImage() async {
-    try {
-      final image = await ImagePicker().pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 72,
-          maxWidth: 1600,
-          maxHeight: 1600);
-      if (mounted && image != null && !_locked) setState(() => _image = image);
-    } catch (_) {
-      if (mounted)
-        showSnackbar(context, LrsTheme.danger,
-            context.tr('Не удалось открыть изображение. Попробуйте ещё раз.'));
-    }
-  }
-
-  Future<void> _publish() async {
-    if (_restoring ||
-        _sending ||
-        (_controller.text.trim().isEmpty && _image == null)) return;
-    setState(() {
-      _sending = true;
-      _notice = null;
-    });
-    try {
-      if (_submission?.write.failed == true) _submission = null;
-      _submission ??=
-          widget.submissions.start(text: _controller.text, image: _image);
-      final confirmed = await _submission!.write.wait();
-      if (!mounted) return;
-      if (!widget.submissions.isCurrentSession) {
-        setState(() => _notice =
-            'Сеанс изменился. Проверьте отправку после входа в исходный аккаунт.');
-      } else if (!confirmed) {
-        setState(() => _notice =
-            'Подтверждение ещё не получено. Нажмите «Проверить отправку».');
-      } else {
-        widget.submissions.acknowledge(_submission!);
-        Navigator.of(context).pop();
-      }
-    } catch (_) {
-      if (mounted)
-        setState(() {
-          _submission = null;
-          _notice = 'Не удалось опубликовать запись. Попробуйте ещё раз.';
-        });
-    } finally {
-      if (mounted) setState(() => _sending = false);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-          child: Padding(
-        padding: EdgeInsets.fromLTRB(
-            18, 18, 18, MediaQuery.of(context).viewInsets.bottom + 24),
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(context.tr('Новая публикация'),
-                  style: TextStyle(
-                      color: LrsTheme.text,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800)),
-              SizedBox(height: 12),
-              TextField(
-                  controller: _controller,
-                  readOnly: _locked,
-                  maxLines: 6,
-                  style: TextStyle(color: LrsTheme.text),
-                  decoration: InputDecoration(
-                      hintText: context.tr('Напишите о важном...'))),
-              if (_image != null) ...[
-                SizedBox(height: 10),
-                Text(_image!.name, style: TextStyle(color: LrsTheme.peachLight))
-              ],
-              SizedBox(height: 10),
-              if (_restoring) LinearProgressIndicator(),
-              if (_notice != null)
-                Padding(
-                    padding: EdgeInsets.only(bottom: 10),
-                    child: Text(context.tr(_notice!))),
-              Wrap(
-                  alignment: WrapAlignment.spaceBetween,
-                  spacing: 12,
-                  runSpacing: 10,
-                  children: [
-                    OutlinedButton.icon(
-                        onPressed: _locked ? null : _pickImage,
-                        icon: Icon(Icons.image_outlined),
-                        label: Text(context.tr('Фото'))),
-                    FilledButton(
-                        style: FilledButton.styleFrom(
-                            backgroundColor: LrsTheme.actionGlass,
-                            foregroundColor: LrsTheme.text,
-                            disabledBackgroundColor: LrsTheme.actionDisabled,
-                            disabledForegroundColor: LrsTheme.muted,
-                            side:
-                                const BorderSide(color: LrsTheme.actionBorder)),
-                        onPressed: _sending ? null : _publish,
-                        child: _sending
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                    strokeWidth: 2, color: LrsTheme.text))
-                            : Text(context.tr(_submission == null
-                                ? 'Опубликовать'
-                                : 'Проверить отправку'))),
-                  ]),
-            ]),
-      ));
 }
 
 class _PostCard extends StatefulWidget {
@@ -463,11 +335,15 @@ class _PostCard extends StatefulWidget {
     required this.postId,
     required this.data,
     required this.social,
+    required this.isAdmin,
+    required this.canPublish
   });
 
   final String postId;
   final Map<String, dynamic> data;
   final SocialService social;
+  final bool isAdmin;
+  final bool canPublish;
 
   @override
   State<_PostCard> createState() => _PostCardState();
@@ -481,6 +357,8 @@ class _PostCardState extends State<_PostCard> {
   bool _sharing = false;
   PendingWrite? _shareWrite;
   bool _reporting = false;
+  bool _deleting = false;
+  PendingWrite? _deleteWrite;
   int _likeRevision = 0;
 
   @override
@@ -597,17 +475,99 @@ class _PostCardState extends State<_PostCard> {
     }
   }
 
+  Future<void> _edit() async {
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PostEditorPage(
+          social: widget.social,
+          postId: widget.postId,
+          initialText: widget.data['text']?.toString() ?? '',
+          initialImages: _imagesFrom(widget.data),
+        ),
+      ),
+    );
+    if (result == true && mounted) {
+      showSnackbar(
+          context, LrsTheme.surface, context.tr('Изменения сохранены'));
+    }
+  }
+
+  Future<void> _delete() async {
+    if (_deleting) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: LrsTheme.surface,
+        title: Text(context.tr('Удалить публикацию?')),
+        content: Text(context.tr('Это действие нельзя отменить.')),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(context.tr('Отмена'))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(context.tr('Удалить'),
+                  style: const TextStyle(color: LrsTheme.danger))),
+        ],
+      ),
+    );
+    if (confirmed != true || _deleting) return;
+    setState(() => _deleting = true);
+    try {
+      _deleteWrite ??=
+          PendingWrite(() => widget.social.deletePost(widget.postId));
+      final ok = await _deleteWrite!.wait();
+      if (!mounted) return;
+      if (ok) {
+        _deleteWrite = null;
+        showSnackbar(
+            context, LrsTheme.surface, context.tr('Публикация удалена'));
+      } else {
+        showSnackbar(
+            context,
+            LrsTheme.danger,
+            context.tr(
+                'Подтверждение ещё не получено. Проверьте результат.'));
+      }
+    } catch (_) {
+      _deleteWrite = null;
+      if (mounted) {
+        showSnackbar(context, LrsTheme.danger,
+            context.tr('Не удалось удалить публикацию.'));
+      }
+    } finally {
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
+
+  static List<String> _imagesFrom(Map<String, dynamic> data) {
+    final list = data['images'];
+    if (list is List) {
+      return list
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    final single = data['imageUrl']?.toString() ?? '';
+    return single.isEmpty ? const [] : [single];
+  }
+
+  bool get _canEditThis {
+    if (widget.isAdmin) return true;
+    if (!widget.canPublish) return false;
+    return widget.data['authorUid']?.toString() ==
+        firebaseAuth.currentUser?.uid;
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
-    final image = data['imageUrl']?.toString() ?? '';
+    final images = _imagesFrom(data);
     final authorPhoto = data['authorPhoto']?.toString() ?? '';
     final authorUid = postAuthorUid(data);
     final text = data['text']?.toString() ?? '';
     final sharedText = data['sharedText']?.toString() ?? '';
-    final sharedImage = data['sharedImageUrl']?.toString() ?? '';
     final displayText = text.isNotEmpty ? text : sharedText;
-    final displayImage = image.isNotEmpty ? image : sharedImage;
 
     return Container(
       decoration: BoxDecoration(
@@ -681,16 +641,11 @@ class _PostCardState extends State<_PostCard> {
               child: TranslatableText(displayText,
                   style: TextStyle(color: LrsTheme.text, height: 1.35)),
             ),
-          if (displayImage.isNotEmpty)
-            AspectRatio(
-                aspectRatio: 1.85,
-                child: CachedNetworkImage(
-                  imageUrl: displayImage,
-                  fit: BoxFit.cover,
-                  errorWidget: (_, __, ___) => Center(
-                      child: Icon(Icons.broken_image_outlined,
-                          color: LrsTheme.muted)),
-                )),
+          if (images.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _PostImages(images: images),
+            ),
           Divider(height: 1, color: Color(0x22FFFFFF)),
           Row(
             children: [
@@ -737,32 +692,104 @@ class _PostCardState extends State<_PostCard> {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: LrsTheme.surface,
-      builder: (context) => SafeArea(
-        child: ListTile(
-          leading: Icon(Icons.flag_outlined, color: LrsTheme.peach),
-          title: Text(context.tr('Пожаловаться'),
-              style: TextStyle(color: LrsTheme.text)),
-          subtitle: Text(
-            context.tr('Жалоба попадёт в очередь модерации'),
-            style: TextStyle(color: LrsTheme.muted),
+      builder: (ctx) => SafeArea(
+        child: Column(mainAxisSize: MainAxisSize.min, children: [
+          if (_canEditThis)
+            ListTile(
+              leading:
+              const Icon(Icons.edit_outlined, color: LrsTheme.peach),
+              title: Text(context.tr('Редактировать'),
+                  style: const TextStyle(color: LrsTheme.text)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _edit();
+              },
+            ),
+          if (_canEditThis)
+            ListTile(
+              leading: const Icon(Icons.delete_outline,
+                  color: LrsTheme.danger),
+              title: Text(context.tr('Удалить'),
+                  style: const TextStyle(color: LrsTheme.danger)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _delete();
+              },
+            ),
+          ListTile(
+            leading: const Icon(Icons.flag_outlined, color: LrsTheme.peach),
+            title: Text(context.tr('Пожаловаться'),
+                style: const TextStyle(color: LrsTheme.text)),
+            subtitle: Text(
+              context.tr('Жалоба попадёт в очередь модерации'),
+              style: const TextStyle(color: LrsTheme.muted),
+            ),
+            onTap: () async {
+              if (_reporting) return;
+              _reporting = true;
+              try {
+                await widget.social
+                    .reportPost(widget.postId)
+                    .timeout(const Duration(seconds: 15));
+                if (ctx.mounted) Navigator.pop(ctx);
+              } catch (_) {
+                if (ctx.mounted) {
+                  showSnackbar(
+                      ctx,
+                      LrsTheme.danger,
+                      context.tr(
+                          'Не удалось отправить заявку. Попробуйте ещё раз.'));
+                }
+              } finally {
+                _reporting = false;
+              }
+            },
           ),
-          onTap: () async {
-            if (_reporting) return;
-            _reporting = true;
-            try {
-              await widget.social
-                  .reportPost(widget.postId)
-                  .timeout(const Duration(seconds: 15));
-              if (context.mounted) Navigator.pop(context);
-            } catch (_) {
-              if (context.mounted)
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                    content: Text(context.tr(
-                        'Не удалось отправить заявку. Попробуйте ещё раз.'))));
-            } finally {
-              _reporting = false;
-            }
-          },
+        ]),
+      ),
+    );
+  }
+}
+
+class _PostImages extends StatelessWidget {
+  const _PostImages({required this.images});
+  final List<String> images;
+
+  @override
+  Widget build(BuildContext context) {
+    if (images.length == 1) {
+      return AspectRatio(
+        aspectRatio: 1.85,
+        child: CachedNetworkImage(
+          imageUrl: images.first,
+          fit: BoxFit.cover,
+          errorWidget: (_, __, ___) => const Center(
+              child:
+              Icon(Icons.broken_image_outlined, color: LrsTheme.muted)),
+        ),
+      );
+    }
+    return SizedBox(
+      height: 220,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemCount: images.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (_, i) => ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: CachedNetworkImage(
+              imageUrl: images[i],
+              fit: BoxFit.cover,
+              errorWidget: (_, __, ___) => Container(
+                color: LrsTheme.surface,
+                child: const Icon(Icons.broken_image_outlined,
+                    color: LrsTheme.muted),
+              ),
+            ),
+          ),
         ),
       ),
     );

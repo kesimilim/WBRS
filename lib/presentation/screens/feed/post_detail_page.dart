@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:wbrs/shared/translatable_text.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/shared/group_avatar.dart';
@@ -6,7 +7,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
+import 'package:wbrs/service/admin_access.dart';
 import 'package:wbrs/service/social_service.dart';
 import 'package:wbrs/service/comment_submission.dart';
 import 'package:wbrs/service/pending_write.dart';
@@ -40,10 +43,11 @@ class _PostDetailPageState extends State<PostDetailPage> {
   CommentSubmission? _submission;
   String? _sendNotice;
   bool _restoring = true;
+  bool _isAdmin = false;
   bool get _locked => _restoring || _submission != null;
   final TextEditingController _comment = TextEditingController();
   final ImagePicker _picker = ImagePicker();
-  XFile? _image;
+  final List<XFile> _images = [];
   String? _replyTo;
   String? _replyName;
   bool _sending = false;
@@ -55,6 +59,8 @@ class _PostDetailPageState extends State<PostDetailPage> {
   late final Future<bool> _canModerate;
   final Set<String> _moderating = {};
   final Map<String, PendingWrite> _moderationWrites = {};
+  final Set<String> _deletingComments = {};
+  final Map<String, PendingWrite> _commentDeletes = {};
 
   Future<void> _moderateComment(String commentId, {required bool delete}) async {
     if (_moderating.contains(commentId)) return;
@@ -78,7 +84,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     try {
       final operation = _moderationWrites.putIfAbsent(key,
           () => PendingWrite(() => delete
-              ? _social.deleteComment(widget.postId, commentId)
+              ? _social.deleteComment(postId: widget.postId, commentId: commentId)
               : _social.reportComment(widget.postId, commentId)));
       final confirmed = await operation.wait();
       if (!mounted) return;
@@ -181,10 +187,20 @@ class _PostDetailPageState extends State<PostDetailPage> {
       _comment.text = _submission!.text;
       _replyTo = _submission!.parentId;
       _replyName = _submission!.replyName;
-      _image = _submission!.image;
+      _images
+        ..clear()
+        ..addAll(_submission!.images);
       _sendNotice =
           'Предыдущая отправка ожидает подтверждения. Проверьте результат.';
     }
+    _loadAdmin();
+  }
+
+  Future<void> _loadAdmin() async {
+    try {
+      final admin = await AdminAccess.current();
+      if (mounted) setState(() => _isAdmin = admin);
+    } catch (_) {}
   }
 
   Future<void> _restoreSubmission() async {
@@ -197,7 +213,9 @@ class _PostDetailPageState extends State<PostDetailPage> {
           _comment.text = restored.text;
           _replyTo = restored.parentId;
           _replyName = restored.replyName;
-          _image = restored.image;
+          _images
+            ..clear()
+            ..addAll(restored.images);
           _sendNotice =
               'Предыдущая отправка ожидает подтверждения. Проверьте результат.';
         });
@@ -222,6 +240,18 @@ class _PostDetailPageState extends State<PostDetailPage> {
   void dispose() {
     _comment.dispose();
     super.dispose();
+  }
+
+  static List<String> _imagesFrom(Map<String, dynamic> data) {
+    final list = data['images'];
+    if (list is List) {
+      return list
+          .map((e) => e.toString())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    }
+    final single = data['imageUrl']?.toString() ?? '';
+    return single.isEmpty ? const [] : [single];
   }
 
   @override
@@ -360,7 +390,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   }
 
   Widget _postHeader() {
-    final image = widget.post['imageUrl']?.toString() ?? '';
+    final images = _imagesFrom(widget.post);
     final text = widget.post['text']?.toString() ?? '';
     final authorUid = postAuthorUid(widget.post);
     return Container(
@@ -387,12 +417,16 @@ class _PostDetailPageState extends State<PostDetailPage> {
             TranslatableText(text,
                 style: TextStyle(color: LrsTheme.text, height: 1.35)),
           ],
-          if (image.isNotEmpty) ...[
+          if (images.isNotEmpty) ...[
             SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: CachedNetworkImage(imageUrl: image, fit: BoxFit.cover),
-            ),
+            for (final url in images)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: CachedNetworkImage(imageUrl: url, fit: BoxFit.cover),
+                ),
+              ),
           ],
         ],
       ),
@@ -404,7 +438,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
     required bool isReply,
   }) {
     final data = doc.data();
-    final image = data['imageUrl']?.toString() ?? '';
+    final images = _imagesFrom(data);
     final photo = data['authorPhoto']?.toString() ?? '';
     return Container(
       margin: EdgeInsets.only(bottom: 8),
@@ -434,17 +468,24 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 if ((data['text']?.toString() ?? '').isNotEmpty)
                   TranslatableText(data['text'].toString(),
                       style: TextStyle(color: LrsTheme.text)),
-                if (image.isNotEmpty)
+                if (images.isNotEmpty)
                   Padding(
                     padding: EdgeInsets.only(top: 8),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: CachedNetworkImage(
-                        imageUrl: image,
-                        height: 150,
-                        width: 190,
-                        fit: BoxFit.cover,
-                      ),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final url in images)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: CachedNetworkImage(
+                              imageUrl: url,
+                              height: 150,
+                              width: 190,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                 Wrap(
@@ -542,27 +583,52 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   ),
                 ],
               ),
-            if (_image != null)
-              Row(
-                children: [
-                  Icon(Icons.image, color: LrsTheme.peach, size: 18),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      _image!.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(color: LrsTheme.muted, fontSize: 11),
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: context.tr('Убрать изображение'),
-                    visualDensity: VisualDensity.compact,
-                    onPressed:
-                        _locked ? null : () => setState(() => _image = null),
-                    icon: Icon(Icons.close, size: 18),
-                  ),
-                ],
+            if (_images.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    for (var i = 0; i < _images.length; i++)
+                      SizedBox(
+                        width: 60,
+                        height: 60,
+                        child: Stack(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.file(
+                                File(_images[i].path),
+                                fit: BoxFit.cover,
+                                width: 60,
+                                height: 60,
+                              ),
+                            ),
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: _locked
+                                    ? null
+                                    : () => setState(
+                                        () => _images.removeAt(i)),
+                                child: Container(
+                                  padding: const EdgeInsets.all(2),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.black54,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.close,
+                                      size: 14, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
               ),
             Row(
               children: [
@@ -572,14 +638,16 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       ? null
                       : () async {
                           try {
-                            final image = await _picker.pickImage(
-                              source: ImageSource.gallery,
+                            final picked = await _picker.pickMultiImage(
                               imageQuality: 68,
                               maxWidth: 1400,
                               maxHeight: 1400,
                             );
-                            if (mounted && image != null)
-                              setState(() => _image = image);
+                            if (picked.isEmpty || !mounted) return;
+                            final room = 10 - _images.length;
+                            setState(() {
+                              _images.addAll(picked.take(room));
+                            });
                           } catch (_) {
                             if (mounted)
                               showSnackbar(
@@ -633,7 +701,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
   Future<void> _send() async {
     if (_restoring ||
         _sending ||
-        (_comment.text.trim().isEmpty && _image == null)) return;
+        (_comment.text.trim().isEmpty && _images.isEmpty)) return;
     setState(() {
       _sending = true;
       _sendNotice = null;
@@ -645,7 +713,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         text: _comment.text,
         parentId: _replyTo,
         replyName: _replyName,
-        image: _image,
+        images: _images,
       );
       final confirmed = await _submission!.write.wait();
       if (mounted) {
@@ -665,7 +733,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         setState(() {
           _submission = null;
           if (parentId != null) _expandedThreads.add(parentId);
-          _image = null;
+          _images.clear();
           _replyTo = widget.threadRootId;
           _replyName = null;
         });

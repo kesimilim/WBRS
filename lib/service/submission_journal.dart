@@ -31,18 +31,21 @@ class SubmissionJournal {
   }
 
   Future<Map<String, dynamic>> prepare(String uid, String scope,
-      Map<String, dynamic> fields, XFile? image, {bool replaceRejected = false}) async {
+      Map<String, dynamic> fields, List<XFile>? images, {bool replaceRejected = false}) async {
     final previous = await load(uid, scope);
     if (previous != null && !replaceRejected) return previous;
     final dir = await _folder(uid, scope);
     final id = List.generate(20, (_) => '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'[_random.nextInt(62)]).join();
-    String? imagePath;
-    if (image != null) {
-      imagePath = '${dir.path}/$id-image';
-      await File(image.path).copy(imagePath);
+    final imagePaths = <String>[];
+    if (images != null) {
+      for (var i = 0; i < images.length; i++) {
+        final path = '${dir.path}/$id-image-$i';
+        await File(images[i].path).copy(path);
+        imagePaths.add(path);
+      }
     }
     final data = <String, dynamic>{'version': 1, 'uid': uid, 'scope': scope,
-      'id': id, 'fields': fields, 'imagePath': imagePath};
+      'id': id, 'fields': fields, 'imagePaths': imagePaths};
     final temporary = File('${dir.path}/request.tmp');
     await temporary.writeAsString(jsonEncode(data), flush: true);
     await temporary.rename('${dir.path}/request.json');

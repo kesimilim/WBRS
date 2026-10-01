@@ -84,7 +84,7 @@ class _Comments extends Fake implements SocialService {
       {required String postId,
       required String text,
       String? parentId,
-      XFile? image,
+      List<XFile> images = const [],
       String? requestId}) async {
     sends++;
     sentParent = parentId;

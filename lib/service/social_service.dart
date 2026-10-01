@@ -32,6 +32,7 @@ class SocialService {
   static Future<bool> _claimAdmin() async {
     final user = firebaseAuth.currentUser;
     if (user == null) return false;
+    if (await AdminAccess.current()) return true;
     try {
       final token = await user.getIdTokenResult(true);
       return firebaseAuth.currentUser?.uid == user.uid &&
@@ -149,9 +150,12 @@ class SocialService {
   }
 
   Future<void> createPost(
-      {required String text, XFile? image, String? requestId}) async {
-    if (text.trim().isEmpty && image == null) {
+      {required String text, List<XFile> images = const [], String? requestId}) async {
+    if (text.trim().isEmpty && images.isEmpty) {
       throw ArgumentError('Публикация не может быть пустой');
+    }
+    if (images.length > 10) {
+      throw ArgumentError('Не больше 10 фотографий');
     }
     if (!await canPublish()) {
       throw StateError(
@@ -160,8 +164,15 @@ class SocialService {
     final user = await _db.collection('users').doc(_uid).get();
     final data = user.data() ?? const <String, dynamic>{};
     final postRef = posts.doc(requestId);
-    final imageUrl =
-        await uploadImage(image, folder: 'feed_posts', requestId: postRef.id);
+    final uploadedUrls = <String>[];
+    for (var i = 0; i < images.length; i++) {
+      final url = await uploadImage(
+        images[i],
+        folder: 'feed_posts',
+        requestId: '${postRef.id}_$i',
+      );
+      if (url != null) uploadedUrls.add(url);
+    }
     await _db.runTransaction((tx) async {
       final existing = await tx.get(postRef);
       _uid;
@@ -174,7 +185,8 @@ class SocialService {
             data['profilePic'] ?? firebaseAuth.currentUser?.photoURL ?? '',
         'authorGroup': data['группа'] ?? '',
         'text': text.trim(),
-        'imageUrl': imageUrl ?? '',
+        'images': uploadedUrls,
+        'imageUrl': uploadedUrls.isEmpty ? '' : uploadedUrls.first,
         'createdAt': FieldValue.serverTimestamp(),
         'status': 'published',
         'likeCount': 0,
@@ -182,6 +194,104 @@ class SocialService {
         'shareCount': 0,
         'nativeLanguage': data['language'] ?? 'ru',
       });
+    });
+  }
+
+  Future<void> updatePost({
+    required String postId,
+    required String text,
+    required List<String> keepImageUrls,
+    List<XFile> newImages = const [],
+  }) async {
+    if (postId.isEmpty || postId.contains('/')) {
+      throw ArgumentError('postId');
+    }
+    if (text.trim().isEmpty && keepImageUrls.isEmpty && newImages.isEmpty) {
+      throw ArgumentError('Публикация не может быть пустой');
+    }
+    if (keepImageUrls.length + newImages.length > 10) {
+      throw ArgumentError('Не больше 10 фотографий');
+    }
+    final isAdmin = await AdminAccess.current();
+    if (!isAdmin && !await canPublish()) {
+      throw StateError(
+          'Редактировать посты могут администраторы и одобренные авторы');
+    }
+    final postRef = posts.doc(postId);
+    final uploadedUrls = <String>[];
+    for (var i = 0; i < newImages.length; i++) {
+      final url = await uploadImage(
+        newImages[i],
+        folder: 'feed_posts',
+        requestId:
+        '${postId}_edit_${DateTime.now().microsecondsSinceEpoch}_$i',
+      );
+      if (url != null) uploadedUrls.add(url);
+    }
+    final allImages = [...keepImageUrls, ...uploadedUrls];
+    await _db.runTransaction((tx) async {
+      final post = await tx.get(postRef);
+      _uid;
+      if (!post.exists) throw StateError('Пост не найден');
+      if (!isAdmin && post.data()?['authorUid']?.toString() != _uid) {
+        throw StateError('Редактировать можно только свои публикации');
+      }
+      tx.update(postRef, {
+        'text': text.trim(),
+        'images': allImages,
+        'imageUrl': allImages.isEmpty ? '' : allImages.first,
+        'editedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<void> deletePost(String postId) async {
+    if (postId.isEmpty || postId.contains('/')) {
+      throw ArgumentError('postId');
+    }
+    final isAdmin = await AdminAccess.current();
+    if (!isAdmin && !await canPublish()) {
+      throw StateError(
+          'Удалять посты могут администраторы и одобренные авторы');
+    }
+    await _db.runTransaction((tx) async {
+      final post = await tx.get(posts.doc(postId));
+      _uid;
+      if (!post.exists) return;
+      if (!isAdmin && post.data()?['authorUid']?.toString() != _uid) {
+        throw StateError('Удалять можно только свои публикации');
+      }
+      tx.update(posts.doc(postId), {'status': 'deleted'});
+    });
+  }
+
+  Future<void> deleteComment({
+    required String postId,
+    required String commentId,
+  }) async {
+    if (postId.isEmpty ||
+        postId.contains('/') ||
+        commentId.isEmpty ||
+        commentId.contains('/')) {
+      throw ArgumentError('Недопустимый комментарий');
+    }
+    final isAdmin = await AdminAccess.current();
+    final commentRef = posts.doc(postId).collection('comments').doc(commentId);
+    final postRef = posts.doc(postId);
+    await _db.runTransaction((tx) async {
+      final comment = await tx.get(commentRef);
+      _uid;
+      if (!comment.exists) return;
+      final authorUid = comment.data()?['authorUid']?.toString();
+      if (!isAdmin && authorUid != _uid) {
+        throw StateError('Нет прав на удаление этого комментария');
+      }
+      tx.delete(commentRef);
+      final post = await tx.get(postRef);
+      if (post.exists) {
+        final count = ((post.data()?['commentCount'] as num?) ?? 0).toInt();
+        tx.update(postRef, {'commentCount': count > 0 ? count - 1 : 0});
+      }
     });
   }
 
@@ -251,32 +361,6 @@ class SocialService {
     }
   }
 
-  /// Administrator removal keeps the post counter consistent in one commit.
-  Future<void> deleteComment(String postId, String commentId) async {
-    final uid = _uid;
-    if (postId.isEmpty || postId.contains('/') ||
-        commentId.isEmpty || commentId.contains('/')) {
-      throw ArgumentError('commentId');
-    }
-    if (!await canModerateComments() || _uid != uid) {
-      throw StateError('Доступ запрещён');
-    }
-    final post = posts.doc(postId);
-    final comment = post.collection('comments').doc(commentId);
-    await _db.runTransaction((tx) async {
-      final postSnapshot = await tx.get(post);
-      final commentSnapshot = await tx.get(comment);
-      _uid;
-      if (!commentSnapshot.exists) return;
-      if (!postSnapshot.exists) throw StateError('Публикация недоступна');
-      final count = (postSnapshot.data()?['commentCount'] as num?)?.toInt();
-      tx.delete(comment);
-      if (count != null && count > 0) {
-        tx.update(post, {'commentCount': count - 1});
-      }
-    });
-  }
-
   Future<void> togglePostLike(String postId) => _retainLike(postId, null, () async {
     final postRef = posts.doc(postId);
     final likeRef = postRef.collection('likes').doc(_uid);
@@ -342,16 +426,23 @@ class SocialService {
     required String postId,
     required String text,
     String? parentId,
-    XFile? image,
+    List<XFile> images = const [],
     String? requestId,
   }) async {
-    if (text.trim().isEmpty && image == null) return;
+    if (text.trim().isEmpty && images.isEmpty) return;
     final user = await _db.collection('users').doc(_uid).get();
     final userData = user.data() ?? const <String, dynamic>{};
     final postRef = posts.doc(postId);
     final commentRef = postRef.collection('comments').doc(requestId);
-    final imageUrl = await uploadImage(image,
-        folder: 'feed_comments', requestId: commentRef.id);
+    final uploadedUrls = <String>[];
+    for (var i = 0; i < images.length; i++) {
+      final url = await uploadImage(
+        images[i],
+        folder: 'feed_comments',
+        requestId: '${commentRef.id}_$i',
+      );
+      if (url != null) uploadedUrls.add(url);
+    }
     final postOwner = await _db.runTransaction<String?>((tx) async {
       final post = await tx.get(postRef);
       final existing = await tx.get(commentRef);
@@ -379,7 +470,8 @@ class SocialService {
             userData['profilePic'] ?? firebaseAuth.currentUser?.photoURL ?? '',
         'authorGroup': userData['группа'] ?? '',
         'text': text.trim(),
-        'imageUrl': imageUrl ?? '',
+        'images': uploadedUrls,
+        'imageUrl': uploadedUrls.isEmpty ? '' : uploadedUrls.first,
         'parentId': parentId,
         'createdAt': FieldValue.serverTimestamp(),
         'likeCount': 0,
@@ -753,7 +845,7 @@ class SocialService {
   }
 
   Future<void> requestRole(String role,
-      {String? proposedText, XFile? proposedImage, String? requestId}) async {
+      {String? proposedText, List<XFile> proposedImages = const [], String? requestId}) async {
     if (role != 'author' && role != 'moderator') {
       throw ArgumentError.value(role, 'role');
     }
@@ -778,10 +870,17 @@ class SocialService {
     if (!RegExp(r'^[A-Za-z0-9_-]{1,120}$').hasMatch(proposalId)) {
       throw ArgumentError('Invalid proposal identity');
     }
-    final imageUrl = role == 'author'
-        ? await uploadImage(proposedImage, folder: 'author_applications',
-            requestId: proposalId)
-        : null;
+    final uploadedUrls = <String>[];
+    if (role == 'author') {
+      for (var i = 0; i < proposedImages.length; i++) {
+        final url = await uploadImage(
+          proposedImages[i],
+          folder: 'author_applications',
+          requestId: '${proposalId}_$i',
+        );
+        if (url != null) uploadedUrls.add(url);
+      }
+    }
     await _db.runTransaction((tx) async {
       final existing = await tx.get(ref);
       if (_uid != uid) throw StateError('Сеанс завершён');
@@ -795,7 +894,8 @@ class SocialService {
         'createdAt': FieldValue.serverTimestamp(),
         if (role == 'author') ...{
           'proposedText': text,
-          'proposedImageUrl': imageUrl ?? '',
+          'proposedImages': uploadedUrls,
+          'proposedImageUrl': uploadedUrls.isEmpty ? '' : uploadedUrls.first,
           'proposalId': proposalId,
         },
       });

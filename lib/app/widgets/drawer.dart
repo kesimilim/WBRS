@@ -376,19 +376,24 @@ class _MyDrawerState extends State<MyDrawer> {
 
   Widget _tile(IconData icon, String title, VoidCallback onTap) {
     return Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: ClrsPanel(
-            padding: EdgeInsets.zero,
-            child: ListTile(
-              dense: true,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16)),
-              leading: Icon(icon, color: LrsTheme.peachLight),
-              title: Text(context.tr(title),
-                  style: TextStyle(color: LrsTheme.text)),
-              trailing: Icon(Icons.chevron_right, color: LrsTheme.muted),
-              onTap: onTap,
-            )));
+      padding: const EdgeInsets.only(bottom: 6),
+      child: ClrsPanel(
+        padding: EdgeInsets.zero,
+        child: Material(
+          color: Colors.transparent,
+          child: ListTile(
+            dense: true,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            leading: Icon(icon, color: LrsTheme.peachLight),
+            title: Text(context.tr(title),
+                style: TextStyle(color: LrsTheme.text)),
+            trailing: Icon(Icons.chevron_right, color: LrsTheme.muted),
+            onTap: onTap,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _requestRole(String role) async {

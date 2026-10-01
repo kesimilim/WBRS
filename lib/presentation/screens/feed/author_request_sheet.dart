@@ -24,7 +24,7 @@ class AuthorRequestSheet extends StatefulWidget {
 
 class _AuthorRequestSheetState extends State<AuthorRequestSheet> {
   final _text = TextEditingController();
-  XFile? _image;
+  final List<XFile> _images = [];
   AuthorRequestSubmission? _submission;
   bool _restoring = true, _sending = false;
   String? _notice;
@@ -42,7 +42,9 @@ class _AuthorRequestSheetState extends State<AuthorRequestSheet> {
       if (!mounted) return;
       if (saved != null) {
         _text.text = saved.text;
-        _image = saved.image;
+        _images
+          ..clear()
+          ..addAll(saved.images);
         _submission = saved.write.failed ? null : saved;
         _notice = saved.write.failed
             ? 'Не удалось отправить заявку. Попробуйте ещё раз.'
@@ -62,15 +64,18 @@ class _AuthorRequestSheetState extends State<AuthorRequestSheet> {
   }
 
   Future<void> _pickImage() async {
+    if (_images.length >= 10) return;
     try {
-      final image = await ImagePicker().pickImage(
-          source: ImageSource.gallery,
-          imageQuality: 72,
-          maxWidth: 1600,
-          maxHeight: 1600);
-      if (mounted && !_locked && widget.submissions.isCurrentSession) {
-        setState(() => _image = image ?? _image);
+      final picked = await ImagePicker().pickMultiImage(
+          imageQuality: 72, maxWidth: 1600, maxHeight: 1600);
+      if (picked.isEmpty ||
+          !mounted ||
+          _locked ||
+          !widget.submissions.isCurrentSession) {
+        return;
       }
+      final room = 10 - _images.length;
+      setState(() => _images.addAll(picked.take(room)));
     } catch (_) {
       if (mounted) {
         setState(() =>
@@ -87,7 +92,7 @@ class _AuthorRequestSheetState extends State<AuthorRequestSheet> {
     });
     try {
       _submission ??=
-          widget.submissions.start(text: _text.text.trim(), image: _image);
+          widget.submissions.start(text: _text.text.trim(), images: _images);
       final confirmed = await _submission!.write.wait();
       if (!mounted) return;
       if (!widget.submissions.isCurrentSession) {
@@ -134,17 +139,51 @@ class _AuthorRequestSheetState extends State<AuthorRequestSheet> {
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                         labelText: context.tr('Предлагаемая публикация'))),
-                if (_image != null) ...[
+                if (_images.isNotEmpty) ...[
                   const SizedBox(height: 8),
-                  Image.file(File(_image!.path),
-                      height: 150,
-                      fit: BoxFit.contain,
-                      errorBuilder: (_, __, ___) =>
-                          const Icon(Icons.broken_image_outlined)),
-                  TextButton(
-                      onPressed:
-                          _locked ? null : () => setState(() => _image = null),
-                      child: Text(context.tr('Удалить фото'))),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (var i = 0; i < _images.length; i++)
+                        SizedBox(
+                          width: 88,
+                          height: 88,
+                          child: Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.file(File(_images[i].path),
+                                    fit: BoxFit.cover,
+                                    width: 88,
+                                    height: 88,
+                                    errorBuilder: (_, __, ___) => const Icon(
+                                        Icons.broken_image_outlined)),
+                              ),
+                              Positioned(
+                                top: 2,
+                                right: 2,
+                                child: GestureDetector(
+                                  onTap: _locked
+                                      ? null
+                                      : () => setState(
+                                          () => _images.removeAt(i)),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black54,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.close,
+                                        size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
                 TextButton.icon(
                     onPressed: _locked ? null : _pickImage,

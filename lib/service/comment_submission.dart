@@ -9,11 +9,11 @@ class CommentSubmission {
       {required this.text,
       this.parentId,
       this.replyName,
-      this.image,
+      this.images = const [],
       required this.write});
   final String text;
   final String? parentId, replyName;
-  final XFile? image;
+  final List<XFile> images;
   final PendingWrite write;
 }
 
@@ -43,14 +43,13 @@ class CommentSubmissionService {
     final saved = await _journal.load(_ownerUid!, _scope(postId));
     if (!isCurrentSession || saved == null) return null;
     final fields = Map<String, dynamic>.from(saved['fields'] as Map);
+    final paths = (saved['imagePaths'] as List?)?.cast<String>() ?? const [];
     return start(
         postId: postId,
         text: fields['text'] as String,
         parentId: fields['parentId'] as String?,
         replyName: fields['replyName'] as String?,
-        image: saved['imagePath'] == null
-            ? null
-            : XFile(saved['imagePath'] as String));
+      images: paths.map((p) => XFile(p)).toList());
   }
 
   CommentSubmission start(
@@ -58,7 +57,7 @@ class CommentSubmissionService {
       required String text,
       String? parentId,
       String? replyName,
-      XFile? image}) {
+      List<XFile> images = const []}) {
     if (!isCurrentSession) throw StateError('Сеанс завершён. Войдите снова.');
     final uid = _ownerUid!;
     final key = _key(postId);
@@ -68,7 +67,7 @@ class CommentSubmissionService {
         text: text,
         parentId: parentId,
         replyName: replyName,
-        image: image,
+        images: images,
         write: PendingWrite(() async {
           final scope = _scope(postId);
           final prior = await _journal.load(uid, scope);
@@ -78,24 +77,25 @@ class CommentSubmissionService {
               prior != null &&
               (prior['fields']['text'] != text ||
                   prior['fields']['parentId'] != parentId ||
-                  previous?.image?.path != image?.path);
+                  (previous?.images.map((e) => e.path).toList() ?? []) !=
+                      images.map((e) => e.path).toList());
           final saved = await _journal.prepare(
               uid,
               scope,
               {'text': text, 'parentId': parentId, 'replyName': replyName},
-              image,
+              images,
               replaceRejected: replaceRejected);
           if (!isCurrentSession)
             throw StateError('Сеанс завершён. Войдите снова.');
+          final paths =
+              (saved['imagePaths'] as List?)?.cast<String>() ?? const [];
           final fields = saved['fields'] as Map;
           await _social.addComment(
               postId: postId,
               text: fields['text'] as String,
               parentId: fields['parentId'] as String?,
               requestId: saved['id'] as String,
-              image: saved['imagePath'] == null
-                  ? null
-                  : XFile(saved['imagePath'] as String));
+              images: paths.map((p) => XFile(p)).toList());
           // An inability to clean up a local record cannot undo a server commit.
           // On reopening, the same ID is reconciled without a duplicate comment.
           try {

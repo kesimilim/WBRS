@@ -86,7 +86,7 @@ class _Feed extends Fake implements SocialService {
   }
 
   @override
-  Future<void> createPost({required String text, XFile? image, String? requestId}) async {
+  Future<void> createPost({required String text, List<XFile> images = const [], String? requestId}) async {
     await postGate?.future;
   }
 }

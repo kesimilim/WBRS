@@ -11,7 +11,8 @@ service cloud.firestore {
         request.auth.uid in [
           'T4zb6OLzDgMh0qrfp3eEahNKmNl1',
           'lyNcv2xr33Ms6G9fI0bhBEcDKFj2',
-          'vLeB8v4b1pUL8h5dtxJSkifF2v72'
+          'vLeB8v4b1pUL8h5dtxJSkifF2v72',
+          '4LTxrSEmWmNRcGn5paeFfhWRIDi1',
         ]
       );
     }

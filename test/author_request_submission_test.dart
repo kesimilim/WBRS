@@ -32,14 +32,15 @@ class _Social extends SocialService {
 class _WaitingSocial extends Fake implements SocialService {
   final gate = Completer<void>();
   int sends = 0;
-  String? text, id, imagePath;
+  String? text, id;
+  List<String> imagePaths = const [];
   @override
   Future<void> requestRole(String role,
-      {String? proposedText, XFile? proposedImage, String? requestId}) async {
+      {String? proposedText, List<XFile> proposedImages = const [], String? requestId}) async {
     sends++;
     text = proposedText;
     id = requestId;
-    imagePath = proposedImage?.path;
+    imagePaths = proposedImages.map((e) => e.path).toList();
     await gate.future;
   }
 }
@@ -59,17 +60,20 @@ void main() {
     expect(db.documents['author_requests/author-test'], isNull);
     await social.requestRole('author',
         proposedText: '  Семейные традиции  ',
-        proposedImage: XFile('/test-photo.jpg'),
+        proposedImages: [XFile('/test-photo.jpg')],
         requestId: 'proposal-1');
     final saved = db.documents['author_requests/author-test']!;
     expect(saved['proposedText'], 'Семейные традиции');
     expect(saved['proposedImageUrl'],
-        contains('author_applications/proposal-1.jpg'));
+        contains('author_applications/proposal-1_0.jpg'));
+    expect(saved['proposedImages'], isA<List>());
+    expect((saved['proposedImages'] as List).first,
+        contains('author_applications/proposal-1_0.jpg'));
     expect(saved['status'], 'pending');
     expect(saved['proposalId'], 'proposal-1');
     await social.requestRole('author',
         proposedText: 'Повторный текст',
-        proposedImage: XFile('/test-photo.jpg'),
+        proposedImages: [XFile('/test-photo.jpg')],
         requestId: 'proposal-1');
     expect(social.uploads, 1);
     expect(db.documents['author_requests/author-test']!['proposedText'],
@@ -129,7 +133,7 @@ void main() {
     await photo.writeAsBytes([1, 2, 3]);
     final journal = SubmissionJournal(directory: () async => dir);
     final saved = await journal.prepare('disk-author', 'author-request',
-        {'text': 'Сохранённая публикация'}, XFile(photo.path));
+        {'text': 'Сохранённая публикация'}, [XFile(photo.path)]);
     await photo.delete();
     final social = _WaitingSocial();
     final service = AuthorRequestSubmissionService(
@@ -139,7 +143,8 @@ void main() {
         isFalse);
     expect(social.id, saved['id']);
     expect(social.text, 'Сохранённая публикация');
-    expect(await File(social.imagePath!).readAsBytes(), [1, 2, 3]);
+    expect(social.imagePaths, hasLength(1));
+    expect(await File(social.imagePaths.first).readAsBytes(), [1, 2, 3]);
     social.gate.complete();
     expect(await request.write.wait(), isTrue);
     service.acknowledge(request);

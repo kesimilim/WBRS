@@ -10,17 +10,23 @@ class MemorySubmissionJournal extends SubmissionJournal {
       records['$uid/$scope'];
   @override
   Future<Map<String, dynamic>> prepare(
-      String uid, String scope, Map<String, dynamic> fields, XFile? image,
+      String uid, String scope, Map<String, dynamic> fields, List<XFile>? images,
       {bool replaceRejected = false}) async {
     final key = '$uid/$scope';
     if (records[key] != null && !replaceRejected) return records[key]!;
+    final imagePaths = <String>[];
+    if (images != null) {
+      for (var i = 0; i < images.length; i++) {
+        imagePaths.add('memory://${images[i].path}-$i');
+      }
+    }
     return records[key] = {
       'version': 1,
       'uid': uid,
       'scope': scope,
       'id': 'request-${_next++}',
       'fields': fields,
-      'imagePath': null
+      'imagePaths': imagePaths,
     };
   }
 

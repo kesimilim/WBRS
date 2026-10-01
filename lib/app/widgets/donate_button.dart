@@ -1,11 +1,11 @@
 import 'dart:convert';
-import 'dart:ui';
 
 import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:wbrs/app/widgets/glass_button.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
+import 'package:wbrs/localization/clrs_localizations.dart';
+import 'package:wbrs/shared/lrs_theme.dart';
 
 class DonateButton extends StatelessWidget {
   final Widget child;
@@ -25,164 +25,118 @@ class DonateButton extends StatelessWidget {
 
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.4),
+      barrierColor: Colors.black.withOpacity(0.55),
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setState) => Center(
           child: Material(
             color: Colors.transparent,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(28),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 30, sigmaY: 30),
-                child: Container(
-                  width: 320,
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.orangeAccent.shade400.withOpacity(0.35),
-                        Colors.orangeAccent.shade100.withOpacity(0.25),
-                      ],
+            child: Container(
+              width: 320,
+              margin: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: LrsTheme.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: LrsTheme.actionBorder, width: 1),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    ctx.tr('Поддержите проект ❤️'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: LrsTheme.text,
                     ),
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.35),
-                      width: 1.5,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.orangeAccent.shade400.withOpacity(0.25),
-                        blurRadius: 30,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                  const SizedBox(height: 8),
+                  Text(
+                    ctx.tr('Ваша поддержка делает проект лучше'),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: LrsTheme.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  TextField(
+                    controller: controller,
+                    keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: LrsTheme.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    cursorColor: LrsTheme.peach,
+                    onChanged: (_) {
+                      if (errorText != null) {
+                        setState(() => errorText = null);
+                      }
+                    },
+                    decoration: InputDecoration(
+                      hintText: ctx.tr('Любая сумма от души'),
+                      hintStyle: const TextStyle(
+                        color: LrsTheme.muted,
+                        fontSize: 15,
+                      ),
+                      suffixText: '₽',
+                      suffixStyle: const TextStyle(
+                        color: LrsTheme.peachLight,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      errorText: errorText,
+                      errorStyle: const TextStyle(color: LrsTheme.danger),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  Row(
                     children: [
-                      const Text(
-                        'Поддержите проект ❤️',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          letterSpacing: 0.3,
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(ctx.tr('Отмена')),
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Ваша поддержка делает проект лучше',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withOpacity(0.75),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.25),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: errorText != null
-                                    ? Colors.redAccent.withOpacity(0.7)
-                                    : Colors.white.withOpacity(0.3),
-                                width: errorText != null ? 1.5 : 1,
-                              ),
-                            ),
-                            child: TextField(
-                              controller: controller,
-                              keyboardType:
-                              const TextInputType.numberWithOptions(
-                                  decimal: true),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                              cursorColor: Colors.white,
-                              onChanged: (_) {
-                                if (errorText != null) {
-                                  setState(() => errorText = null);
-                                }
-                              },
-                              decoration: InputDecoration(
-                                hintText: 'Любая сумма от души',
-                                hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.7),
-                                  fontSize: 15,
-                                ),
-                                suffixText: '₽',
-                                suffixStyle: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 14,
-                                ),
-                              ),
-                            ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: LrsTheme.actionGlass,
+                            foregroundColor: LrsTheme.text,
+                            side: const BorderSide(color: LrsTheme.actionBorder),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                            minimumSize: const Size(0, 44),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            textStyle: const TextStyle(fontSize: 14),
+                          ),
+                          onPressed: () async {
+                            final raw = controller.text.trim().replaceAll(',', '.');
+                            final amount = double.tryParse(raw);
+                            if (amount == null || amount <= 0) {
+                              setState(() => errorText =
+                              'Введите сумму цифрами, например 150 или 99.50');
+                              return;
+                            }
+                            Navigator.pop(ctx);
+                            await _openWebview(context, amount);
+                          },
+                          child: Text(
+                            ctx.tr('Поддержать'),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
                           ),
                         ),
-                      ),
-                      if (errorText != null) ...[
-                        const SizedBox(height: 10),
-                        Text(
-                          errorText!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 20),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: GlassButton(
-                              label: 'Отмена',
-                              onTap: () => Navigator.pop(ctx),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: GlassButton(
-                              label: 'Поддержать',
-                              isPrimary: true,
-                              onTap: () async {
-                                final raw = controller.text
-                                    .trim()
-                                    .replaceAll(',', '.');
-                                final amount = double.tryParse(raw);
-                                if (amount == null || amount <= 0) {
-                                  setState(() => errorText =
-                                  'Введите сумму цифрами, например 150 или 99.50');
-                                  return;
-                                }
-                                Navigator.pop(ctx);
-                                await _openWebview(context, amount);
-                              },
-                            ),
-                          ),
-                        ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -214,7 +168,7 @@ class DonateButton extends StatelessWidget {
     await nextScreen(context, Scaffold(body: WebViewWidget(controller: ctrl)));
 
     if (context.mounted) {
-      showSnackbar(context, Colors.lightGreen, 'Спасибо за поддержку!');
+      showSnackbar(context, Colors.lightGreen, context.tr('Спасибо за поддержку!'));
     }
   }
 }

@@ -1,6 +1,6 @@
 // Isolated security fixture. Merge with the actual production rules only after
 // reviewing the existing rule set; do not deploy this file as a replacement.
-rules_version = '2';
+rules_version = '3';
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }

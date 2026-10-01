@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/app/helper/helper_function.dart';
 import 'package:wbrs/app/pages/admin/panel.dart';
+import 'package:wbrs/app/widgets/donate_button.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/screens/about_app/about_app.dart';
 import 'package:wbrs/presentation/screens/auth/login_screen/login_page.dart';
@@ -264,8 +265,27 @@ class _MyDrawerState extends State<MyDrawer> {
                       _tile(Icons.quiz_outlined, 'Пройти тест', () {
                         nextScreen(context, FirstGroupRed());
                       }),
-                      _tile(Icons.favorite_border, 'Поддержать проект',
-                          _supportProject),
+                      DonateButton(
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: ClrsPanel(
+                            padding: EdgeInsets.zero,
+                            child: Material(
+                              color: Colors.transparent,
+                              child: ListTile(
+                                dense: true,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16)),
+                                leading: const Icon(Icons.favorite_border,
+                                    color: LrsTheme.peachLight),
+                                title: Text(context.tr('Поддержать проект'),
+                                    style: const TextStyle(color: LrsTheme.text)),
+                                trailing: Icon(Icons.chevron_right, color: LrsTheme.muted),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                       _tile(Icons.chat_bubble_outline, 'Чаты', () {
                         selectedIndex = 2;
                         nextScreenReplace(context, HomePage());

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/app/helper/helper_function.dart';
+import 'package:wbrs/app/widgets/donate_button.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/screens/feed/feed_page.dart';
 import 'package:wbrs/presentation/screens/home/home_page.dart';
@@ -143,16 +144,7 @@ class _MyBottomNavigationBarState extends State<MyBottomNavigationBar> {
                 ),
               ],
             ),
-            GestureDetector(
-              onTap: () {
-                //nextScreen(context, WebPage());
-                launchUrl(
-                    Uri.parse(
-                        'https://qr.nspk.ru/BS2A002KUIKV3G1Q8JGRDS9N32P84DCB?type=01&bank=100000000008&crc=5D81'),
-                    mode: LaunchMode.externalApplication);
-                showSnackbar(
-                    context, Colors.lightGreen, 'Спасибо за поддержку!');
-              },
+            DonateButton(
               child: Container(
                 padding: EdgeInsets.zero,
                 width: double.infinity,

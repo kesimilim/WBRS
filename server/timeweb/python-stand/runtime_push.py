@@ -249,7 +249,7 @@ class RuntimePushWorker:
                 payload=unique_json(raw.decode() if type(raw) is bytes else raw) if type(raw) in (str,bytes) else raw
                 keys={'messageId','sequence','senderUid','chatRevision','createdAt', 'chatId' if kind.startswith('chat.') else 'meetingId'}
                 if type(payload) is not dict or set(payload)!=keys or type(payload['sequence']) is not int or not 1<=payload['sequence']<=MAX_INTEGER:raise RuntimeUnavailable()
-                if _integer(payload['chatRevision'])<payload['sequence']:raise RuntimeUnavailable()
+                if kind.startswith('chat.') and _integer(payload['chatRevision'])<payload['sequence']:raise RuntimeUnavailable()
                 for key in ('messageId','senderUid','chatId' if kind.startswith('chat.') else 'meetingId'):_identifier(payload[key])
                 stamp=payload['createdAt']
                 if type(stamp) is not str or re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z',stamp) is None or _date(stamp[:-1].replace('T',' '))>int(self.clock())+30:raise RuntimeUnavailable()
@@ -259,10 +259,10 @@ class RuntimePushWorker:
                 if c.rowcount!=1:raise RuntimeUnavailable()
                 ex('SELECT device_id,fcm_token_hash,fcm_token_ciphertext FROM clrs_staging.device_push_tokens WHERE uid=%s ORDER BY BINARY device_id LIMIT 5 FOR SHARE',(uid,));tokens=c.fetchall()
                 if len(tokens)>MAX_DEVICES:raise RuntimeUnavailable()
-                return outbox,uid,kind,payload,[tuple(t) for t in tokens if t[2]]
+                return outbox,event,uid,kind,payload,[tuple(t) for t in tokens if t[2]]
             original=self._sql(claim,deadline)
             if original is None:return {'state':'empty','claimed':0}
-            outbox,uid,kind,payload,targets=original;confirmed=0;attempted=0;unknown=False
+            outbox,event,uid,kind,payload,targets=original;confirmed=0;attempted=0;unknown=False
             for device,digest,cipher in targets:
                 if self.mono()>=deadline or self.closed.is_set():unknown=True;break
                 def send(c,ex,cancel):
@@ -270,7 +270,7 @@ class RuntimePushWorker:
                     if current is None or tuple(current)!=(digest,cipher):return False
                     recipient=self._recipient(c,ex,uid,device,digest,cipher,payload,kind)
                     if recipient is None:return False
-                    data={'kind':'native-chat' if kind.startswith('chat.') else 'native-meeting','recipientUid':uid,'messageId':payload['messageId'], 'chatId' if kind.startswith('chat.') else 'meetingId':payload.get('chatId',payload.get('meetingId'))}
+                    data={'kind':'native-chat' if kind.startswith('chat.') else 'native-meeting','recipientUid':uid,'messageId':payload['messageId'],'notificationId':'e:'+event, 'chatId' if kind.startswith('chat.') else 'meetingId':payload.get('chatId',payload.get('meetingId'))}
                     nonlocal attempted
                     attempted+=1
                     if self.provider.send(recipient[0],data,sound=recipient[1],tag=outbox,deadline=deadline,cancel=cancel) is not True:raise RuntimeUnavailable()

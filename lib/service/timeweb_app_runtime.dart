@@ -316,6 +316,24 @@ final class TimewebAppRuntime {
   }).timeout(session.waitTimeout);
 
   bool get pushEnabled => ownProfileEnabled;
+  Future<TimewebNotificationPage> readNotifications({int limit = 30, TimewebNotificationCursor? cursor}) => session.runAuthenticated((lease) async {
+    if (!ownProfileEnabled) throw StateError('Native notifications are unavailable.');
+    final page = await client.readNotifications(limit: limit, cursor: cursor);
+    lease.requireCurrent(); page.requireCurrent();
+    return page.bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+  Future<TimewebNotification> readNotification(String id) => session.runAuthenticated((lease) async {
+    if (!ownProfileEnabled) throw StateError('Native notifications are unavailable.');
+    final item = await client.readNotification(id);
+    lease.requireCurrent(); item.requireCurrent();
+    return item.bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+  Future<TimewebChatFlow> openExistingChat(String chatId) => session.runAuthenticated((lease) {
+    if (!chatsEnabled) throw StateError('Native chats are unavailable.');
+    return TimewebChatFlow.openExisting(client: client, session: session,
+      lease: lease, journal: _chatJournal, chatId: chatId);
+  }).timeout(session.waitTimeout);
+
   Future<TimewebPushFlow> openPush() => session.runAuthenticated((lease) {
     if (!pushEnabled) throw StateError('Native push is unavailable.');
     return TimewebPushFlow.open(client: client, session: session, lease: lease, journal: _pushJournal);

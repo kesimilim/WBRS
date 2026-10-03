@@ -153,6 +153,9 @@ class RuntimeMutationHttp:
         from native_fcm import create_native_fcm
         store = self._services[0] if self._services else None
         self._push = create_runtime_push_http(env, store)
+        from runtime_notifications import create_runtime_notifications_http
+        self._notifications = create_runtime_notifications_http(
+            env, store, meeting_authority=imported_authority)
         self._push_worker = None
         codec = create_push_codec(env)
         if store is not None and codec is not None:
@@ -179,6 +182,10 @@ class RuntimeMutationHttp:
                                        native_configured=native_configured)
         if push_reply is not None:
             return push_reply
+        notification_reply = self._notifications.dispatch(
+            environ, native_service=native_service, native_configured=native_configured)
+        if notification_reply is not None:
+            return notification_reply
         if self._post_media is not None:
             media_reply = self._post_media.dispatch(environ, native_service=native_service,
                                                    native_configured=native_configured)

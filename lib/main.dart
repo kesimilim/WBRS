@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -22,6 +23,9 @@ import 'package:wbrs/service/content_translation_service.dart';
 import 'package:wbrs/service/push_target.dart';
 import 'package:wbrs/service/push_language_sync.dart';
 import 'package:wbrs/service/timeweb_push_coordinator.dart';
+import 'package:wbrs/service/timeweb_notification_delivery.dart';
+import 'package:wbrs/service/timeweb_auth_client.dart';
+import 'package:wbrs/presentation/screens/notifications_center/timeweb_notifications_page.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/localization/locale_controller.dart';
 import 'package:wbrs/core/utils/account_destination.dart';
@@ -76,7 +80,16 @@ class _StartupState extends State<_Startup> {
           await _localNotifications.initialize(const InitializationSettings(
             android: AndroidInitializationSettings('@mipmap/ic_launcher'),
             iOS: DarwinInitializationSettings(),
-          )).timeout(const Duration(seconds: 10));
+          ), onDidReceiveNotificationResponse: (response) {
+            final payload = response.payload;
+            if (payload == null) return;
+            if (_localTapHandler != null) { _localTapHandler!(payload); }
+            else { _initialLocalPayload = payload; }
+          }).timeout(const Duration(seconds: 10));
+          final launch = await _localNotifications.getNotificationAppLaunchDetails();
+          if (launch?.didNotificationLaunchApp == true) {
+            _initialLocalPayload = launch?.notificationResponse?.payload;
+          }
           final android = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
           await android?.createNotificationChannel(const AndroidNotificationChannel(
             'wbrs', 'CLRS', importance: Importance.high));
@@ -184,18 +197,35 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   late final PushLanguageSync _pushLanguageSync;
   String? _translationUserId;
   TimewebPushCoordinator? _nativePush;
+  TimewebNotificationDelivery? _nativeNotifications;
 
   @override
   void initState() {
     super.initState();
     if (AppBackend.usesTimeweb) {
       WidgetsBinding.instance.addObserver(this);
+      _nativeNotifications = TimewebNotificationDelivery(runtime: AppBackend.timewebRuntime,
+        onForeground: _showNativeNotification, onTap: _openNativeNotification,
+        onClear: () => unawaited(_localNotifications.cancelAll().catchError((Object _) {})))..start();
+      _localTapHandler = (payload) => unawaited(_nativeNotifications!.receiveLocal(payload));
+      final local = _initialLocalPayload;
+      _initialLocalPayload = null;
+      if (local != null) unawaited(_nativeNotifications!.receiveLocal(local));
       if (!AppBackend.useEmulators && Firebase.apps.isNotEmpty) {
         final messaging = FirebaseMessaging.instance;
         _nativePush = TimewebPushCoordinator(runtime: AppBackend.timewebRuntime,
           readToken: () => messaging.getToken().timeout(const Duration(seconds: 10)),
           tokenRefreshes: messaging.onTokenRefresh)..start();
         unawaited(messaging.requestPermission().then<void>((_) {}, onError: (Object _, StackTrace __) {}));
+        _subscriptions.add(FirebaseMessaging.onMessage.listen((message) {
+          unawaited(_nativeNotifications!.receive(message.data, opened: false));
+        }));
+        _subscriptions.add(FirebaseMessaging.onMessageOpenedApp.listen((message) {
+          unawaited(_nativeNotifications!.receive(message.data, opened: true));
+        }));
+        unawaited(messaging.getInitialMessage().then<void>((message) {
+          if (message != null && mounted) unawaited(_nativeNotifications!.receive(message.data, opened: true));
+        }, onError: (Object _, StackTrace __) {}));
       }
       return;
     }
@@ -262,6 +292,31 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       });
       firebaseMessaging.requestPermission();
     }
+  }
+
+  Future<void> _showNativeNotification(TimewebNotification item, bool sound) async {
+    final runtime = AppBackend.timewebRuntime, lease = AppBackend.timewebRuntime.session.captureLease();
+    item.requireCurrent(); lease.requireCurrent();
+    final context = _navigatorKey.currentContext;
+    if (!mounted || context == null) return;
+    final id = int.parse(item.id.substring(2)) % 2147483647;
+    final body = context.tr(item.targetKind == 'meeting' ? 'Встречи' : 'Сообщения');
+    await _localNotifications.show(id, 'CLRS', body, NotificationDetails(
+      android: AndroidNotificationDetails(sound ? 'wbrs' : 'wbrs_silent', 'CLRS',
+        importance: Importance.high, priority: Priority.high, playSound: sound),
+      iOS: DarwinNotificationDetails(presentSound: sound),
+    ), payload: 'native-notification:${jsonEncode({'notificationId': item.id, 'recipientUid': lease.identity.uid})}');
+    if (!mounted || !lease.isCurrent || !runtime.session.state.authenticated) {
+      await _localNotifications.cancel(id);
+    }
+  }
+  Future<void> _openNativeNotification(TimewebNotification item) async {
+    final runtime = AppBackend.timewebRuntime, lease = AppBackend.timewebRuntime.session.captureLease();
+    await WidgetsBinding.instance.endOfFrame;
+    lease.requireCurrent(); item.requireCurrent();
+    final context = _navigatorKey.currentContext;
+    if (!mounted || context == null || !context.mounted) return;
+    await openTimewebNotification(context, runtime, item, refresh: false);
   }
 
   RemoteMessage? _pendingMessage;
@@ -527,6 +582,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void dispose() {
     if (AppBackend.usesTimeweb) {
       _nativePush?.close();
+      _nativeNotifications?.close();
+      _localTapHandler = null; _initialLocalPayload = null;
+      for (final subscription in _subscriptions) { unawaited(subscription.cancel()); }
       WidgetsBinding.instance.removeObserver(this);
       // Runtime teardown preserves remembered protected credentials.
       unawaited(AppBackend.timewebRuntime.stop());

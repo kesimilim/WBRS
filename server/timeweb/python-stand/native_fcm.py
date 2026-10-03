@@ -36,6 +36,7 @@ def _post(host,path,body,headers,deadline,cancel,clock):
             if r.status!=200 or r.getheader('Content-Encoding') not in (None,'identity'):raise RuntimeUnavailable()
             while True:
                 if cancel.is_set() or clock()>=deadline:raise RuntimeUnavailable()
+                if r.isclosed():break
                 stream.settimeout(max(.001,min(2,deadline-clock())))
                 chunk=r.read(min(4096,16385-len(raw)))
                 if not chunk:break

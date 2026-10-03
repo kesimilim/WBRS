@@ -36,7 +36,8 @@ _SOURCE_FILES = ("imported_meeting_authority.py", "runtime_imported_meetings.py"
     "runtime_geography.py", "geo_catalog.json", "legacy_conversation_payload.py",
     "native_credentials.py", "runtime_reads.py", "meeting_schedule.py", "runtime_meetings_http.py",
     "app.py", "runtime_http.py", "runtime_read_http.py", "runtime_meeting_join.py",
-    "runtime_meeting_chat.py", "runtime_meeting_membership.py", "runtime_meeting_archive.py")
+    "runtime_meeting_chat.py", "runtime_meeting_membership.py", "runtime_meeting_archive.py",
+    "imported_authority_bootstrap.py", "private_media_s3.py", "requirements.txt")
 _BINDING_KEYS = {"generation", "sourceSha256", "cohortSha256", "policy",
                  "barrierSha256", "finalDeltaSha256"}
 
@@ -228,7 +229,10 @@ def reviewed_message(meeting_id, message_id, raw, sequence):
 
 
 def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None):
-    """Only a trusted cutover assembler supplies reviewed_binding; never HTTP/env.
+    """Only a trusted cutover assembler supplies reviewed_binding.
+
+    HTTP and unsigned settings never supply authority. The protected bootstrap
+    may transport the assembler's separately authenticated reviewed binding.
 
     The signing key must authenticate the separately approved final pack, not
     old current-root observations. No producer or release activation exists here.

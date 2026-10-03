@@ -22,6 +22,7 @@ final class TimewebChatFlow {
     this._journal,
     this._chat, [
     this._opened,
+    this._existingChatId,
   ]);
   final TimewebAuthClient _client;
   final AppSession _session;
@@ -29,6 +30,7 @@ final class TimewebChatFlow {
   final TimewebChatJournal _journal;
   final TimewebCurrentChat? _chat;
   final TimewebOpenedPersonalChatReceipt? _opened;
+  final String? _existingChatId;
   List<TimewebCurrentMessage> _messages = [];
   TimewebCurrentReadCursor? _older;
   Future<void>? _readFlight;
@@ -83,6 +85,23 @@ final class TimewebChatFlow {
     return flow;
   }
 
+  /// Source-resolved notification ID; current membership is checked by GET.
+  static Future<TimewebChatFlow> openExisting({
+    required TimewebAuthClient client, required AppSession session,
+    required AppSessionLease lease, required TimewebChatJournal journal,
+    required String chatId,
+  }) async {
+    lease.requireCurrent();
+    TimewebCurrentReadRequest.messages(chatId);
+    final flow = TimewebChatFlow._(client, session, lease, journal, null, null, chatId);
+    try {
+      await flow.loadLatest();
+      await flow._restoreIntents();
+      flow.requireCurrent();
+      return flow;
+    } catch (_) { flow.close(); rethrow; }
+  }
+
   Future<void> _restoreIntents() async {
     for (final read in [false, true]) {
       final intent = await _journal._load(
@@ -125,7 +144,7 @@ final class TimewebChatFlow {
 
   String get chatId {
     requireCurrent();
-    return _chat?.chatId ?? _opened!.chatId;
+    return _chat?.chatId ?? _opened?.chatId ?? _existingChatId!;
   }
 
   List<TimewebCurrentMessage> get messages {

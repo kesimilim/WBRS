@@ -10,6 +10,7 @@ import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
+import 'package:wbrs/presentation/screens/notifications_center/timeweb_notifications_page.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 enum _Section { feed, people, chats, meetings, profile }
@@ -163,6 +164,13 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
     }
   }
 
+  Future<void> _notifications() async {
+    if (!_current || _busy) return;
+    final lease = widget.runtime.session.captureLease();
+    await Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => TimewebNotificationsPage(runtime: widget.runtime, lease: lease)));
+    if (lease.isCurrent && mounted) setState(() {});
+  }
+
   @override
   void dispose() {
     _invalidated = true;
@@ -194,6 +202,12 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
               ),
             ),
           ),
+          Positioned(top: 0, left: 0, right: 0, child: SafeArea(bottom: false,
+            child: Align(alignment: Alignment.topCenter, child: IconButton(
+              key: const ValueKey('timeweb-home-notifications'), tooltip: context.tr('Уведомления'),
+              onPressed: _busy ? null : () => unawaited(_notifications()),
+              style: IconButton.styleFrom(backgroundColor: const Color(0xAD302110), foregroundColor: LrsTheme.peach),
+              icon: const Icon(Icons.notifications_none))))),
           if (_busy)
             const Positioned(
               top: 0,

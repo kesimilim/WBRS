@@ -369,7 +369,10 @@ def _deployed_app():
         versions = verify_photo_versions(
             decode_base64(settings["CLRS_PROFILE_PHOTO_VERSIONS_ACK_B64"], max_bytes=16384),
             decode_base64(settings["CLRS_PREVIEW_ACCESS_KEY_B64"], max_bytes=64))
-    return create_app(env=settings, profile_photo_versions=versions)
+    from imported_authority_bootstrap import load_reviewed_imported_authority
+    authority, binding = load_reviewed_imported_authority(settings)
+    return create_app(env=settings, profile_photo_versions=versions,
+                      imported_meeting_authority=authority, imported_meeting_binding=binding)
 
 
 app = _deployed_app()

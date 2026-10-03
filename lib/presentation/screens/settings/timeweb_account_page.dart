@@ -11,6 +11,8 @@ import 'package:wbrs/localization/language_picker.dart';
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_lifecycle.dart';
+import 'package:wbrs/service/timeweb_auth_client.dart';
+import 'package:wbrs/service/timeweb_preferences_flow.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
@@ -50,6 +52,11 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
   late final AppSessionLease _lease;
   StreamSubscription<AppSessionState>? _states;
   TimewebAuthLifecycleClient? _email;
+  TimewebPreferencesFlow? _preferencesFlow;
+  TimewebPreferences? _preferences;
+  bool? _messages, _meetings, _sound;
+  bool _preferencesLoading = false, _preferencesBusy = false;
+  String? _preferencesNotice;
   bool _invalidated = false, _busy = false;
   String? _notice;
   bool get _current {
@@ -76,10 +83,14 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
         TimewebLifecyclePurpose.passwordReset,
       );
     }
+    if (!_invalidated && widget._view == _View.settings) {
+      unawaited(_loadPreferences());
+    }
     _states = widget.runtime.session.states.listen((_) {
       if (_current || _invalidated) return;
       _invalidated = true;
       _notice = null;
+      _clearPreferences();
       unawaited(_email?.close());
       setState(() {});
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -95,10 +106,218 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
   @override
   void dispose() {
     _invalidated = true;
+    _clearPreferences();
     unawaited(_states?.cancel());
     unawaited(_email?.close());
     super.dispose();
   }
+
+  void _clearPreferences() {
+    _preferencesFlow?.close();
+    _preferencesFlow = null;
+    _preferences = null;
+    _messages = _meetings = _sound = null;
+    _preferencesNotice = null;
+    _preferencesLoading = _preferencesBusy = false;
+  }
+
+  bool get _preferencesPending =>
+      _current && (_preferencesFlow?.needsCheck ?? false);
+  void _usePreferences(TimewebPreferences value) {
+    value.requireCurrent();
+    _preferences = value;
+    _messages = value.messages;
+    _meetings = value.meetings;
+    _sound = value.sound;
+  }
+
+  Future<void> _loadPreferences() async {
+    if (!_current || _preferencesLoading || _preferencesBusy) return;
+    setState(() {
+      _preferencesLoading = true;
+      _preferencesNotice = null;
+    });
+    TimewebPreferencesFlow? flow;
+    try {
+      flow = await widget.runtime.openPreferences();
+      if (!_current) return;
+      final pending = flow.pendingAction;
+      final value = pending == null
+          ? await widget.runtime.readPreferences()
+          : null;
+      if (!_current) return;
+      _preferencesFlow?.close();
+      _preferencesFlow = flow;
+      flow = null;
+      setState(() {
+        if (value != null) {
+          _usePreferences(value);
+        } else {
+          _messages = pending!.messages;
+          _meetings = pending.meetings;
+          _sound = pending.sound;
+          _preferencesNotice =
+              'Подтверждение ещё не получено. Проверьте результат без повторной отправки.';
+        }
+      });
+    } catch (_) {
+      if (_current) {
+        setState(
+          () => _preferencesNotice =
+              'Сервис пока недоступен. Попробуйте позднее.',
+        );
+      }
+    } finally {
+      flow?.close();
+      if (_current) setState(() => _preferencesLoading = false);
+    }
+  }
+
+  Future<void> _savePreferences() async {
+    final flow = _preferencesFlow;
+    if (!_current || flow == null || _preferencesBusy || _preferencesLoading) {
+      return;
+    }
+    setState(() {
+      _preferencesBusy = true;
+      _preferencesNotice = null;
+    });
+    try {
+      final result =
+          await (flow.needsCheck
+                  ? flow.check()
+                  : flow.submit(
+                      TimewebPreferenceChanges(
+                        expectedRevision: _preferences!.revision,
+                        messages: _messages!,
+                        meetings: _meetings!,
+                        sound: _sound!,
+                      ),
+                    ))
+              .timeout(flow.observationTimeout);
+      if (!_current) return;
+      if (result == TimewebPreferencesOutcome.confirmed) {
+        flow.receipt!.requireCurrent();
+        // A recovered receipt proves the original save. It can precede a
+        // later save on another device, so controls use a fresh current GET.
+        setState(() {
+          _preferences = null;
+          _messages = _meetings = _sound = null;
+        });
+        final value = await widget.runtime.readPreferences();
+        if (_current) setState(() => _usePreferences(value));
+      } else if (result == TimewebPreferencesOutcome.rejected) {
+        setState(() {
+          _preferences = null;
+          _messages = _meetings = _sound = null;
+        });
+        final value = await widget.runtime.readPreferences();
+        if (_current) {
+          setState(() {
+            _usePreferences(value);
+            _preferencesNotice =
+                'Не удалось сохранить изменения. Попробуйте ещё раз.';
+          });
+        }
+      } else {
+        setState(
+          () => _preferencesNotice =
+              'Подтверждение ещё не получено. Проверьте результат без повторной отправки.',
+        );
+      }
+    } catch (_) {
+      if (_current) {
+        setState(
+          () => _preferencesNotice = flow.needsCheck
+              ? 'Подтверждение ещё не получено. Проверьте результат без повторной отправки.'
+              : 'Сервис пока недоступен. Попробуйте позднее.',
+        );
+      }
+    } finally {
+      if (_current) setState(() => _preferencesBusy = false);
+    }
+  }
+
+  Widget _preference(
+    String key,
+    String label,
+    IconData icon,
+    bool value,
+    ValueChanged<bool> change,
+  ) => SwitchListTile.adaptive(
+    key: ValueKey('timeweb-preferences-$key'),
+    dense: true,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+    secondary: Icon(icon, color: LrsTheme.peachLight, size: 21),
+    title: Text(
+      context.tr(label),
+      style: const TextStyle(fontFamily: 'Lato', fontSize: 14),
+    ),
+    value: value,
+    onChanged:
+        _preferencesBusy ||
+            _preferencesLoading ||
+            _preferencesPending ||
+            _preferences == null
+        ? null
+        : change,
+  );
+  Widget _preferencesGroup() => _group('Уведомления', [
+    if (_preferencesLoading || _preferencesBusy)
+      const LinearProgressIndicator(),
+    if (_messages != null) ...[
+      _preference(
+        'messages',
+        'Сообщения',
+        Icons.chat_bubble_outline,
+        _messages!,
+        (value) => setState(() => _messages = value),
+      ),
+      _preference(
+        'meetings',
+        'Встречи',
+        Icons.event_outlined,
+        _meetings!,
+        (value) => setState(() => _meetings = value),
+      ),
+      _preference(
+        'sound',
+        'Звук уведомлений',
+        Icons.notifications_none,
+        _sound!,
+        (value) => setState(() => _sound = value),
+      ),
+      TextButton(
+        key: const ValueKey('timeweb-preferences-save'),
+        onPressed:
+            _preferencesBusy ||
+                _preferencesLoading ||
+                (!_preferencesPending &&
+                    (_preferences == null ||
+                        _preferences!.messages == _messages &&
+                            _preferences!.meetings == _meetings &&
+                            _preferences!.sound == _sound))
+            ? null
+            : _savePreferences,
+        child: Text(
+          context.tr(
+            _preferencesPending ? 'Проверить результат' : 'Сохранить настройки',
+          ),
+        ),
+      ),
+    ],
+    if (_preferencesNotice != null)
+      Padding(
+        padding: const EdgeInsets.all(12),
+        child: Text(context.tr(_preferencesNotice!)),
+      ),
+    if (!_preferencesLoading && _messages == null)
+      TextButton(
+        key: const ValueKey('timeweb-preferences-retry'),
+        onPressed: _loadPreferences,
+        child: Text(context.tr('Повторить')),
+      ),
+  ]);
 
   Future<void> _open(_View view) async {
     if (!_current || _busy || ModalRoute.of(context)?.isCurrent == false) {
@@ -288,6 +507,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                           () => _open(_View.privacy),
                         ),
                       ]),
+                      _preferencesGroup(),
                       _group('Помощь', [
                         _row(
                           'timeweb-settings-about',

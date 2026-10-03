@@ -23,6 +23,7 @@ part 'timeweb_initial_profile.dart';
 part 'timeweb_social.dart';
 part 'timeweb_gifts.dart';
 part 'timeweb_post_media.dart';
+part 'timeweb_preferences.dart';
 
 /// Public routing only. This is intentionally not wired to AppBackend or UI.
 class TimewebAuthConfiguration {

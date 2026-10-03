@@ -27,12 +27,11 @@ existing `TimewebEmailLifecycleForm` and this runtime's lifecycle client. Its
 unavailable state does not claim a sent email or changed password. Logout calls
 this same runtime's native session.
 
-Notification preferences are deliberately not rendered as unsaved switches.
-The old Firebase screen reads `users.notificationPreferences.messages`,
-`meetings`, `sound`, with `value != false` (default true); it writes those same
-nested fields. Native `read_events` currently carries message/read deltas and is
-not a notification-center projection. Root is implementing a separate genuine
-preferences contract; it is not mounted by this UI change.
+Notification preferences now use the separate genuine current preferences
+client and atomic three-switch CAS operation; see TIMEWEB_NATIVE_PREFERENCES_CLIENT.md.
+The old Firebase source reads `users.notificationPreferences.messages`, `meetings`,
+`sound`, with `value != false` (default true). Native `read_events` currently carries
+message/read deltas and is not a notification-center projection.
 
 Focused verification, using the existing Flutter 3.32.5 cache:
 

@@ -21,6 +21,7 @@ import 'timeweb_photo_upload_flow.dart';
 import 'timeweb_initial_profile_flow.dart';
 import 'timeweb_social_flow.dart';
 import 'timeweb_gift_flow.dart';
+import 'timeweb_preferences_flow.dart';
 
 /// One native runtime owner. No Firebase identity, profile hydration or token
 /// fallback. Replacing this owner requires awaiting stop, which keeps protected
@@ -47,6 +48,7 @@ final class TimewebAppRuntime {
     TimewebInitialProfileJournal? initialProfileJournal,
     TimewebSocialJournal? socialJournal,
     TimewebGiftJournal? giftJournal,
+    TimewebPreferencesJournal? preferencesJournal,
     bool? profileEditorEnabled,
     this.currentChatsEnabled = false,
     this.currentOwnProfileEnabled = false,
@@ -72,6 +74,7 @@ final class TimewebAppRuntime {
     _initialProfileJournal = initialProfileJournal ?? TimewebInitialProfileJournal();
     _socialJournal = socialJournal ?? TimewebSocialJournal();
     _giftJournal = giftJournal ?? TimewebGiftJournal();
+    _preferencesJournal = preferencesJournal ?? TimewebPreferencesJournal();
     _temperamentJournal = temperamentJournal ?? TimewebTemperamentJournal();
     _geographyJournal = geographyJournal ?? TimewebGeographyJournal();
     _profileEditorEnabled =
@@ -105,6 +108,7 @@ final class TimewebAppRuntime {
   late final TimewebInitialProfileJournal _initialProfileJournal;
   late final TimewebSocialJournal _socialJournal;
   late final TimewebGiftJournal _giftJournal;
+  late final TimewebPreferencesJournal _preferencesJournal;
   late final TimewebTemperamentJournal _temperamentJournal;
   late final TimewebGeographyJournal _geographyJournal;
   late final bool _profileEditorEnabled;
@@ -305,6 +309,17 @@ final class TimewebAppRuntime {
   Future<TimewebPostMediaReader> openPostMedia(String postId, String mediaId) => session.runAuthenticated((lease) async {
     if (!socialEnabled) throw StateError('Native post media is unavailable.');
     return client.openPostMedia(postId,mediaId).bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+
+  Future<TimewebPreferencesFlow> openPreferences() => session.runAuthenticated((lease) {
+    if (!ownProfileEnabled) throw StateError('Current preferences are unavailable.');
+    return TimewebPreferencesFlow.open(client: client, session: session, lease: lease, journal: _preferencesJournal);
+  }).timeout(session.waitTimeout);
+
+  Future<TimewebPreferences> readPreferences() => session.runAuthenticated((lease) async {
+    if (!ownProfileEnabled) throw StateError('Current preferences are unavailable.');
+    final value=await client.readPreferences();lease.requireCurrent();value.requireCurrent();
+    return value.bindSessionGuard(lease.requireCurrent);
   }).timeout(session.waitTimeout);
 
   bool get giftsEnabled => ownProfileEnabled;
@@ -593,6 +608,7 @@ final class TimewebAppRuntime {
     await _initialProfileJournal.drain();
     await _socialJournal.drain();
     await _giftJournal.drain();
+    await _preferencesJournal.drain();
     await _meetingMembershipJournal.drain();
     return result.confirmed && !_policyUnsafe;
   }

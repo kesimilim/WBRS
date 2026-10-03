@@ -148,8 +148,22 @@ class RuntimeMutationHttp:
         from runtime_post_media import create_post_media_http
         self._post_media = create_post_media_http(
             env, self._services[0] if self._services else None)
+        from runtime_push_http import create_runtime_push_http
+        from runtime_push import RuntimePushWorker, create_push_codec
+        from native_fcm import create_native_fcm
+        store = self._services[0] if self._services else None
+        self._push = create_runtime_push_http(env, store)
+        self._push_worker = None
+        codec = create_push_codec(env)
+        if store is not None and codec is not None:
+            self._push_worker = RuntimePushWorker(store, codec, create_native_fcm(env),
+                                                  imported_authority=imported_authority)
+            self._push_worker.start()
 
     def close(self):
+        if self._push_worker is not None:
+            self._push_worker.close()
+            self._push_worker = None
         if self._post_media is not None:
             self._post_media.close()
             self._post_media = None
@@ -161,6 +175,10 @@ class RuntimeMutationHttp:
             self._services = None
 
     def dispatch(self, environ, *, native_service=None, native_configured=False):
+        push_reply = self._push.handle(environ, native_service=native_service,
+                                       native_configured=native_configured)
+        if push_reply is not None:
+            return push_reply
         if self._post_media is not None:
             media_reply = self._post_media.dispatch(environ, native_service=native_service,
                                                    native_configured=native_configured)

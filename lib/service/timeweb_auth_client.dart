@@ -24,6 +24,7 @@ part 'timeweb_social.dart';
 part 'timeweb_gifts.dart';
 part 'timeweb_post_media.dart';
 part 'timeweb_preferences.dart';
+part 'timeweb_push.dart';
 
 /// Public routing only. This is intentionally not wired to AppBackend or UI.
 class TimewebAuthConfiguration {
@@ -456,6 +457,8 @@ class TimewebAuthClient {
   final bool _ownsTransport;
   final DateTime Function() _clock;
   Future<void> _storeTail = Future<void>.value();
+  final _sessionRefreshes = StreamController<void>.broadcast();
+  Stream<void> get sessionRefreshes => _sessionRefreshes.stream;
   Future<TimewebSession>? _refreshFlight;
   Future<TimewebSession?>? _restoreFlight;
   Future<bool>? _closeFlight;
@@ -745,6 +748,7 @@ class TimewebAuthClient {
       await _persist(epoch, op, next);
       _checkRuntimeEpoch(epoch, op);
       _session = next;
+      _sessionRefreshes.add(null);
       return next;
     } on TimewebAuthException catch (error) {
       if (error is TimewebUnknownOutcome ||

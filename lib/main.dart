@@ -21,6 +21,7 @@ import 'package:wbrs/service/session_service.dart';
 import 'package:wbrs/service/content_translation_service.dart';
 import 'package:wbrs/service/push_target.dart';
 import 'package:wbrs/service/push_language_sync.dart';
+import 'package:wbrs/service/timeweb_push_coordinator.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/localization/locale_controller.dart';
 import 'package:wbrs/core/utils/account_destination.dart';
@@ -64,6 +65,25 @@ class _StartupState extends State<_Startup> {
     await AppBackend.initialize().timeout(const Duration(seconds: 20));
     if (AppBackend.usesTimeweb) {
       FlutterError.onError = FlutterError.presentError;
+      if (!AppBackend.useEmulators) {
+        try {
+          // Firebase Core/Messaging provides FCM only. Native identity and all
+          // app data remain in Timeweb; no Auth/Firestore or legacy deep links.
+          if (Firebase.apps.isEmpty) {
+            await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
+                .timeout(const Duration(seconds: 10));
+          }
+          await _localNotifications.initialize(const InitializationSettings(
+            android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+            iOS: DarwinInitializationSettings(),
+          )).timeout(const Duration(seconds: 10));
+          final android = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+          await android?.createNotificationChannel(const AndroidNotificationChannel(
+            'wbrs', 'CLRS', importance: Importance.high));
+          await android?.createNotificationChannel(const AndroidNotificationChannel(
+            'wbrs_silent', 'CLRS', importance: Importance.high, playSound: false));
+        } catch (_) { debugPrint('CLRS: native push transport unavailable.'); }
+      }
       return;
     }
     FlutterError.onError = AppBackend.useEmulators
@@ -163,11 +183,22 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   late final PushLanguageSync _pushLanguageSync;
   String? _translationUserId;
+  TimewebPushCoordinator? _nativePush;
 
   @override
   void initState() {
     super.initState();
-    if (AppBackend.usesTimeweb) return;
+    if (AppBackend.usesTimeweb) {
+      WidgetsBinding.instance.addObserver(this);
+      if (!AppBackend.useEmulators && Firebase.apps.isNotEmpty) {
+        final messaging = FirebaseMessaging.instance;
+        _nativePush = TimewebPushCoordinator(runtime: AppBackend.timewebRuntime,
+          readToken: () => messaging.getToken().timeout(const Duration(seconds: 10)),
+          tokenRefreshes: messaging.onTokenRefresh)..start();
+        unawaited(messaging.requestPermission().then<void>((_) {}, onError: (Object _, StackTrace __) {}));
+      }
+      return;
+    }
     _pushLanguageSync = PushLanguageSync(
       firestore: firebaseFirestore,
       currentUid: () => firebaseAuth.currentUser?.uid,
@@ -485,7 +516,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (!AppBackend.usesTimeweb) {
+    if (AppBackend.usesTimeweb) {
+      if (state == AppLifecycleState.resumed) { unawaited(_nativePush?.synchronize().catchError((Object _) {})); }
+    } else {
       _updatePresence(state == AppLifecycleState.resumed);
     }
   }
@@ -493,6 +526,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void dispose() {
     if (AppBackend.usesTimeweb) {
+      _nativePush?.close();
+      WidgetsBinding.instance.removeObserver(this);
       // Runtime teardown preserves remembered protected credentials.
       unawaited(AppBackend.timewebRuntime.stop());
       super.dispose();

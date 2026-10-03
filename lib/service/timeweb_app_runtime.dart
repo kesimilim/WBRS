@@ -22,6 +22,7 @@ import 'timeweb_initial_profile_flow.dart';
 import 'timeweb_social_flow.dart';
 import 'timeweb_gift_flow.dart';
 import 'timeweb_preferences_flow.dart';
+import 'timeweb_push_flow.dart';
 
 /// One native runtime owner. No Firebase identity, profile hydration or token
 /// fallback. Replacing this owner requires awaiting stop, which keeps protected
@@ -49,6 +50,7 @@ final class TimewebAppRuntime {
     TimewebSocialJournal? socialJournal,
     TimewebGiftJournal? giftJournal,
     TimewebPreferencesJournal? preferencesJournal,
+    TimewebPushJournal? pushJournal,
     bool? profileEditorEnabled,
     this.currentChatsEnabled = false,
     this.currentOwnProfileEnabled = false,
@@ -75,6 +77,7 @@ final class TimewebAppRuntime {
     _socialJournal = socialJournal ?? TimewebSocialJournal();
     _giftJournal = giftJournal ?? TimewebGiftJournal();
     _preferencesJournal = preferencesJournal ?? TimewebPreferencesJournal();
+    _pushJournal = pushJournal ?? TimewebPushJournal();
     _temperamentJournal = temperamentJournal ?? TimewebTemperamentJournal();
     _geographyJournal = geographyJournal ?? TimewebGeographyJournal();
     _profileEditorEnabled =
@@ -109,6 +112,7 @@ final class TimewebAppRuntime {
   late final TimewebSocialJournal _socialJournal;
   late final TimewebGiftJournal _giftJournal;
   late final TimewebPreferencesJournal _preferencesJournal;
+  late final TimewebPushJournal _pushJournal;
   late final TimewebTemperamentJournal _temperamentJournal;
   late final TimewebGeographyJournal _geographyJournal;
   late final bool _profileEditorEnabled;
@@ -309,6 +313,12 @@ final class TimewebAppRuntime {
   Future<TimewebPostMediaReader> openPostMedia(String postId, String mediaId) => session.runAuthenticated((lease) async {
     if (!socialEnabled) throw StateError('Native post media is unavailable.');
     return client.openPostMedia(postId,mediaId).bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+
+  bool get pushEnabled => ownProfileEnabled;
+  Future<TimewebPushFlow> openPush() => session.runAuthenticated((lease) {
+    if (!pushEnabled) throw StateError('Native push is unavailable.');
+    return TimewebPushFlow.open(client: client, session: session, lease: lease, journal: _pushJournal);
   }).timeout(session.waitTimeout);
 
   Future<TimewebPreferencesFlow> openPreferences() => session.runAuthenticated((lease) {
@@ -609,6 +619,7 @@ final class TimewebAppRuntime {
     await _socialJournal.drain();
     await _giftJournal.drain();
     await _preferencesJournal.drain();
+    await _pushJournal.drain();
     await _meetingMembershipJournal.drain();
     return result.confirmed && !_policyUnsafe;
   }

@@ -159,6 +159,10 @@ class RuntimeGiftService:
             ex('INSERT INTO clrs_staging.gift_transfers(transfer_id,gift_id,sender_uid,recipient_uid,chat_id,message_id,created_at) VALUES(%s,%s,%s,%s,%s,%s,%s)',(identifier,selected,uid,pair['peer'],chat_id,message_id,sql_created))
             ex('UPDATE clrs_staging.chats SET last_sequence=%s,revision=%s,updated_at=%s WHERE chat_id=%s AND last_sequence=%s AND revision=%s',(sequence,revision,sql_created,chat_id,pair['sequence'],pair['revision']))
             if c.rowcount!=1:raise RuntimeUnavailable()
-            _events(c,ex,(uid,pair['peer']),'chat.message.created.v1',{'chatId':chat_id,'messageId':message_id,'sequence':sequence,'senderUid':uid,'chatRevision':revision,'createdAt':created})
+            payload={'chatId':chat_id,'messageId':message_id,'sequence':sequence,'senderUid':uid,'chatRevision':revision,'createdAt':created}
+            events=_events(c,ex,(uid,pair['peer']),'chat.message.created.v1',payload)
+            if pair['members'][pair['peer']]['notifications']:
+                from runtime_push import enqueue_event
+                enqueue_event(c,ex,pair['peer'],events[1],'chat.message.created.v1',payload)
             return 201,{'giftId':selected,'transferId':identifier,'recipientUid':pair['peer'],'chatId':chat_id,'messageId':message_id,'sequence':sequence},None
         return self.store.mutate(identity,'gift.buy.v1' if kind=='buy' else 'gift.send.v1',operation_id,request,action,access_token=access_token)

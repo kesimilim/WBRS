@@ -224,6 +224,10 @@ class RuntimeMeetingChatService:
             if cursor.rowcount != 1: raise RuntimeUnavailable()
             execute("UPDATE clrs_staging.meetings SET revision = %s, updated_at = %s WHERE meeting_id = %s AND CAST(meeting_id AS BINARY) = CAST(%s AS BINARY) AND revision = %s", (revision,created[:-1].replace("T"," "),meeting_id,meeting_id,stored_revision[0]))
             if cursor.rowcount != 1: raise RuntimeUnavailable()
+            from runtime_push import enqueue_meeting_message
+            enqueue_meeting_message(cursor, execute, {"meetingId":meeting_id,
+                "messageId":message_id,"sequence":sequence,"senderUid":uid,
+                "chatRevision":revision,"createdAt":created})
             return 201,{"meetingId":meeting_id,"messageId":message_id,"sequence":sequence,
                 "senderUid":uid,"text":text,"createdAt":created,"chatRevision":revision},revision
         return self._store.mutate(identity,SEND_OPERATION,operation_id,request,action,access_token=access_token)

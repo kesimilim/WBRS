@@ -190,6 +190,12 @@ class NativeSessionStore:
             raise SessionUnavailable()
         self.codec = codec; self.tokens = tokens
         self._password_selector = password_selector
+        self._push_codec = None
+        if env.get("CLRS_NATIVE_PUSH_TOKEN_KEY_B64"):
+            from runtime_push import create_push_codec
+            self._push_codec = create_push_codec(env)
+            if self._push_codec is None:
+                raise SessionUnavailable()
         password_flag = env.get("CLRS_NATIVE_PASSWORD_ENABLED")
         if password_flag not in (None, "0", "1") or ((password_flag == "1") != (password_selector is not None)):
             raise SessionUnavailable()
@@ -225,6 +231,8 @@ class NativeSessionStore:
                     "device_sessions": {"SELECT", "INSERT", "UPDATE"}}
         if self._password_selector is not None:
             expected["native_password_credentials"] = {"SELECT"}
+        if self._push_codec is not None:
+            expected["device_push_tokens"] = {"SELECT", "UPDATE"}
         found = {table: set() for table in expected}; usage = False
         names = "|".join(expected)
         for row in rows:
@@ -275,6 +283,14 @@ class NativeSessionStore:
                 database = True
         if not usage or not database:
             raise SessionUnavailable()
+
+    def _push(self, name, cursor, *arguments, deadline):
+        if self._push_codec is None:
+            return
+        from runtime_push import revoke_session_token, revoke_owner_tokens, rotate_session_token
+        hooks = {"session": revoke_session_token, "owner": revoke_owner_tokens, "rotate": rotate_session_token}
+        hooks[name](cursor, lambda sql, params=(): self._execute(cursor, sql, params, deadline=deadline),
+                    self._push_codec, *arguments)
 
     def _transaction(self, action, *, deadline):
         self._enabled(); connection = None
@@ -445,6 +461,7 @@ class NativeSessionStore:
                 self._execute(cursor, """UPDATE clrs_staging.device_sessions SET revoked_at = UTC_TIMESTAMP(6)
                   WHERE uid = %s AND device_id = %s AND revoked_at IS NULL""",
                   (old["uid"], old["device_id"]), deadline=deadline)
+                self._push("owner", cursor, old["uid"], old["device_id"], deadline=deadline)
                 return None
             self._active(old, version)
             self._execute(cursor, """UPDATE clrs_staging.device_sessions SET revoked_at = UTC_TIMESTAMP(6)
@@ -453,6 +470,7 @@ class NativeSessionStore:
                 raise SessionRejected()
             row, tokens = self.tokens.mint(old["uid"], old["device_id"], version, int(self._clock()), rotated_from=session_id)
             self._insert(cursor, row, deadline=deadline)
+            self._push("rotate", cursor, old["uid"], old["device_id"], session_id, row["session_id"], deadline=deadline)
             return {**tokens, "uid": old["uid"], "emailVerified": bool(old["email_verified"])}
         result = self._transaction(action, deadline=deadline)
         if result is None:
@@ -470,8 +488,10 @@ class NativeSessionStore:
             if all_sessions:
                 self._execute(cursor, """UPDATE clrs_staging.device_sessions SET revoked_at = UTC_TIMESTAMP(6)
                   WHERE uid = %s AND revoked_at IS NULL""", (row["uid"],), deadline=deadline)
+                self._push("owner", cursor, row["uid"], deadline=deadline)
             else:
                 self._execute(cursor, """UPDATE clrs_staging.device_sessions SET revoked_at = UTC_TIMESTAMP(6)
                   WHERE session_id = %s AND revoked_at IS NULL""", (session_id,), deadline=deadline)
+                self._push("session", cursor, row["uid"], row["device_id"], session_id, deadline=deadline)
             return {"loggedOut": True}
         return self._transaction(action, deadline=deadline)

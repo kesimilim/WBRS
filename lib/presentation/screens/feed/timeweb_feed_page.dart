@@ -11,6 +11,7 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/group_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
 
 /// Native feed, author wall and comments use the same current actor runtime.
 class TimewebFeedPage extends StatefulWidget {
@@ -574,13 +575,9 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
           if (item.mediaId != null)
             Padding(
               padding: const EdgeInsets.only(top: 10),
-              child: Row(
-                children: [
-                  const Icon(Icons.image_not_supported_outlined),
-                  const SizedBox(width: 8),
-                  Text(context.tr('Фотографии пока недоступны.')),
-                ],
-              ),
+              child: TimewebPostImage(
+                key:ValueKey('$_generation/${item.id}/${item.mediaId}'),
+                runtime:widget.runtime,postId:item.id,mediaId:item.mediaId!),
             ),
           if (item.createdAt != null)
             Padding(

@@ -302,6 +302,11 @@ final class TimewebAppRuntime {
       })
       .timeout(session.waitTimeout);
 
+  Future<TimewebPostMediaReader> openPostMedia(String postId, String mediaId) => session.runAuthenticated((lease) async {
+    if (!socialEnabled) throw StateError('Native post media is unavailable.');
+    return client.openPostMedia(postId,mediaId).bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+
   bool get giftsEnabled => ownProfileEnabled;
   Future<TimewebGiftFlow> openGifts() => session.runAuthenticated((lease) {
     if (!giftsEnabled) throw StateError('Native gifts are unavailable.');

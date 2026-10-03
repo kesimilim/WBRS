@@ -362,6 +362,26 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
     return application
 
 
+def _decode_photo_delta_ack(value):
+    # Optional env transport only: verified HMAC always receives original bytes.
+    import zlib
+    from native_credentials import decode_base64
+    if not isinstance(value, str):
+        raise CredentialUnavailable()
+    if not value.startswith("gz1:"):
+        return decode_base64(value, max_bytes=65536)
+    compressed = decode_base64(value[4:], max_bytes=16384)
+    try:
+        decoder = zlib.decompressobj(16 + zlib.MAX_WBITS)
+        raw = decoder.decompress(compressed, 65537)
+        if (len(raw) > 65536 or not decoder.eof or decoder.unused_data
+                or decoder.unconsumed_tail):
+            raise CredentialUnavailable()
+    except zlib.error:
+        raise CredentialUnavailable() from None
+    return raw
+
+
 def _deployed_app():
     # This is a signed actual fresh-readback capability, never an enable flag.
     settings = dict(os.environ)
@@ -378,7 +398,7 @@ def _deployed_app():
         from native_credentials import decode_base64
         from runtime_profile_photo_delta import verify_profile_photo_delta
         delta = verify_profile_photo_delta(
-            decode_base64(settings["CLRS_PROFILE_PHOTO_DELTA_ACK_B64"], max_bytes=65536),
+            _decode_photo_delta_ack(settings["CLRS_PROFILE_PHOTO_DELTA_ACK_B64"]),
             decode_base64(settings["CLRS_PROFILE_PHOTO_DELTA_KEY_B64"], max_bytes=32),
             separate_from=tuple(decode_base64(settings[name], max_bytes=64) for name in (
                 "CLRS_NATIVE_SESSION_KEY_B64", "CLRS_LEGACY_READ_CURSOR_KEY_B64",

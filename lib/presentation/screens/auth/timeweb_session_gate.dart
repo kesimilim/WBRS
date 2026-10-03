@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
+import 'package:wbrs/presentation/screens/home/timeweb_home_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
@@ -184,10 +184,10 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
       try {
         _currentOwnProfile?.requireCurrent();
         if (_currentOwnProfile?.onboarding == TimewebOnboarding.search) {
-          return TimewebPeoplePageView(
-            key: ValueKey('timeweb-people-${state.epoch}-$_generation'),
+          return TimewebHomePage(
+            key: ValueKey('timeweb-home-${state.epoch}-$_generation'),
             runtime: widget.runtime,
-            initialOwnProfile: _currentOwnProfile,
+            initialOwnProfile: _currentOwnProfile!,
           );
         }
       } catch (_) {
@@ -198,6 +198,7 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
         runtime: widget.runtime,
         initialProfile: _currentOwnProfile,
         initialError: _error,
+        onOpenPeople: () => unawaited(_load()),
       );
     }
     String? stage;

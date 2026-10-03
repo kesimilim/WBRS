@@ -26,10 +26,12 @@ class TimewebPeoplePageView extends StatefulWidget {
     required this.runtime,
     this.initialOwnProfile,
     this.onSelected,
+    this.showSectionLinks = true,
   });
   final TimewebAppRuntime runtime;
   final TimewebCurrentOwnProfile? initialOwnProfile;
   final ValueChanged<TimewebPublicPerson>? onSelected;
+  final bool showSectionLinks;
   @override
   State<TimewebPeoplePageView> createState() => _TimewebPeoplePageViewState();
 }
@@ -339,20 +341,20 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
                   Wrap(
                     spacing: 8,
                     children: [
-                      if (widget.onSelected == null) ElevatedButton.icon(
+                      if (widget.onSelected == null && widget.showSectionLinks) ElevatedButton.icon(
                         key: const ValueKey('timeweb-people-own-profile'),
                         onPressed: _busy ? null : _openOwnProfile,
                         icon: const Icon(Icons.person_outline),
                         label: Text(context.tr('Профиль')),
                       ),
-                      if (widget.onSelected == null && widget.runtime.chatsEnabled)
+                      if (widget.onSelected == null && widget.showSectionLinks && widget.runtime.chatsEnabled)
                         ElevatedButton.icon(
                           key: const ValueKey('timeweb-people-chats'),
                           onPressed: _busy ? null : _openChats,
                           icon: const Icon(Icons.chat_bubble_outline),
                           label: Text(context.tr('Чаты')),
                         ),
-                      if (widget.onSelected == null && widget.runtime.meetingsEnabled)
+                      if (widget.onSelected == null && widget.showSectionLinks && widget.runtime.meetingsEnabled)
                         ElevatedButton.icon(key: const ValueKey('timeweb-people-meetings'),
                           onPressed: _busy ? null : () => Navigator.of(context).push<void>(
                             MaterialPageRoute(settings: const RouteSettings(name: timewebMeetingsRoute),

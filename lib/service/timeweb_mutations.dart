@@ -19,11 +19,13 @@ enum TimewebMutationKind {
   prepareProfilePhoto,
   commitProfilePhoto,
   finishInitialProfile,
+  socialAction,
 }
 
 enum TimewebMutationState { confirmed, declaredFailure, unknown, notFound }
 
 enum TimewebMutationFailure {
+  socialAccessDenied,
   invalidRequest,
   unauthorized,
   notFound,
@@ -157,6 +159,9 @@ final class TimewebMutationRequest {
       throw ArgumentError('Mutation body exceeds its bound.');
     }
   }
+  factory TimewebMutationRequest.socialAction({required String operationId, required TimewebSocialAction action}) =>
+      TimewebMutationRequest._(TimewebMutationKind.socialAction, operationId, action.payload,
+        ['v1', 'runtime', 'social', 'actions']);
   factory TimewebMutationRequest.sendMessage({
     required String operationId,
     required String chatId,
@@ -318,8 +323,10 @@ final class TimewebMutationRequest {
     TimewebMutationKind.prepareProfilePhoto => 'profile.photo.prepare.v1',
     TimewebMutationKind.commitProfilePhoto => 'profile.photo.commit.v1',
     TimewebMutationKind.finishInitialProfile => 'profile.finish-registration.v1',
+    TimewebMutationKind.socialAction => 'social.${_payload['kind']}.v1',
   };
-  Map<String, dynamic> get _wireBody => {
+  Map<String, dynamic> get _wireBody => kind == TimewebMutationKind.socialAction
+      ? {'operationId': operationId, 'payload': _payload} : {
     'operationId': operationId,
     for (final entry in _payload.entries)
       if (entry.key != 'chatId' && !(kind == TimewebMutationKind.sendMeetingText && entry.key == 'meetingId')) entry.key: entry.value,
@@ -396,6 +403,7 @@ final class TimewebMutationResult {
     TimewebInitialProfileReceipt? initialProfile,
     TimewebPreparedPhotoReceipt? preparedPhoto,
     TimewebCommittedPhotoReceipt? committedPhoto,
+    TimewebSocialReceipt? social,
     String? updatedAt,
     bool receiptConfirmed = false,
     bool originalPostDeclaredFailure = false,
@@ -417,6 +425,7 @@ final class TimewebMutationResult {
        _initialProfile = initialProfile,
        _preparedPhoto = preparedPhoto,
        _committedPhoto = committedPhoto,
+       _social = social,
        _updatedAt = updatedAt,
        _receiptConfirmed = receiptConfirmed,
        _originalPostDeclaredFailure = originalPostDeclaredFailure;
@@ -441,6 +450,7 @@ final class TimewebMutationResult {
   final TimewebInitialProfileReceipt? _initialProfile;
   final TimewebPreparedPhotoReceipt? _preparedPhoto;
   final TimewebCommittedPhotoReceipt? _committedPhoto;
+  final TimewebSocialReceipt? _social;
   final String? _updatedAt;
   final bool _receiptConfirmed;
   final bool _originalPostDeclaredFailure;
@@ -548,6 +558,7 @@ final class TimewebMutationResult {
   TimewebInitialProfileReceipt? get initialProfile { requireCurrent(); return _initialProfile; }
   TimewebPreparedPhotoReceipt? get preparedPhoto { requireCurrent(); return _preparedPhoto; }
   TimewebCommittedPhotoReceipt? get committedPhoto { requireCurrent(); return _committedPhoto; }
+  TimewebSocialReceipt? get socialReceipt { requireCurrent(); return _social; }
 
   @override
   String toString() => 'TimewebMutationResult(<redacted>)';
@@ -879,7 +890,7 @@ TimewebMutationResult _retainMutationOutcome(
       !const {TimewebMutationKind.openPersonalChat,
         TimewebMutationKind.createMeeting, TimewebMutationKind.joinMeeting,
         TimewebMutationKind.sendMeetingText, TimewebMutationKind.leaveMeeting,
-        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile}.contains(reference._request.kind)) {
+        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile, TimewebMutationKind.socialAction}.contains(reference._request.kind)) {
     return confirmed!;
   }
   reference._settledResult = result;
@@ -945,6 +956,7 @@ Future<TimewebMutationResult> _executeMutation(
       ),
       session.accessToken,
       body: reference._request._wireBody,
+      acceptForbidden: reference._request.kind == TimewebMutationKind.socialAction,
     );
     reference.requireCurrent();
     return _retainMutationOutcome(
@@ -1019,20 +1031,23 @@ Future<TimewebMutationResult> _executeMutationLookup(
     pathSegments: [
       'v1',
       'runtime',
+      if (reference._request.kind == TimewebMutationKind.socialAction) 'social',
       'operations',
       reference._request.operation,
       reference._request.operationId,
     ],
     queryParameters: {'requestHash': reference._request.requestHash},
   );
-  var reply = await _mutationTransfer(owner, 'GET', uri, session.accessToken);
+  var reply = await _mutationTransfer(owner, 'GET', uri, session.accessToken,
+    acceptForbidden: reference._request.kind == TimewebMutationKind.socialAction);
   reference.requireCurrent();
   if (reply.status == 401) {
     if (owner._session?.accessToken == session.accessToken)
       await owner.refresh();
     reference.requireCurrent();
     session = owner._session!;
-    reply = await _mutationTransfer(owner, 'GET', uri, session.accessToken);
+    reply = await _mutationTransfer(owner, 'GET', uri, session.accessToken,
+    acceptForbidden: reference._request.kind == TimewebMutationKind.socialAction);
     reference.requireCurrent();
   }
   final result = _decodeMutationReply(reference, reply, lookup: true);
@@ -1073,6 +1088,7 @@ Future<_Reply> _mutationTransfer(
   Uri uri,
   String bearer, {
   Map<String, dynamic>? body,
+  bool acceptForbidden = false,
 }) async {
   if (owner._inflightRequests >= 4) {
     throw const TimewebAuthException(
@@ -1125,7 +1141,8 @@ Future<_Reply> _mutationTransfer(
         );
       }
       if (response.statusCode == 401) return _Reply(401, null);
-      if (!const [200, 201, 400, 404, 409, 429].contains(response.statusCode)) {
+      if (!const [200, 201, 400, 404, 409, 429].contains(response.statusCode) &&
+          !(acceptForbidden && response.statusCode == 403)) {
         return _Reply(response.statusCode, null);
       }
       final mime = response.headers['content-type']?.toLowerCase() ?? '';
@@ -1274,7 +1291,7 @@ TimewebMutationResult _decodeMutationReply(
   ref.requireCurrent();
   if (reply.status == 401) {
     if (!lookup && const {TimewebMutationKind.createMeeting, TimewebMutationKind.joinMeeting, TimewebMutationKind.sendMeetingText, TimewebMutationKind.leaveMeeting,
-        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile}.contains(ref._request.kind)) {
+        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile, TimewebMutationKind.socialAction}.contains(ref._request.kind)) {
       return TimewebMutationResult._(ref, TimewebMutationState.unknown, 401,
         failure: TimewebMutationFailure.unauthorized,
         unknownReason: TimewebAuthError.unauthorized);
@@ -1292,6 +1309,11 @@ TimewebMutationResult _decodeMutationReply(
       failure: TimewebMutationFailure.unauthorized,
       originalPostDeclaredFailure: true,
     );
+  }
+  if (ref._request.kind == TimewebMutationKind.socialAction && reply.status == 403) {
+    if (!_mutationExact(reply.body ?? {}, {'error'}) || reply.body!['error'] != 'social_access_denied') { _mutationInvalidReply(); }
+    return TimewebMutationResult._(ref, TimewebMutationState.unknown, 403,
+      failure: TimewebMutationFailure.socialAccessDenied, unknownReason: TimewebAuthError.unavailable);
   }
   if (!const [200, 201, 400, 404, 409, 429].contains(reply.status)) {
     return TimewebMutationResult._(
@@ -1323,7 +1345,7 @@ TimewebMutationResult _decodeMutationReply(
       );
     }
     if (const {TimewebMutationKind.createMeeting, TimewebMutationKind.joinMeeting, TimewebMutationKind.sendMeetingText, TimewebMutationKind.leaveMeeting,
-        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile}.contains(ref._request.kind)) {
+        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile, TimewebMutationKind.socialAction}.contains(ref._request.kind)) {
       // Every short refusal lacks the original operation/hash receipt. Only a
       // matching committed envelope below can retire this durable create intent.
       final failure = switch ((reply.status, body['error'])) {
@@ -1331,7 +1353,7 @@ TimewebMutationResult _decodeMutationReply(
         (404, 'not_found') => TimewebMutationFailure.notFound,
         (404, 'meeting_unavailable') when lookup => TimewebMutationFailure.meetingUnavailable,
         (404, 'meeting_not_found') when const {TimewebMutationKind.joinMeeting, TimewebMutationKind.sendMeetingText, TimewebMutationKind.leaveMeeting,
-        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile}.contains(ref._request.kind) => TimewebMutationFailure.meetingNotFound,
+        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile, TimewebMutationKind.socialAction}.contains(ref._request.kind) => TimewebMutationFailure.meetingNotFound,
         (409, 'operation_conflict') => TimewebMutationFailure.conflict,
         (429, 'rate_limited') => TimewebMutationFailure.rateLimited,
         _ => null,
@@ -1399,6 +1421,9 @@ TimewebMutationResult _decodeMutationReply(
   final result = body['result'] as Map<String, dynamic>;
   final replayed = body['replayed'] as bool;
   final revision = body['entityRevision'] as int?;
+  if (ref._request.kind == TimewebMutationKind.socialAction) {
+    return _decodeSocialReceipt(ref, reply, result, replayed, revision);
+  }
   if (const [404, 409].contains(reply.status)) {
     if(ref._request.kind==TimewebMutationKind.finishInitialProfile) {
       final stamped=const {'profile_changed','registration_already_saved','registration_already_completed'}.contains(result['error']);
@@ -1428,7 +1453,7 @@ TimewebMutationResult _decodeMutationReply(
       return TimewebMutationResult._(ref,TimewebMutationState.declaredFailure,reply.status,failure:failure,replayed:replayed,receiptConfirmed:true);
     }
     if (const {TimewebMutationKind.joinMeeting, TimewebMutationKind.sendMeetingText, TimewebMutationKind.leaveMeeting,
-        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile}.contains(ref._request.kind)) {
+        TimewebMutationKind.kickMeetingParticipant, TimewebMutationKind.prepareProfilePhoto, TimewebMutationKind.commitProfilePhoto, TimewebMutationKind.finishInitialProfile, TimewebMutationKind.socialAction}.contains(ref._request.kind)) {
       final failure = switch ((reply.status, result['error'])) {
         (404, 'meeting_not_found') => TimewebMutationFailure.meetingNotFound,
         (404, 'profile_not_found') => TimewebMutationFailure.notFound,

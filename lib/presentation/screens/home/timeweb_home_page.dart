@@ -79,11 +79,16 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
     } catch (_) {
       _invalidated = true;
     }
-    _page = TimewebPeoplePageView(
-      runtime: widget.runtime,
-      initialOwnProfile: widget.initialOwnProfile,
-      showSectionLinks: false,
-    );
+    if (!_invalidated && widget.nativeFeedBuilder != null) {
+      _selected = _Section.feed;
+      _page = widget.nativeFeedBuilder!(widget.runtime);
+    } else {
+      _page = TimewebPeoplePageView(
+        runtime: widget.runtime,
+        initialOwnProfile: widget.initialOwnProfile,
+        showSectionLinks: false,
+      );
+    }
     _states = widget.runtime.session.states.listen((_) {
       if (!_current) {
         _invalidated = true;

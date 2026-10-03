@@ -409,7 +409,7 @@ TimewebMeetingArchivePage _decodeMeetingArchive(_PeopleFlight f, Map<String, dyn
   final rows = <TimewebMeetingMessage>[], ids = <String>{}; int? previous = cursor?._cursor._beforeSequence;
   for (final value in raw) {
     if (value is! Map<String, dynamic> || !_mutationExact(value, {'meetingId','messageId','sequence','senderUid','text','createdAt'}) ||
-        !_meetingMessageFields(value, id) || value['sequence'] > window['throughSequence'] ||
+        !_meetingMessageFields(value, id, retainedRead: true) || value['sequence'] > window['throughSequence'] ||
         previous != null && value['sequence'] >= previous || !ids.add(value['messageId'])) { _peopleInvalid(); }
     previous = value['sequence']; rows.add(TimewebMeetingMessage._(Map.unmodifiable(value), _meetingReadCheck(f)));
   }
@@ -420,8 +420,9 @@ TimewebMeetingArchivePage _decodeMeetingArchive(_PeopleFlight f, Map<String, dyn
     TimewebMeetingArchiveWindow._(frozen, _meetingReadCheck(f)), _meetingReadCheck(f));
 }
 
-bool _meetingMessageFields(Map<String, dynamic> value, String id) => value['meetingId'] == id &&
-  value['messageId'] is String && RegExp(r'^tw-meet-msg-[a-f0-9]{64}$').hasMatch(value['messageId']) &&
+bool _meetingMessageFields(Map<String, dynamic> value, String id, {bool retainedRead = false}) => value['meetingId'] == id &&
+  (retainedRead ? _mutationId(value['messageId']) :
+    value['messageId'] is String && RegExp(r'^tw-meet-msg-[a-f0-9]{64}$').hasMatch(value['messageId'])) &&
   _mutationInteger(value['sequence'], positive: true) && _currentIdentifier(value['senderUid']) &&
   _mutationText(value['text']) && _mutationStamp(value['createdAt']);
 
@@ -436,7 +437,7 @@ TimewebMeetingMessagePage _decodeMeetingMessages(_PeopleFlight f, Map<String, dy
   final rows = <TimewebMeetingMessage>[], ids = <String>{}; int? previous = cursor?._beforeSequence;
   for (final value in raw) {
     if (value is! Map<String, dynamic> || !_mutationExact(value, {'meetingId','messageId','sequence','senderUid','text','createdAt'}) ||
-        !_meetingMessageFields(value, id) || value['sequence'] > body['chatRevision'] ||
+        !_meetingMessageFields(value, id, retainedRead: true) || value['sequence'] > body['chatRevision'] ||
         cursor != null && value['sequence'] > cursor._capSequence! || previous != null && value['sequence'] >= previous || !ids.add(value['messageId'])) _peopleInvalid();
     previous = value['sequence']; rows.add(TimewebMeetingMessage._(Map.unmodifiable(value), _meetingReadCheck(f)));
   }

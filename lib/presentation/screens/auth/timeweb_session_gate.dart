@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:wbrs/presentation/screens/home/timeweb_home_page.dart';
+import 'package:wbrs/presentation/screens/feed/timeweb_feed_page.dart';
 
 import 'package:flutter/material.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
@@ -188,6 +189,8 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
             key: ValueKey('timeweb-home-${state.epoch}-$_generation'),
             runtime: widget.runtime,
             initialOwnProfile: _currentOwnProfile!,
+            nativeFeedBuilder: widget.runtime.socialEnabled
+                ? (runtime) => TimewebFeedPage(runtime: runtime) : null,
           );
         }
       } catch (_) {

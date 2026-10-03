@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:wbrs/presentation/screens/auth/timeweb_session_gate.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chats_page.dart';
 import 'package:wbrs/presentation/screens/home/timeweb_home_page.dart';
+import 'package:wbrs/presentation/screens/feed/timeweb_feed_page.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.dart';
 import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
 import 'package:wbrs/presentation/screens/profile/timeweb_own_profile_page.dart';
@@ -16,6 +17,7 @@ import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_initial_profile_flow.dart';
 import 'package:wbrs/service/timeweb_photo_upload_flow.dart';
+import 'package:wbrs/service/timeweb_social_flow.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
@@ -49,7 +51,7 @@ Future<void> _tab(WidgetTester tester, String name) async {
 
 void main() {
   testWidgets(
-    'native gate owns all four home tabs; late A tab read cannot enter B',
+    'native gate owns five reviewed home tabs; late A tab read cannot enter B',
     (tester) async {
       final folder = (await tester.runAsync(
         () => Directory.systemTemp.createTemp('native-home-'),
@@ -71,6 +73,10 @@ void main() {
         if (path.endsWith('/me/full-profile')) {
           ownReads.update(uid, (count) => count + 1, ifAbsent: () => 1);
           return peopleReply(peopleOwn(uid));
+        }
+        if (path == '/v1/runtime/social/feed') {
+          return peopleReply({'kind':'native-feed','ordering':'created_desc_id_desc_null_last',
+            'items':<Object?>[],'nextCursor':null,'canPublish':false,'canModerate':false});
         }
         if (path == '/v1/runtime/people') {
           directoryReads.update(uid, (count) => count + 1, ifAbsent: () => 1);
@@ -127,6 +133,7 @@ void main() {
         photoUploadJournal: TimewebPhotoUploadJournal(
           directory: () async => folder,
         ),
+        socialJournal: TimewebSocialJournal(directory: () async => folder),
         initialProfileJournal: TimewebInitialProfileJournal(
           directory: () async => folder,
         ),
@@ -154,12 +161,16 @@ void main() {
           home: TimewebSessionGate(runtime: app),
         ),
       );
+      await _until(tester, () => find.byType(TimewebFeedPage).evaluate().isNotEmpty &&
+          find.byKey(const ValueKey('timeweb-social-busy')).evaluate().isEmpty);
+      await _tab(tester, 'people');
       await _until(tester, () => find.textContaining('Person A').evaluate().isNotEmpty);
       expect(find.byType(TimewebHomePage), findsOneWidget);
       final navigation = tester.widget<BottomNavigationBar>(
         find.byKey(const ValueKey('timeweb-home-navigation')),
       );
       expect(navigation.items.map((item) => item.label), [
+        'Лента',
         'Поиск',
         'Чаты',
         'Встречи',
@@ -207,6 +218,9 @@ void main() {
         ))!.confirmed,
         isTrue,
       );
+      await _until(tester, () => find.byType(TimewebFeedPage).evaluate().isNotEmpty &&
+          find.byKey(const ValueKey('timeweb-social-busy')).evaluate().isEmpty);
+      await _tab(tester, 'people');
       await _until(tester, () => find.textContaining('Person B').evaluate().isNotEmpty);
       late.complete(peopleReply(_emptyChats));
       await tester.pump();

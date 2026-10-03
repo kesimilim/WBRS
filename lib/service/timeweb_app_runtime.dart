@@ -19,6 +19,7 @@ import 'timeweb_meeting_membership_flow.dart';
 import 'timeweb_meeting_archive_flow.dart';
 import 'timeweb_photo_upload_flow.dart';
 import 'timeweb_initial_profile_flow.dart';
+import 'timeweb_social_flow.dart';
 
 /// One native runtime owner. No Firebase identity, profile hydration or token
 /// fallback. Replacing this owner requires awaiting stop, which keeps protected
@@ -43,6 +44,7 @@ final class TimewebAppRuntime {
     TimewebMeetingMembershipJournal? meetingMembershipJournal,
     TimewebPhotoUploadJournal? photoUploadJournal,
     TimewebInitialProfileJournal? initialProfileJournal,
+    TimewebSocialJournal? socialJournal,
     bool? profileEditorEnabled,
     this.currentChatsEnabled = false,
     this.currentOwnProfileEnabled = false,
@@ -66,6 +68,7 @@ final class TimewebAppRuntime {
     _meetingMembershipJournal = meetingMembershipJournal ?? TimewebMeetingMembershipJournal();
     _photoUploadJournal = photoUploadJournal ?? TimewebPhotoUploadJournal();
     _initialProfileJournal = initialProfileJournal ?? TimewebInitialProfileJournal();
+    _socialJournal = socialJournal ?? TimewebSocialJournal();
     _temperamentJournal = temperamentJournal ?? TimewebTemperamentJournal();
     _geographyJournal = geographyJournal ?? TimewebGeographyJournal();
     _profileEditorEnabled =
@@ -97,6 +100,7 @@ final class TimewebAppRuntime {
   late final TimewebMeetingMembershipJournal _meetingMembershipJournal;
   late final TimewebPhotoUploadJournal _photoUploadJournal;
   late final TimewebInitialProfileJournal _initialProfileJournal;
+  late final TimewebSocialJournal _socialJournal;
   late final TimewebTemperamentJournal _temperamentJournal;
   late final TimewebGeographyJournal _geographyJournal;
   late final bool _profileEditorEnabled;
@@ -293,6 +297,22 @@ final class TimewebAppRuntime {
         return page.bindSessionGuard(lease.requireCurrent);
       })
       .timeout(session.waitTimeout);
+
+  bool get socialEnabled => ownProfileEnabled;
+  Future<TimewebSocialFlow> openSocial() => session.runAuthenticated((lease) {
+    if (!socialEnabled) throw StateError('Native social service is unavailable.');
+    return TimewebSocialFlow.open(client: client, session: session, lease: lease, journal: _socialJournal);
+  }).timeout(session.waitTimeout);
+  Future<TimewebSocialPage> readSocialFeed({int limit = 10, String? wallUid, TimewebSocialCursor? cursor}) => session.runAuthenticated((lease) async {
+    if (!socialEnabled) throw StateError('Native social feed is unavailable.');
+    final page = await client.readSocialFeed(limit: limit, wallUid: wallUid, cursor: cursor);
+    lease.requireCurrent(); page.requireCurrent(); return page.bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
+  Future<TimewebSocialPage> readSocialComments(String postId, {TimewebSocialCursor? cursor}) => session.runAuthenticated((lease) async {
+    if (!socialEnabled) throw StateError('Native social comments are unavailable.');
+    final page = await client.readSocialComments(postId, cursor: cursor);
+    lease.requireCurrent(); page.requireCurrent(); return page.bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
 
   Future<TimewebInitialProfileFlow> openInitialProfile() => session.runAuthenticated((lease) {
     if(!ownProfileEnabled){throw StateError('Initial profile is unavailable.');}
@@ -551,6 +571,7 @@ final class TimewebAppRuntime {
     await _meetingChatJournal.drain();
     await _photoUploadJournal.drain();
     await _initialProfileJournal.drain();
+    await _socialJournal.drain();
     await _meetingMembershipJournal.drain();
     return result.confirmed && !_policyUnsafe;
   }

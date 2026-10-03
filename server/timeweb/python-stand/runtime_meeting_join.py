@@ -34,7 +34,7 @@ class _JoinFailure(Exception):
         self.status = status; self.error = error
 
 
-def _member(cursor, execute, meeting_id, uid, *, readonly, allow_left=False):
+def _member(cursor, execute, meeting_id, uid, *, readonly, allow_left=False, authority=None):
     execute(MEMBER_SELECT + " WHERE mm.meeting_id = %s AND CAST(mm.meeting_id AS BINARY) = CAST(%s AS BINARY)"
         " AND mm.uid = %s AND CAST(mm.uid AS BINARY) = CAST(%s AS BINARY) LIMIT 1"
         + (" FOR SHARE OF mm" if readonly else " FOR UPDATE"), (meeting_id, meeting_id, uid, uid))
@@ -43,7 +43,8 @@ def _member(cursor, execute, meeting_id, uid, *, readonly, allow_left=False):
         raise RuntimeUnavailable()
     if not rows:
         return None
-    row = _member_row(rows[0])
+    from runtime_imported_meetings import proved_member
+    row = proved_member(cursor, execute, rows[0], authority)
     if row["meetingId"] != meeting_id or row["uid"] != uid:
         raise RuntimeUnavailable()
     if row["trusted"] != 1 or (row["leftAt"] is not None and not allow_left) or row["kickedAt"] is not None:
@@ -51,7 +52,7 @@ def _member(cursor, execute, meeting_id, uid, *, readonly, allow_left=False):
     return row
 
 
-def _target(cursor, execute, uid, meeting_id, now, *, readonly, allow_left=False):
+def _target(cursor, execute, uid, meeting_id, now, *, readonly, allow_left=False, authority=None):
     # Existing PK equality and exact byte comparison; never browse/import scan.
     execute(MEETING_SELECT + " WHERE m.meeting_id = %s AND CAST(m.meeting_id AS BINARY) = CAST(%s AS BINARY) LIMIT 1"
         + (" FOR SHARE OF m" if readonly else " FOR UPDATE"), (meeting_id, meeting_id))
@@ -60,12 +61,15 @@ def _target(cursor, execute, uid, meeting_id, now, *, readonly, allow_left=False
         raise RuntimeUnavailable()
     if not rows:
         raise _JoinFailure(404, "meeting_not_found")
-    row = _meeting_row(rows[0])
+    from runtime_imported_meetings import proved_meeting
+    row = proved_meeting(cursor, execute, rows[0], authority)
     if row["meetingId"] != meeting_id:
         raise RuntimeUnavailable()
     if _meeting_dto(row) is None:
         raise _JoinFailure(404, "meeting_not_found")
-    member = _member(cursor, execute, meeting_id, uid, readonly=readonly, allow_left=allow_left)
+    if authority is not None and authority.kicked(meeting_id, uid):
+        raise _JoinFailure(409, "meeting_unavailable")
+    member = _member(cursor, execute, meeting_id, uid, readonly=readonly, allow_left=allow_left, authority=authority)
     actor = RuntimePeopleService._actor(cursor, execute, uid)
     profiles = RuntimeMeetingsService._profiles(cursor, execute,
         [target for target in (row["organizerUid"], row["invitedUid"]) if target is not None and target != uid])
@@ -79,8 +83,13 @@ def _target(cursor, execute, uid, meeting_id, now, *, readonly, allow_left=False
 
 
 class RuntimeMeetingJoinService:
-    def __init__(self, store, *, clock=time.time):
+    def __init__(self, store, *, clock=time.time, imported_authority=None, reviewed_binding=None):
         self._store = store; self._clock = clock
+        if imported_authority is not None:
+            from imported_meeting_authority import ImportedMeetingAuthority
+            if type(imported_authority) is not ImportedMeetingAuthority or reviewed_binding is None: raise RuntimeUnavailable()
+            imported_authority.require(reviewed_binding)
+        self._authority = imported_authority
         self._allow_join = getattr(store, "_env", {}).get("CLRS_RUNTIME_PERMISSION_MODEL") == "provider-database-v1"
         store.register_replay_guard(JOIN_OPERATION, self._replay_guard, response_guard=True)
 
@@ -92,7 +101,8 @@ class RuntimeMeetingJoinService:
         failure = _current_profile(cursor, execute, uid, {"type": "групповая"}, now)
         if failure:
             raise _JoinFailure(*failure)
-        return _target(cursor, execute, uid, request["meetingId"], now, readonly=readonly, allow_left=allow_left)
+        return _target(cursor, execute, uid, request["meetingId"], now, readonly=readonly,
+            allow_left=allow_left, authority=self._authority)
 
     def _replay_guard(self, cursor, execute, uid, request, response):
         request = validate_join(request)
@@ -128,7 +138,7 @@ class RuntimeMeetingJoinService:
                     (previous + 1, request["meetingId"], request["meetingId"], uid, uid, previous))
                 if cursor.rowcount != 1:
                     raise RuntimeUnavailable()
-                member = _member(cursor, execute, request["meetingId"], uid, readonly=False)
+                member = _member(cursor, execute, request["meetingId"], uid, readonly=False, authority=self._authority)
                 if member is None or member["membershipRevision"] != previous + 1:
                     raise RuntimeUnavailable()
             elif not already:
@@ -139,7 +149,7 @@ class RuntimeMeetingJoinService:
                     stamp[:-1].replace("T", " "), canonical_json({"origin": MEMBER_ORIGIN}).decode()))
                 if cursor.rowcount != 1:
                     raise RuntimeUnavailable()
-                member = _member(cursor, execute, request["meetingId"], uid, readonly=False)
+                member = _member(cursor, execute, request["meetingId"], uid, readonly=False, authority=self._authority)
                 if member is None or member["joinedAt"] != stamp or member["membershipRevision"] != 0:
                     raise RuntimeUnavailable()
             revision = member["membershipRevision"]

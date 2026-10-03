@@ -40,14 +40,18 @@ def _message_id(meeting_id, uid, operation_id):
     return "tw-meet-msg-" + hashlib.sha256(b"clrs-native-meeting-message-v1\0" + canonical_json([meeting_id, uid, _uid(operation_id)])).hexdigest()
 
 
-def _message(value):
+def _message(value, *, legacy_id=False):
     if type(value) is not dict or set(value) != MESSAGE_KEYS:
         raise RuntimeUnavailable()
     try:
         _uid(value["meetingId"]); _uid(value["senderUid"]); _text(value["text"])
     except RuntimeInvalidRequest:
         raise RuntimeUnavailable() from None
-    if type(value["messageId"]) is not str or re.fullmatch(r"tw-meet-msg-[0-9a-f]{64}", value["messageId"]) is None:
+    if legacy_id:
+        from legacy_conversation_payload import identifier
+        try: _uid(value["messageId"]); identifier(value["messageId"], uid=True)
+        except (RuntimeInvalidRequest, LegacyInvalid): raise RuntimeUnavailable() from None
+    elif type(value["messageId"]) is not str or re.fullmatch(r"tw-meet-msg-[0-9a-f]{64}", value["messageId"]) is None:
         raise RuntimeUnavailable()
     if _integer(value["sequence"]) == 0:
         raise RuntimeUnavailable()
@@ -71,7 +75,7 @@ def validate_page(value, meeting_id, limit, previous_cursor=None):
         raise RuntimeUnavailable()
     revision = _integer(value["chatRevision"]); previous = MAX_INTEGER + 1
     for item in value["items"]:
-        _message(item)
+        _message(item, legacy_id=True)
         if item["meetingId"] != meeting_id or not 0 < item["sequence"] < previous or item["sequence"] > revision:
             raise RuntimeUnavailable()
         previous = item["sequence"]
@@ -95,37 +99,45 @@ def _message_indexes(cursor, execute):
         raise RuntimeUnavailable()
 
 
-def _state(store, cursor, execute, uid, meeting_id, now, *, readonly):
+def _state(store, cursor, execute, uid, meeting_id, now, *, readonly, authority=None, stored_revision=None):
     if getattr(store, "_env", {}).get("CLRS_RUNTIME_PERMISSION_MODEL") != "provider-database-v1":
         raise RuntimeUnavailable()
     _indexes(cursor, execute); _message_indexes(cursor, execute)
     failure = _current_profile(cursor, execute, uid, {"type": "групповая"}, now)
     if failure: raise _JoinFailure(*failure)
-    if _target(cursor, execute, uid, meeting_id, now, readonly=readonly) is None:
+    if _target(cursor, execute, uid, meeting_id, now, readonly=readonly, authority=authority) is None:
         raise _JoinFailure(409, "meeting_unavailable")
     execute("SELECT revision FROM clrs_staging.meetings WHERE meeting_id = %s AND CAST(meeting_id AS BINARY) = CAST(%s AS BINARY) LIMIT 1", (meeting_id, meeting_id))
     row = cursor.fetchone()
     if not isinstance(row, (tuple, list)) or len(row) != 1: raise RuntimeUnavailable()
     revision = _integer(row[0])
+    if stored_revision is not None: stored_revision.append(revision)
+    baseline = authority.message_tail(meeting_id) if authority is not None and authority.reviewed(meeting_id) else 0
+    revision = max(revision, baseline)
     execute(_SELECT + " FORCE INDEX (meeting_messages_page_idx) WHERE mm.meeting_id = %s AND CAST(mm.meeting_id AS BINARY) = CAST(%s AS BINARY) ORDER BY mm.sequence DESC LIMIT 1 FOR SHARE OF mm", (meeting_id, meeting_id))
     rows = cursor.fetchall()
     if len(rows) > 1: raise RuntimeUnavailable()
-    tail = _row(rows[0], meeting_id)["sequence"] if rows else 0
-    if tail > revision: raise RuntimeUnavailable()
+    from runtime_imported_meetings import proved_messages
+    tail = proved_messages(cursor, execute, rows, meeting_id, authority)[0]["sequence"] if rows else 0
+    if not baseline <= tail <= revision: raise RuntimeUnavailable()
     return tail, revision
 
 
 def _cursor(reader, value, uid, meeting_id, limit, tail, revision):
     now = int(reader._clock())
+    authority = getattr(reader, "_authority", None)
+    purpose = "meeting_messages_sequence_desc"
+    if authority is not None and authority.reviewed(meeting_id):
+        authority.require(); purpose += ":" + authority.fingerprint
     if value is None:
-        return {"v":1,"uid":uid,"purpose":"meeting_messages_sequence_desc","meetingId":meeting_id,
+        return {"v":1,"uid":uid,"purpose":purpose,"meetingId":meeting_id,
             "limit":limit,"capSequence":tail,"initialRevision":revision,"after":None,"exp":now+300}
     try:
         if type(value) is not str or not 1 <= len(value) <= 4096: raise RuntimeInvalidRequest()
         claim = reader._codec.open("cursor", value)
         if (set(claim) != {"v","uid","purpose","meetingId","limit","capSequence","initialRevision","after","exp"}
                 or type(claim["v"]) is not int or claim["v"] != 1 or claim["uid"] != uid
-                or claim["purpose"] != "meeting_messages_sequence_desc" or claim["meetingId"] != meeting_id
+                or claim["purpose"] != purpose or claim["meetingId"] != meeting_id
                 or type(claim["limit"]) is not int or claim["limit"] != limit
                 or type(claim["exp"]) is not int or not now < claim["exp"] <= now+300
                 or type(claim["capSequence"]) is not int or not 1 <= claim["capSequence"] <= tail
@@ -143,7 +155,7 @@ def read_messages(reader, identity, meeting_id, *, limit=30, cursor=None, access
     def action(sql_cursor, execute, uid):
         try:
             tail, revision = _state(reader._store, sql_cursor, execute, uid, meeting_id,
-                datetime.fromtimestamp(reader._clock(), timezone.utc), readonly=True)
+                datetime.fromtimestamp(reader._clock(), timezone.utc), readonly=True, authority=getattr(reader, "_authority", None))
         except _JoinFailure:
             raise RuntimeReadRejected() from None
         claim = _cursor(reader, cursor, uid, meeting_id, limit, tail, revision)
@@ -153,7 +165,8 @@ def read_messages(reader, identity, meeting_id, *, limit=30, cursor=None, access
         execute(sql + " ORDER BY mm.sequence DESC LIMIT %s FOR SHARE OF mm", (*params, limit+1))
         rows = sql_cursor.fetchall()
         if len(rows) > limit+1: raise RuntimeUnavailable()
-        items = [_row(row, meeting_id) for row in rows]
+        from runtime_imported_meetings import proved_messages
+        items = proved_messages(sql_cursor, execute, rows, meeting_id, getattr(reader, "_authority", None))
         previous = claim["after"] or claim["capSequence"]+1
         for item in items:
             if not 0 < item["sequence"] < previous or item["sequence"] > claim["capSequence"]: raise RuntimeUnavailable()
@@ -166,8 +179,13 @@ def read_messages(reader, identity, meeting_id, *, limit=30, cursor=None, access
 
 
 class RuntimeMeetingChatService:
-    def __init__(self, store, *, clock=time.time):
+    def __init__(self, store, *, clock=time.time, imported_authority=None, reviewed_binding=None):
         self._store = store; self._clock = clock
+        if imported_authority is not None:
+            from imported_meeting_authority import ImportedMeetingAuthority
+            if type(imported_authority) is not ImportedMeetingAuthority or reviewed_binding is None: raise RuntimeUnavailable()
+            imported_authority.require(reviewed_binding)
+        self._authority = imported_authority
         store.register_replay_guard(SEND_OPERATION, self._replay_guard, response_guard=True, operation_id_guard=True)
 
     def _replay_guard(self, cursor, execute, uid, operation_id, request, response):
@@ -180,7 +198,7 @@ class RuntimeMeetingChatService:
         if response["meetingId"] != meeting_id or response["messageId"] != expected or response["senderUid"] != uid or response["text"] != text: raise RuntimeUnavailable()
         try:
             tail, revision = _state(self._store, cursor, execute, uid, meeting_id,
-                datetime.fromtimestamp(self._clock(), timezone.utc), readonly=True)
+                datetime.fromtimestamp(self._clock(), timezone.utc), readonly=True, authority=self._authority)
             if revision < receipt_revision or not response["sequence"] <= tail: raise RuntimeUnavailable()
             execute(_SELECT + " WHERE mm.meeting_id = %s AND CAST(mm.meeting_id AS BINARY) = CAST(%s AS BINARY) AND mm.message_id = %s AND CAST(mm.message_id AS BINARY) = CAST(%s AS BINARY) LIMIT 1 FOR SHARE OF mm", (meeting_id,meeting_id,expected,expected))
             rows = cursor.fetchall()
@@ -191,9 +209,11 @@ class RuntimeMeetingChatService:
     def send_text(self, identity, meeting_id, operation_id, text, *, access_token):
         meeting_id = _uid(meeting_id); text = _text(text); request = {"meetingId":meeting_id,"text":text}
         def action(cursor, execute, uid):
+            stored_revision = []
             try:
                 tail, revision = _state(self._store,cursor,execute,uid,meeting_id,
-                    datetime.fromtimestamp(self._clock(),timezone.utc),readonly=False)
+                    datetime.fromtimestamp(self._clock(),timezone.utc),readonly=False,
+                    authority=self._authority, stored_revision=stored_revision)
             except _JoinFailure as error: return error.status,{"error":error.error},None
             if tail == MAX_INTEGER or revision == MAX_INTEGER: raise RuntimeUnavailable()
             sequence = tail+1; revision += 1; created = _stamp(cursor,execute)
@@ -202,7 +222,7 @@ class RuntimeMeetingChatService:
  (meeting_id,message_id,sequence,sender_uid,body,media_id,created_at,legacy_raw)
  VALUES (%s,%s,%s,%s,%s,NULL,%s,%s)""", (meeting_id,message_id,sequence,uid,text,created[:-1].replace("T"," "),canonical_json({"origin":MESSAGE_ORIGIN}).decode()))
             if cursor.rowcount != 1: raise RuntimeUnavailable()
-            execute("UPDATE clrs_staging.meetings SET revision = %s, updated_at = %s WHERE meeting_id = %s AND CAST(meeting_id AS BINARY) = CAST(%s AS BINARY) AND revision = %s", (revision,created[:-1].replace("T"," "),meeting_id,meeting_id,revision-1))
+            execute("UPDATE clrs_staging.meetings SET revision = %s, updated_at = %s WHERE meeting_id = %s AND CAST(meeting_id AS BINARY) = CAST(%s AS BINARY) AND revision = %s", (revision,created[:-1].replace("T"," "),meeting_id,meeting_id,stored_revision[0]))
             if cursor.rowcount != 1: raise RuntimeUnavailable()
             return 201,{"meetingId":meeting_id,"messageId":message_id,"sequence":sequence,
                 "senderUid":uid,"text":text,"createdAt":created,"chatRevision":revision},revision

@@ -37,7 +37,7 @@ class _MembershipFailure(Exception):
         self.status = status; self.error = error
 
 
-def _meeting(cursor, execute, meeting_id, *, readonly):
+def _meeting(cursor, execute, meeting_id, *, readonly, authority=None):
     execute(MEETING_SELECT + " WHERE m.meeting_id = %s AND CAST(m.meeting_id AS BINARY) = CAST(%s AS BINARY) LIMIT 1"
         + (" FOR SHARE OF m" if readonly else " FOR UPDATE"), (meeting_id, meeting_id))
     rows = cursor.fetchall()
@@ -45,7 +45,8 @@ def _meeting(cursor, execute, meeting_id, *, readonly):
         raise RuntimeUnavailable()
     if not rows:
         raise _MembershipFailure(404, "meeting_not_found")
-    row = _meeting_row(rows[0])
+    from runtime_imported_meetings import proved_meeting
+    row = proved_meeting(cursor, execute, rows[0], authority)
     if row["meetingId"] != meeting_id:
         raise RuntimeUnavailable()
     if _meeting_dto(row) is None:
@@ -53,7 +54,7 @@ def _meeting(cursor, execute, meeting_id, *, readonly):
     return row
 
 
-def _affected(cursor, execute, meeting_id, uid, *, readonly):
+def _affected(cursor, execute, meeting_id, uid, *, readonly, authority=None):
     execute(MEMBER_SELECT + " WHERE mm.meeting_id = %s AND CAST(mm.meeting_id AS BINARY) = CAST(%s AS BINARY)"
         " AND mm.uid = %s AND CAST(mm.uid AS BINARY) = CAST(%s AS BINARY) LIMIT 1"
         + (" FOR SHARE OF mm" if readonly else " FOR UPDATE"), (meeting_id, meeting_id, uid, uid))
@@ -62,7 +63,8 @@ def _affected(cursor, execute, meeting_id, uid, *, readonly):
         raise RuntimeUnavailable()
     if not rows:
         return None
-    row = _member_row(rows[0])
+    from runtime_imported_meetings import proved_member
+    row = proved_member(cursor, execute, rows[0], authority)
     if row["meetingId"] != meeting_id or row["uid"] != uid or row["trusted"] != 1:
         raise RuntimeUnavailable()
     return row
@@ -76,8 +78,13 @@ def _utc(value):
 
 
 class RuntimeMeetingMembershipService:
-    def __init__(self, store, *, clock=time.time):
+    def __init__(self, store, *, clock=time.time, imported_authority=None, reviewed_binding=None):
         self._store = store; self._clock = clock
+        if imported_authority is not None:
+            from imported_meeting_authority import ImportedMeetingAuthority
+            if type(imported_authority) is not ImportedMeetingAuthority or reviewed_binding is None: raise RuntimeUnavailable()
+            imported_authority.require(reviewed_binding)
+        self._authority = imported_authority
         self._allowed = getattr(store, "_env", {}).get("CLRS_RUNTIME_PERMISSION_MODEL") == "provider-database-v1"
         for operation in (LEAVE_OPERATION, KICK_OPERATION):
             store.register_replay_guard(operation,
@@ -92,9 +99,11 @@ class RuntimeMeetingMembershipService:
             failure = _current_profile(cursor, execute, uid, {"type": "групповая"}, now)
             if failure:
                 raise _MembershipFailure(*failure)
-        row = _meeting(cursor, execute, request["meetingId"], readonly=readonly)
-        member = _affected(cursor, execute, request["meetingId"], uid, readonly=readonly)
+        row = _meeting(cursor, execute, request["meetingId"], readonly=readonly, authority=self._authority)
+        member = _affected(cursor, execute, request["meetingId"], uid, readonly=readonly, authority=self._authority)
         if authorize:
+            if self._authority is not None and self._authority.kicked(request["meetingId"], uid):
+                raise _MembershipFailure(409, "meeting_unavailable")
             actor = RuntimePeopleService._actor(cursor, execute, uid)
             profiles = RuntimeMeetingsService._profiles(cursor, execute,
                 [target for target in (row["organizerUid"], row["invitedUid"]) if target is not None and target != uid])
@@ -102,27 +111,29 @@ class RuntimeMeetingMembershipService:
                 raise _MembershipFailure(409, "meeting_unavailable")
         return row, member
 
-    @staticmethod
-    def _update(cursor, execute, member, *, kick, operation_id=None):
+    def _update(self, cursor, execute, member, *, kick, operation_id=None):
         previous = member["membershipRevision"]; revision = _integer(previous + 1)
         stamp = _utc(_stamp(cursor, execute)); left = member["leftAt"] or stamp
-        if stamp < member["joinedAt"] or (member["leftAt"] is not None and stamp < member["leftAt"]):
+        if (member["joinedAt"] is not None and stamp < member["joinedAt"]) or (member["leftAt"] is not None and stamp < member["leftAt"]):
             raise RuntimeUnavailable()
         kicked = stamp if kick else member["kickedAt"]
         sql_time = lambda value: value[:-1].replace("T", " ") if value is not None else None
         raw_assignment = ""
         values = [sql_time(left), sql_time(kicked), revision]
         if not kick:
-            from runtime_meeting_archive import capture_window
-            marker = capture_window(cursor, execute, member, operation_id, revision, stamp)
-            raw_assignment = ", legacy_raw = %s"; values.append(canonical_json(marker).decode())
+            from runtime_meeting_archive import capture_window, save_imported_window
+            marker = capture_window(cursor, execute, member, operation_id, revision, stamp, authority=self._authority)
+            if self._authority is not None and self._authority.reviewed(member["meetingId"]):
+                save_imported_window(cursor, execute, member, marker["archiveWindow"], self._authority)
+            else:
+                raw_assignment = ", legacy_raw = %s"; values.append(canonical_json(marker).decode())
         execute("""UPDATE clrs_staging.meeting_members SET left_at = %s, kicked_at = %s, membership_revision = %s""" + raw_assignment + """
  WHERE meeting_id = %s AND CAST(meeting_id AS BINARY) = CAST(%s AS BINARY)
  AND uid = %s AND CAST(uid AS BINARY) = CAST(%s AS BINARY) AND membership_revision = %s""",
             (*values, member["meetingId"], member["meetingId"], member["uid"], member["uid"], previous))
         if cursor.rowcount != 1:
             raise RuntimeUnavailable()
-        current = _affected(cursor, execute, member["meetingId"], member["uid"], readonly=False)
+        current = _affected(cursor, execute, member["meetingId"], member["uid"], readonly=False, authority=self._authority)
         expected = {**member, "leftAt": left, "kickedAt": kicked, "membershipRevision": revision}
         if current != expected:
             raise RuntimeUnavailable()
@@ -152,7 +163,7 @@ class RuntimeMeetingMembershipService:
                     raise _MembershipFailure(409, "organizer_required")
                 if request["targetUid"] == uid:
                     raise _MembershipFailure(409, "cannot_kick_self")
-                member = _affected(cursor, execute, request["meetingId"], request["targetUid"], readonly=False)
+                member = _affected(cursor, execute, request["meetingId"], request["targetUid"], readonly=False, authority=self._authority)
                 if member is None:
                     raise _MembershipFailure(404, "participant_not_found")
                 if row["kind"] == "individual" and request["targetUid"] != row["invitedUid"]:
@@ -199,9 +210,10 @@ class RuntimeMeetingMembershipService:
             row, own = self._base(cursor, execute, uid, request, readonly=True, authorize=False)
             if kick and row["organizerUid"] != uid:
                 raise RuntimeUnavailable()
-            member = _affected(cursor, execute, request["meetingId"], request["targetUid"], readonly=True) if kick else own
+            member = _affected(cursor, execute, request["meetingId"], request["targetUid"], readonly=True, authority=self._authority) if kick else own
             if revision is not None:
-                if member is None or member["membershipRevision"] < revision or response["leftAt"] < member["joinedAt"]:
+                if (member is None or member["membershipRevision"] < revision
+                        or (member["joinedAt"] is not None and response["leftAt"] < member["joinedAt"])):
                     raise RuntimeUnavailable()
                 # At the same revision the current row must prove the action.
                 # A later rejoin may clear left_at; the original receipt remains

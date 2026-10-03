@@ -1,7 +1,7 @@
-"""Isolated CLRS API draft for an existing free Timeweb App Platform stand.
+"""CLRS native API candidate behind the existing operator preview guard.
 
-The deployed smoke branch remains separate. This draft has no SQL editor,
-admin route, arbitrary media access, or cross-account profile read.
+Customer routes authenticate native sessions and use current owner, membership
+and role checks. Imported media additionally requires signed readback evidence.
 """
 
 import json
@@ -24,6 +24,7 @@ from native_auth_lifecycle_http import NativeAuthLifecycleHttp
 from runtime_profile_photos_http import RuntimeProfilePhotoMediaReply, RuntimeProfilePhotosHttpReply
 from runtime_profile_photos_factory import create_profile_photos_http
 from native_profile_photo_factory import create_native_profile_photos_http
+from runtime_versioned_profile_photos_factory import create_versioned_profile_photos_http
 
 
 def _reply(start_response, status, payload, *, head=False, authenticate=False, retry=False):
@@ -107,7 +108,9 @@ def _native_runtime_http(env, *, imported_authority=None, reviewed_binding=None)
     else:
         meetings_factory = lambda store, current_env: RuntimeMeetingsService.from_env(
             store, current_env, trusted_policy=TRUSTED_POLICY)
-    return RuntimeMutationHttp(env, meetings_factory=meetings_factory)
+    return RuntimeMutationHttp(env, meetings_factory=meetings_factory,
+                               imported_authority=imported_authority,
+                               reviewed_binding=reviewed_binding)
 
 
 def create_app(*, env=None, verify_token=verify_firebase_id_token,
@@ -119,7 +122,8 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                lifecycle_http_factory=NativeAuthLifecycleHttp,
                profile_photos_http=None,
                profile_photos_http_factory=create_profile_photos_http,
-               imported_meeting_authority=None, imported_meeting_binding=None):
+               imported_meeting_authority=None, imported_meeting_binding=None,
+               profile_photo_versions=None):
     """Construct WSGI app with injectable dependencies for offline tests."""
     if env is None:
         env = os.environ
@@ -158,6 +162,8 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
             if profile_photos_http is None:
                 profile_photos_http = profile_photos_http_factory(env)
             profile_photos_http = create_native_profile_photos_http(env, profile_photos_http)
+            profile_photos_http = create_versioned_profile_photos_http(
+                env, profile_photos_http, snapshot=profile_photo_versions)
             if native_configured:
                 try:
                     native_service = native_service_factory(env)
@@ -270,6 +276,10 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                               retry=lifecycle_reply.retry)
             runtime_reply = runtime_http.dispatch(environ, native_service=native_service,
                                                  native_configured=native_configured)
+            if isinstance(runtime_reply, RuntimeProfilePhotoMediaReply):
+                runtime_reply = runtime_reply.respond(start_response)
+                if not isinstance(runtime_reply, RuntimeProfilePhotosHttpReply):
+                    return runtime_reply
             if runtime_reply is not None:
                 return _reply(start_response, runtime_reply.status, runtime_reply.payload,
                               authenticate=runtime_reply.authenticate, retry=runtime_reply.retry)
@@ -349,7 +359,20 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
     return application
 
 
-app = create_app()
+def _deployed_app():
+    # This is a signed actual fresh-readback capability, never an enable flag.
+    settings = dict(os.environ)
+    versions = None
+    if settings.get("CLRS_PROFILE_PHOTO_VERSIONS_ACK_B64"):
+        from native_credentials import decode_base64
+        from runtime_versioned_profile_photos import verify_photo_versions
+        versions = verify_photo_versions(
+            decode_base64(settings["CLRS_PROFILE_PHOTO_VERSIONS_ACK_B64"], max_bytes=16384),
+            decode_base64(settings["CLRS_PREVIEW_ACCESS_KEY_B64"], max_bytes=64))
+    return create_app(env=settings, profile_photo_versions=versions)
+
+
+app = _deployed_app()
 
 
 if __name__ == "__main__":

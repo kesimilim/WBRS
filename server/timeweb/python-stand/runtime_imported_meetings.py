@@ -1,4 +1,4 @@
-"""Opt-in imported list/detail/roster only. No chat or mutation authority."""
+"""Opt-in imported reads and bounded operation adapters from final authority."""
 import time
 
 from imported_meeting_authority import ImportedMeetingAuthority
@@ -34,6 +34,71 @@ def _proofs(cursor, execute, keys, *, member=False):
         if key not in keys or key in result: raise RuntimeUnavailable()
         result[key] = row[-1]
     return result
+
+
+def proved_meeting(cursor, execute, source, authority):
+    if authority is None: return _meeting_row(source)
+    authority.require()
+    values = list(source)
+    if len(values) == len(MEETING_FIELDS) and authority.reviewed(values[0]):
+        values[MEETING_FIELDS.index("trusted")] = 0
+    row = _meeting_row(values)
+    if authority.reviewed(row["meetingId"]):
+        proof = _proofs(cursor, execute, [(row["meetingId"],)])
+        row = authority.meeting(row, proof.get((row["meetingId"],)))
+    return row
+
+
+def proved_member(cursor, execute, source, authority):
+    if authority is None: return _member_row(source)
+    authority.require()
+    values = list(source)
+    if len(values) == len(MEMBER_FIELDS) and authority.reviewed(values[0]):
+        values[MEMBER_FIELDS.index("trusted")] = 0
+    row = _member_row(values)
+    if authority.reviewed(row["meetingId"]):
+        proof = _proofs(cursor, execute, [(row["meetingId"], row["uid"])], member=True)
+        row = authority.member(row, proof.get((row["meetingId"], row["uid"])))
+    return row
+
+
+def proved_messages(cursor, execute, sources, meeting_id, authority):
+    from runtime_meeting_chat import _row, _message
+    if authority is None or not authority.reviewed(meeting_id):
+        return [_row(source, meeting_id) for source in sources]
+    authority.require(); authority.message_tail(meeting_id)
+    if len(sources) > 31: raise RuntimeUnavailable()
+    items = []; keys = []
+    for source in sources:
+        if (not isinstance(source, (tuple, list)) or len(source) != 8 or source[0] != meeting_id
+                or type(source[6]) is not int or source[6] != 1 or type(source[7]) is not int
+                or source[7] not in (0, 1)):
+            raise RuntimeUnavailable()
+        if source[7] == 1:
+            items.append(_row(source, meeting_id))
+        else:
+            items.append(_message(dict(zip(("meetingId", "messageId", "sequence", "senderUid", "text", "createdAt"), source[:6])), legacy_id=True))
+            keys.append((meeting_id, source[1]))
+    if keys:
+        if len(keys) != len(set(keys)): raise RuntimeUnavailable()
+        predicates = []; params = []
+        for mid, message_id in keys:
+            predicates.append("(mm.meeting_id = %s AND CAST(mm.meeting_id AS BINARY) = CAST(%s AS BINARY)"
+                " AND mm.message_id = %s AND CAST(mm.message_id AS BINARY) = CAST(%s AS BINARY))")
+            params.extend((mid, mid, message_id, message_id))
+        execute("SELECT mm.meeting_id, mm.message_id, CASE WHEN OCTET_LENGTH(CAST(mm.legacy_raw AS CHAR CHARACTER SET utf8mb4)) <= 131072 THEN mm.legacy_raw ELSE NULL END"
+            " FROM clrs_staging.meeting_messages AS mm WHERE " + " OR ".join(predicates)
+            + " LIMIT %s FOR SHARE OF mm", (*params, len(keys)))
+        proof = {}
+        for row in cursor.fetchall():
+            if not isinstance(row, (tuple, list)) or len(row) != 3 or tuple(row[:2]) not in keys or tuple(row[:2]) in proof:
+                raise RuntimeUnavailable()
+            proof[tuple(row[:2])] = row[2]
+        if len(proof) != len(keys): raise RuntimeUnavailable()
+        for item in items:
+            key = (meeting_id, item["messageId"])
+            if key in proof: authority.message(item, proof[key])
+    return items
 
 
 class RuntimeImportedMeetingsService(RuntimeMeetingsService):
@@ -108,12 +173,14 @@ class RuntimeImportedMeetingsService(RuntimeMeetingsService):
         return self._store.read_authenticated(identity, action, access_token=access_token)
 
     def messages(self, identity, meeting_id, *, access_token, **kwargs):
-        if self._authority.reviewed(meeting_id): return self._deny(identity, access_token)
-        return super().messages(identity, meeting_id, access_token=access_token, **kwargs)
+        if self._authority.reviewed(meeting_id) and "messages" not in (self._authority.entry(meeting_id) or {}):
+            return self._deny(identity, access_token)
+        return self._read(super().messages, identity, meeting_id, access_token=access_token, **kwargs)
 
     def archived_messages(self, identity, meeting_id, *, access_token, **kwargs):
-        if self._authority.reviewed(meeting_id): return self._deny(identity, access_token)
-        return super().archived_messages(identity, meeting_id, access_token=access_token, **kwargs)
+        if self._authority.reviewed(meeting_id) and "messages" not in (self._authority.entry(meeting_id) or {}):
+            return self._deny(identity, access_token)
+        return self._read(super().archived_messages, identity, meeting_id, access_token=access_token, **kwargs)
 
 
 def imported_meetings_factory(authority=None, *, reviewed_binding=None):

@@ -25,7 +25,7 @@ from runtime_initial_profile import RuntimeInitialProfileService, InitialProfile
 from runtime_profile_photo_uploads import RuntimeProfilePhotoUploadsService
 
 
-_OPERATIONS = frozenset({"profile.finish-registration.v1", "chat.send-text.v1", "chat.mark-read.v1", "chat.open-personal.v1", "meeting.create.v1", "meeting.join.v1", "meeting.leave.v1", "meeting.kick.v1", "meeting.send-text.v1", "profile.edit.v1", "profile.complete-test.v1", "profile.edit-geography.v1"})
+_OPERATIONS = frozenset({"profile.finish-registration.v1", "chat.send-text.v1", "chat.mark-read.v1", "chat.open-personal.v1", "meeting.create.v1", "meeting.join.v1", "meeting.leave.v1", "meeting.kick.v1", "meeting.send-text.v1", "profile.edit.v1", "profile.complete-test.v1", "profile.edit-geography.v1", "profile.preferences.v1"})
 _UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
 _MAX_BODY = 65536
 
@@ -44,6 +44,8 @@ def _route(path):
         path = path.encode("latin-1").decode("utf-8")
     except UnicodeError:
         return None
+    if path == "/v1/runtime/me/preferences":
+        return "profile.preferences.v1", None, None
     if path == "/v1/runtime/me/registration":
         return "profile.finish-registration.v1", None, None
     if path == "/v1/runtime/me/profile":
@@ -99,7 +101,7 @@ def _body(environ):
         raise RuntimeInvalidRequest() from None
 
 
-def _create(env):
+def _create(env, *, imported_authority=None, reviewed_binding=None):
     store = RuntimeMutationStore.from_env(env)
     from native_profile_photo_factory import create_native_photo_writer
     from runtime_profile_photo_uploads_http import RuntimeProfilePhotoUploadsHttp
@@ -111,23 +113,46 @@ def _create(env):
         initial = RuntimeInitialProfileService(store, photos=photos)
     uploads = (RuntimeProfilePhotoUploadsHttp(env, service=photos if writer is not None else None)
                if env.get("CLRS_RUNTIME_NATIVE_PHOTO_UPLOADS_ENABLED") == "1" else None)
-    return store, RuntimeChatService(store), RuntimeProfileService(store), RuntimePersonalChatService(store), RuntimeMeetingCreateService(store), RuntimeMeetingJoinService(store), RuntimeMeetingChatService(store), RuntimeMeetingMembershipService(store), initial, uploads
+    imported = dict(imported_authority=imported_authority, reviewed_binding=reviewed_binding)
+    return store, RuntimeChatService(store), RuntimeProfileService(store), RuntimePersonalChatService(store), RuntimeMeetingCreateService(store), RuntimeMeetingJoinService(store, **imported), RuntimeMeetingChatService(store, **imported), RuntimeMeetingMembershipService(store, **imported), initial, uploads
 
 
 class RuntimeMutationHttp:
-    def __init__(self, env, *, service_factory=_create, read_factory=None, meetings_factory=None):
+    def __init__(self, env, *, service_factory=_create, read_factory=None, meetings_factory=None,
+                 imported_authority=None, reviewed_binding=None):
+        if (imported_authority is None) != (reviewed_binding is None):
+            raise RuntimeUnavailable()
         self._enabled = (env.get("CLRS_RUNTIME_WRITES_ENABLED") == "1"
             and env.get("CLRS_RUNTIME_MEMBERSHIP_AUTHORITY") == "canonical-current-v1")
         self._services = None
         if self._enabled:
             try:
-                self._services = service_factory(env)
+                self._services = (service_factory(env, imported_authority=imported_authority,
+                                   reviewed_binding=reviewed_binding) if imported_authority is not None
+                                  else service_factory(env))
+            except Exception:
+                pass
+        self._preferences = None
+        if self._services:
+            try:
+                from runtime_preferences import RuntimePreferencesService
+                self._preferences = RuntimePreferencesService(self._services[0])
             except Exception:
                 pass
         self._reads = RuntimeReadHttp(env, self._services[0] if self._services else None,
                                       read_factory=read_factory, meetings_factory=meetings_factory)
+        from runtime_social_http import RuntimeSocialHttp
+        self._social = RuntimeSocialHttp(env, self._services[0] if self._services else None)
+        from runtime_gifts_http import RuntimeGiftsHttp
+        self._gifts = RuntimeGiftsHttp(env, self._services[0] if self._services else None)
+        from runtime_post_media import create_post_media_http
+        self._post_media = create_post_media_http(
+            env, self._services[0] if self._services else None)
 
     def close(self):
+        if self._post_media is not None:
+            self._post_media.close()
+            self._post_media = None
         self._reads.close()
         if self._services is not None:
             cleanup = getattr(self._services[0], "close", None)
@@ -136,6 +161,19 @@ class RuntimeMutationHttp:
             self._services = None
 
     def dispatch(self, environ, *, native_service=None, native_configured=False):
+        if self._post_media is not None:
+            media_reply = self._post_media.dispatch(environ, native_service=native_service,
+                                                   native_configured=native_configured)
+            if media_reply is not None:
+                return media_reply
+        gift_reply = self._gifts.dispatch(environ, native_service=native_service,
+                                          native_configured=native_configured)
+        if gift_reply is not None:
+            return gift_reply
+        social_reply = self._social.dispatch(environ, native_service=native_service,
+                                            native_configured=native_configured)
+        if social_reply is not None:
+            return social_reply
         if self._services is not None and len(self._services) > 9 and self._services[9] is not None:
             upload_reply = self._services[9].dispatch(
                 environ, native_service=native_service, native_configured=native_configured)
@@ -156,9 +194,10 @@ class RuntimeMutationHttp:
         if not self._enabled:
             return RuntimeHttpReply("404 Not Found", {"error": "not_found"})
         operation, resource, operation_id = route
+        preferences_read = operation == "profile.preferences.v1" and environ.get("REQUEST_METHOD") == "GET"
         profile_read = operation == "profile.edit.v1" and environ.get("REQUEST_METHOD") == "GET"
         full_profile_read = operation == "profile.full-read.v1"
-        method = "GET" if operation == "reconcile" or profile_read or full_profile_read else "POST"
+        method = "GET" if operation == "reconcile" or profile_read or full_profile_read or preferences_read else "POST"
         if environ.get("REQUEST_METHOD") != method:
             return RuntimeHttpReply("405 Method Not Allowed", {"error": "method_not_allowed"})
         try:
@@ -170,7 +209,7 @@ class RuntimeMutationHttp:
                     raise RuntimeInvalidRequest()
             elif query or (full_profile_read and not isinstance(query, str)):
                 raise RuntimeInvalidRequest()
-            if (profile_read or full_profile_read) and (environ.get("HTTP_TRANSFER_ENCODING")
+            if (profile_read or full_profile_read or preferences_read) and (environ.get("HTTP_TRANSFER_ENCODING")
                     or environ.get("CONTENT_LENGTH", "") not in ("", "0")):
                 raise RuntimeInvalidRequest()
             header = environ.get("HTTP_AUTHORIZATION", "")
@@ -186,6 +225,9 @@ class RuntimeMutationHttp:
             if type(identity) is not NativeIdentity:
                 raise NativeUnavailable()
             store, chat, profile = self._services[:3]
+            if preferences_read:
+                if self._preferences is None:raise RuntimeUnavailable()
+                return RuntimeHttpReply("200 OK",self._preferences.read(identity,access_token=token))
             if full_profile_read:
                 result = profile.read_full(identity, access_token=token)
                 if type(result) is not dict:
@@ -203,7 +245,11 @@ class RuntimeMutationHttp:
                 operation_id = body.get("operationId")
                 if not isinstance(operation_id, str) or _UUID.fullmatch(operation_id) is None:
                     raise RuntimeInvalidRequest()
-                if operation == "chat.open-personal.v1":
+                if operation == "profile.preferences.v1":
+                    if self._preferences is None:raise RuntimeUnavailable()
+                    if set(body)!={"operationId","expectedRevision","messages","meetings","sound"}:raise RuntimeInvalidRequest()
+                    outcome=self._preferences.save(identity,operation_id,{k:v for k,v in body.items() if k!="operationId"},access_token=token)
+                elif operation == "chat.open-personal.v1":
                     if set(body) != {"operationId", "targetUid"}:
                         raise RuntimeInvalidRequest()
                     if len(self._services) < 4:

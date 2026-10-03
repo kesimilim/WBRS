@@ -126,6 +126,28 @@ class DeltaTests(unittest.TestCase):
         self.db.state=copy.deepcopy(state);lease=self.reader.open_photo(self.db.identity,'peer',reference,access_token=self.db.access)
         lease.close();lease.close();self.assertTrue(lease._file.closed);self.assertFalse(self.reader._leases)
 
+    def test_real_driver_source_collection_shape_and_exact_source_guard(self):
+        original=delta._rows
+        expected=(delta.SOURCE['project'],delta.SOURCE['database'],delta.SOURCE['bucket'])
+        for collection in ([expected],(expected,),[list(expected)],(list(expected),)):
+            with self.subTest(collection=type(collection).__name__,row=type(collection[0]).__name__):
+                def rows(cursor,execute,sql,params=()):
+                    return collection if sql==delta.SOURCE_SQL else original(cursor,execute,sql,params)
+                with patch.object(delta,'_rows',side_effect=rows):
+                    self.assertEqual(len(self.page()['items']),3)
+        for collection in ([],(),[expected,expected],(expected,expected),
+                [('other-project',*expected[1:])],['invalid-row'],{'not':'rows'}):
+            with self.subTest(refused=type(collection).__name__):
+                def rows(cursor,execute,sql,params=()):
+                    return collection if sql==delta.SOURCE_SQL else original(cursor,execute,sql,params)
+                with patch.object(delta,'_rows',side_effect=rows):
+                    with self.assertRaises(RuntimeProfilePhotoNotFound): self.page()
+        # Passing the transport-shape guard does not bypass retained source pins.
+        self.db.state['galleries']['peer']=self.db.state['galleries']['peer'][:-1]
+        with patch.object(delta,'_rows',side_effect=lambda c,e,s,p=(): (expected,) if s==delta.SOURCE_SQL else original(c,e,s,p)):
+            with self.assertRaises(RuntimeProfilePhotoNotFound): self.page()
+        self.assertTrue(all(not sql.startswith(('INSERT','UPDATE','DELETE')) for sql,_ in self.db.calls))
+
     def test_native_precedence_resolves_real_committed_reader_and_no_legacy_fallback(self):
         from test_runtime_native_profile_photos import NativeGalleryTests, GalleryCursor
         import test_runtime_native_profile_photos as native_fixture

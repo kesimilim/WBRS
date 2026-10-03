@@ -160,7 +160,10 @@ class RuntimeProfilePhotoDeltaService(RuntimeVersionedProfilePhotosService):
     def _captured(self, cursor, execute, target_uid, raw, bundle):
         root,slots,records = _bundle(target_uid,bundle)
         if document(raw) != root: raise RuntimeProfilePhotoNotFound()
-        if _rows(cursor,execute,SOURCE_SQL) != [(SOURCE['project'],SOURCE['database'],SOURCE['bucket'])]: raise RuntimeProfilePhotoNotFound()
+        source=_rows(cursor,execute,SOURCE_SQL)
+        if (not isinstance(source,(tuple,list)) or len(source)!=1
+                or not isinstance(source[0],(tuple,list))
+                or tuple(source[0]) != (SOURCE['project'],SOURCE['database'],SOURCE['bucket'])): raise RuntimeProfilePhotoNotFound()
         path='users/'+target_uid
         roots=_rows(cursor,execute,ROOT_SQL,(_hash(path),path))
         if len(roots)!=1: raise RuntimeProfilePhotoNotFound()

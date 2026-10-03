@@ -25,6 +25,7 @@ from runtime_profile_photos_http import RuntimeProfilePhotoMediaReply, RuntimePr
 from runtime_profile_photos_factory import create_profile_photos_http
 from native_profile_photo_factory import create_native_profile_photos_http
 from runtime_versioned_profile_photos_factory import create_versioned_profile_photos_http
+from runtime_profile_photo_delta_factory import create_delta_profile_photos_http
 
 
 def _reply(start_response, status, payload, *, head=False, authenticate=False, retry=False):
@@ -123,7 +124,7 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                profile_photos_http=None,
                profile_photos_http_factory=create_profile_photos_http,
                imported_meeting_authority=None, imported_meeting_binding=None,
-               profile_photo_versions=None):
+               profile_photo_versions=None, profile_photo_delta=None):
     """Construct WSGI app with injectable dependencies for offline tests."""
     if env is None:
         env = os.environ
@@ -164,6 +165,8 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
             profile_photos_http = create_native_profile_photos_http(env, profile_photos_http)
             profile_photos_http = create_versioned_profile_photos_http(
                 env, profile_photos_http, snapshot=profile_photo_versions)
+            profile_photos_http = create_delta_profile_photos_http(
+                env, profile_photos_http, snapshot=profile_photo_delta)
             if native_configured:
                 try:
                     native_service = native_service_factory(env)
@@ -362,16 +365,27 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
 def _deployed_app():
     # This is a signed actual fresh-readback capability, never an enable flag.
     settings = dict(os.environ)
-    versions = None
+    versions = delta = None
     if settings.get("CLRS_PROFILE_PHOTO_VERSIONS_ACK_B64"):
         from native_credentials import decode_base64
         from runtime_versioned_profile_photos import verify_photo_versions
         versions = verify_photo_versions(
             decode_base64(settings["CLRS_PROFILE_PHOTO_VERSIONS_ACK_B64"], max_bytes=16384),
             decode_base64(settings["CLRS_PREVIEW_ACCESS_KEY_B64"], max_bytes=64))
+    delta_ack = settings.get("CLRS_PROFILE_PHOTO_DELTA_ACK_B64")
+    delta_key = settings.get("CLRS_PROFILE_PHOTO_DELTA_KEY_B64")
+    if delta_ack or delta_key:
+        from native_credentials import decode_base64
+        from runtime_profile_photo_delta import verify_profile_photo_delta
+        delta = verify_profile_photo_delta(
+            decode_base64(settings["CLRS_PROFILE_PHOTO_DELTA_ACK_B64"], max_bytes=65536),
+            decode_base64(settings["CLRS_PROFILE_PHOTO_DELTA_KEY_B64"], max_bytes=32),
+            separate_from=tuple(decode_base64(settings[name], max_bytes=64) for name in (
+                "CLRS_NATIVE_SESSION_KEY_B64", "CLRS_LEGACY_READ_CURSOR_KEY_B64",
+                "CLRS_PREVIEW_ACCESS_KEY_B64", "CLRS_LEGACY_MEDIA_PROMOTION_RECEIPT_KEY_B64")))
     from imported_authority_bootstrap import load_reviewed_imported_authority
     authority, binding = load_reviewed_imported_authority(settings)
-    return create_app(env=settings, profile_photo_versions=versions,
+    return create_app(env=settings, profile_photo_versions=versions, profile_photo_delta=delta,
                       imported_meeting_authority=authority, imported_meeting_binding=binding)
 
 

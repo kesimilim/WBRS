@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:wbrs/presentation/screens/admin/timeweb_admin_users_page.dart';
+import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
 
 import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
 
@@ -368,6 +369,17 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     }
   }
 
+  Future<void> _openGifts() async {
+    if (!_current || _loading || _opening || !widget.runtime.giftsEnabled) return;
+    setState(() => _opening = true);
+    try {
+      await Navigator.of(context).push<void>(MaterialPageRoute(
+        builder: (_) => TimewebGiftsPage(runtime: widget.runtime)));
+    } finally {
+      if (_current) setState(() => _opening = false);
+    }
+  }
+
   Future<void> _openPeople() async {
     if (!_current ||
         _loading ||
@@ -545,6 +557,13 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                             : null,
                         icon: const Icon(Icons.people_outline),
                         label: Text(context.tr('Люди')),
+                      ),
+                    if (widget.runtime.giftsEnabled)
+                      ElevatedButton.icon(
+                        key: const ValueKey('timeweb-open-gifts'),
+                        onPressed: current && !_loading && !_opening ? _openGifts : null,
+                        icon: const Icon(Icons.card_giftcard),
+                        label: Text(context.tr('Магазин подарков')),
                       ),
                     if (_adminAllowed && widget.runtime.adminUsersEnabled)
                       ElevatedButton.icon(

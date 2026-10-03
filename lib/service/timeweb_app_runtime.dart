@@ -20,6 +20,7 @@ import 'timeweb_meeting_archive_flow.dart';
 import 'timeweb_photo_upload_flow.dart';
 import 'timeweb_initial_profile_flow.dart';
 import 'timeweb_social_flow.dart';
+import 'timeweb_gift_flow.dart';
 
 /// One native runtime owner. No Firebase identity, profile hydration or token
 /// fallback. Replacing this owner requires awaiting stop, which keeps protected
@@ -45,6 +46,7 @@ final class TimewebAppRuntime {
     TimewebPhotoUploadJournal? photoUploadJournal,
     TimewebInitialProfileJournal? initialProfileJournal,
     TimewebSocialJournal? socialJournal,
+    TimewebGiftJournal? giftJournal,
     bool? profileEditorEnabled,
     this.currentChatsEnabled = false,
     this.currentOwnProfileEnabled = false,
@@ -69,6 +71,7 @@ final class TimewebAppRuntime {
     _photoUploadJournal = photoUploadJournal ?? TimewebPhotoUploadJournal();
     _initialProfileJournal = initialProfileJournal ?? TimewebInitialProfileJournal();
     _socialJournal = socialJournal ?? TimewebSocialJournal();
+    _giftJournal = giftJournal ?? TimewebGiftJournal();
     _temperamentJournal = temperamentJournal ?? TimewebTemperamentJournal();
     _geographyJournal = geographyJournal ?? TimewebGeographyJournal();
     _profileEditorEnabled =
@@ -101,6 +104,7 @@ final class TimewebAppRuntime {
   late final TimewebPhotoUploadJournal _photoUploadJournal;
   late final TimewebInitialProfileJournal _initialProfileJournal;
   late final TimewebSocialJournal _socialJournal;
+  late final TimewebGiftJournal _giftJournal;
   late final TimewebTemperamentJournal _temperamentJournal;
   late final TimewebGeographyJournal _geographyJournal;
   late final bool _profileEditorEnabled;
@@ -297,6 +301,17 @@ final class TimewebAppRuntime {
         return page.bindSessionGuard(lease.requireCurrent);
       })
       .timeout(session.waitTimeout);
+
+  bool get giftsEnabled => ownProfileEnabled;
+  Future<TimewebGiftFlow> openGifts() => session.runAuthenticated((lease) {
+    if (!giftsEnabled) throw StateError('Native gifts are unavailable.');
+    return TimewebGiftFlow.open(client:client,session:session,lease:lease,journal:_giftJournal);
+  }).timeout(session.waitTimeout);
+  Future<TimewebGiftInventory> readGifts() => session.runAuthenticated((lease) async {
+    if (!giftsEnabled) throw StateError('Native gifts are unavailable.');
+    final data=await client.readGifts();lease.requireCurrent();data.requireCurrent();
+    return data.bindSessionGuard(lease.requireCurrent);
+  }).timeout(session.waitTimeout);
 
   bool get socialEnabled => ownProfileEnabled;
   Future<TimewebSocialFlow> openSocial() => session.runAuthenticated((lease) {
@@ -572,6 +587,7 @@ final class TimewebAppRuntime {
     await _photoUploadJournal.drain();
     await _initialProfileJournal.drain();
     await _socialJournal.drain();
+    await _giftJournal.drain();
     await _meetingMembershipJournal.drain();
     return result.confirmed && !_policyUnsafe;
   }

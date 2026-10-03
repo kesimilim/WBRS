@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:wbrs/presentation/screens/admin/timeweb_admin_users_page.dart';
 import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
+import 'package:wbrs/presentation/screens/settings/timeweb_account_page.dart';
 
 import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
 
@@ -113,6 +114,30 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         Navigator.of(context).removeRoute(route);
       }
     });
+  }
+
+  Future<void> _openSettings() async {
+    if (!_current || _loading || _opening) return;
+    setState(() => _opening = true);
+    final lease = widget.runtime.session.captureLease();
+    TimewebAccountAction? action;
+    try {
+      action = await Navigator.of(context).push<TimewebAccountAction>(
+        MaterialPageRoute(
+          settings: const RouteSettings(name: timewebAccountRoute),
+          builder: (_) => TimewebAccountPage(
+            runtime: widget.runtime,
+            lease: lease,
+            canEditProfile: widget.runtime.profileEditorEnabled &&
+                _profile?.profileExists == true && _initialChecked &&
+                !_initialPending && !_initialRequired,
+          ),
+        ),
+      );
+    } finally {
+      if (_current) setState(() => _opening = false);
+    }
+    if (_current && action == TimewebAccountAction.editProfile) await _edit();
   }
 
   Future<void> _probeAdmin() async {
@@ -482,6 +507,12 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         backgroundColor: Colors.transparent,
         title: const ClrsLogo(size: 34),
         actions: [
+          IconButton(
+            key: const ValueKey('timeweb-profile-settings'),
+            tooltip: context.tr('Настройки'),
+            onPressed: current && !_loading && !_opening ? _openSettings : null,
+            icon: const Icon(Icons.settings_outlined),
+          ),
           IconButton(
             key: const ValueKey('timeweb-profile-refresh'),
             tooltip: context.tr('Обновить'),

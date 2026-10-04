@@ -97,7 +97,9 @@ class GroupBadge extends StatelessWidget {
           GroupRing(group: actual, size: size),
           if (showLabel) ...[
             const SizedBox(width: 7),
-            GroupNameText(group: actual, fontSize: size * .6),
+            Flexible(
+              child: GroupNameText(group: actual, fontSize: size * .6),
+            ),
           ],
         ])));
   }

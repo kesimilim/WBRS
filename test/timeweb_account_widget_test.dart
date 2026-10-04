@@ -28,8 +28,47 @@ Future<void> _until(WidgetTester tester, bool Function() ready) async {
   expect(ready(), isTrue);
 }
 
+Future<void> _editorReady(WidgetTester tester) => _until(tester, () {
+  final action = find.byKey(const ValueKey('timeweb-open-profile-editor'));
+  // The action exists while the local account journal is still being checked.
+  // Settings captures edit availability when it opens, so wait for readiness.
+  return action.evaluate().length == 1 &&
+      tester.widget<InkWell>(action).onTap != null;
+});
+
 Future<void> _tap(WidgetTester tester, String key) async {
   final target = find.byKey(ValueKey(key));
+  if (key == 'timeweb-profile-settings') {
+    await tester.tap(find.byIcon(Icons.menu).hitTestable());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.scrollUntilVisible(
+      target,
+      160,
+      scrollable: find.descendant(
+        of: find.byType(Drawer),
+        matching: find.byType(Scrollable),
+      ),
+    );
+  }
+  if (target.evaluate().isEmpty &&
+      (key.startsWith('timeweb-settings-') ||
+          key.startsWith('timeweb-about-'))) {
+    await tester.scrollUntilVisible(
+      target,
+      160,
+      scrollable: find.descendant(
+        of: find.byKey(
+          ValueKey(
+            key.startsWith('timeweb-about-')
+                ? 'timeweb-about-scroll'
+                : 'timeweb-settings-scroll',
+          ),
+        ),
+        matching: find.byType(Scrollable),
+      ),
+    );
+  }
   await tester.ensureVisible(target);
   await tester.pump(const Duration(milliseconds: 500));
   final scroll = find.ancestor(of: target, matching: find.byType(Scrollable));
@@ -179,15 +218,15 @@ void main() {
             ),
           );
       await tester.pumpWidget(host(own));
-      await _until(
-        tester,
-        () => find
-            .byKey(const ValueKey('timeweb-open-profile-editor'))
-            .evaluate()
-            .isNotEmpty,
-      );
+      await _editorReady(tester);
       await _tap(tester, 'timeweb-profile-settings');
       expect(find.byType(TimewebAccountPage), findsOneWidget);
+      expect(
+        tester
+            .widget<TimewebAccountPage>(find.byType(TimewebAccountPage))
+            .canEditProfile,
+        isTrue,
+      );
       expect(find.byType(SwitchListTile), findsNothing);
       expect(
         tester
@@ -207,11 +246,8 @@ void main() {
       expect(find.byType(ClrsDocumentPage), findsOneWidget);
       await _back(tester);
       await _back(tester);
-      await _tap(tester, 'timeweb-settings-help');
-      expect(
-        find.byKey(const ValueKey('timeweb-help-support')),
-        findsOneWidget,
-      );
+      await _tap(tester, 'timeweb-settings-rules');
+      expect(find.text('Правила использования'), findsOneWidget);
       await _back(tester);
       await _tap(tester, 'timeweb-settings-password');
       expect(find.byType(TimewebEmailLifecycleForm), findsOneWidget);
@@ -245,13 +281,7 @@ void main() {
       );
       expect(Firebase.apps, isEmpty);
       await _back(tester);
-      await _until(
-        tester,
-        () => find
-            .byKey(const ValueKey('timeweb-open-profile-editor'))
-            .evaluate()
-            .isNotEmpty,
-      );
+      await _editorReady(tester);
       await _tap(tester, 'timeweb-profile-settings');
       final login = app.session.login(
         email: 'b@example.invalid',
@@ -285,13 +315,7 @@ void main() {
       final ownB = (await tester.runAsync(app.readCurrentOwnProfile))!;
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpWidget(host(ownB));
-      await _until(
-        tester,
-        () => find
-            .byKey(const ValueKey('timeweb-open-profile-editor'))
-            .evaluate()
-            .isNotEmpty,
-      );
+      await _editorReady(tester);
       await _tap(tester, 'timeweb-profile-settings');
       await _tap(tester, 'timeweb-settings-logout');
       await _until(tester, () => !app.session.state.authenticated);

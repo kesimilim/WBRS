@@ -11,6 +11,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
+import 'support/timeweb_profile_photos_fixtures.dart';
 
 Map<String, dynamic> _page(List<Object?> rows, [String? cursor]) => {
   'kind': 'canonical-admin-users',
@@ -89,6 +90,9 @@ void main() {
         if (request.url.path == '/v1/runtime/me/full-profile') {
           return peopleReply(peopleOwn('A'));
         }
+        if (request.url.path.endsWith('/photos')) {
+          return peopleReply(photoPage('A', []));
+        }
         expect(request.url.path, '/v1/runtime/admin/users');
         if (request.url.queryParameters['limit'] == '1') {
           probes++;
@@ -150,6 +154,33 @@ void main() {
         ),
         home: TimewebOwnProfilePage(runtime: runtime, initialProfile: own),
       );
+      final settings = find.byKey(const ValueKey('timeweb-profile-settings'));
+      final logout = find.byKey(const ValueKey('timeweb-profile-logout'));
+      Future<void> openAdminDrawer() async {
+        await tester.tap(find.byIcon(Icons.menu).hitTestable());
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        final scroll = find.descendant(
+          of: find.byKey(const ValueKey('timeweb-profile-drawer-scroll')),
+          matching: find.byType(Scrollable),
+        );
+        await tester.scrollUntilVisible(logout, 160, scrollable: scroll);
+        await Scrollable.ensureVisible(tester.element(logout), alignment: .75);
+        await tester.pump(const Duration(milliseconds: 350));
+        for (final item in [_entry(), settings, logout]) {
+          expect(item.hitTestable(), findsOneWidget);
+          expect(tester.widget<InkWell>(item).onTap, isNotNull);
+        }
+        expect(
+          tester.getTopLeft(_entry()).dy,
+          lessThan(tester.getTopLeft(settings).dy),
+        );
+        expect(
+          tester.getTopLeft(settings).dy,
+          lessThan(tester.getTopLeft(logout).dy),
+        );
+      }
+
       try {
         await tester.binding.setSurfaceSize(const Size(360, 800));
         await tester.runAsync(() async {
@@ -157,9 +188,43 @@ void main() {
           own = await runtime.readCurrentOwnProfile();
         });
         await tester.pumpWidget(app());
-        await _until(tester, () => _entry().evaluate().isNotEmpty);
+        await _until(tester, () => probes == 1);
+        // Dispatch alone does not mean the authenticated probe has completed.
+        // This awaits the same bounded epoch probe, without issuing another GET.
+        bool? allowed;
+        final probe = runtime.probeAdminUsersAccess().then((value) {
+          allowed = value;
+        });
+        await _until(tester, () => allowed != null);
+        await probe;
+        expect(allowed, isTrue);
         expect(probes, 1);
         expect(find.text('Never render probe'), findsNothing);
+        final profileState = tester.state(find.byType(TimewebOwnProfilePage));
+        final scaffold = find
+            .descendant(
+              of: find.byType(TimewebOwnProfilePage),
+              matching: find.byType(Scaffold),
+            )
+            .first;
+        expect(navigator.currentState!.canPop(), isFalse);
+        await openAdminDrawer();
+        expect(tester.state<ScaffoldState>(scaffold).isDrawerOpen, isTrue);
+        expect(reads, 0);
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        expect(tester.state<ScaffoldState>(scaffold).isDrawerOpen, isFalse);
+        expect(
+          tester.state(find.byType(TimewebOwnProfilePage)),
+          same(profileState),
+        );
+        expect(navigator.currentState!.canPop(), isFalse);
+        expect(runtime.session.currentUid, 'A');
+        expect(runtime.session.state.authenticated, isTrue);
+        expect(probes, 1);
+        expect(reads, 0);
+        await openAdminDrawer();
         await _tap(tester, _entry());
         await _until(
           tester,
@@ -233,7 +298,14 @@ void main() {
         expect(runtime.session.state.authenticated, isTrue);
         expect(tester.takeException(), isNull);
         navigator.currentState!.pop();
-        await tester.pumpAndSettle();
+        // Returning resumes a fresh photo read with a real transport deadline.
+        // Complete the route animation without waiting on that unrelated read.
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await _until(
+          tester,
+          () => find.byType(TimewebAdminUsersPage).evaluate().isEmpty,
+        );
         expect(_entry(), findsNothing);
         expect(
           await tester.runAsync(() => runtime.probeAdminUsersAccess()),

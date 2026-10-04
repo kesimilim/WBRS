@@ -1,6 +1,7 @@
 """MySQL-shaped transaction fixtures: no TCP, cloud, credentials or real users."""
 import base64
 import copy
+from contextlib import nullcontext
 from dataclasses import replace
 import json
 import re
@@ -221,6 +222,200 @@ def store_for(db, **kwargs):
 
 
 class MutationTests(unittest.TestCase):
+    def test_seven_fresh_read_proofs_reuse_one_tls_connection(self):
+        db = FakeDatabase(); db.before_connect = lambda: time.sleep(0.04)
+        store = store_for(db); self.addCleanup(store.close)
+        observed = []; begin = time.monotonic()
+        for _ in range(7):
+            observed.append(store.read_authenticated(db.identity,
+                lambda cursor, _, uid: {"uid": uid, "connection": id(cursor.c)}, access_token=db.access))
+        elapsed = time.monotonic() - begin
+        self.assertEqual(len(db.connections), 1)
+        self.assertEqual(len({value["connection"] for value in observed}), 1)
+        self.assertTrue(all(value["uid"] == "actor" for value in observed))
+        self.assertEqual(sum("FROM clrs_staging.device_sessions AS s" in sql for sql, _ in db.calls), 14)
+        for sql in ("SHOW GRANTS", "SELECT DATABASE(), VERSION()", "SHOW SESSION STATUS LIKE 'Ssl_cipher'"):
+            self.assertEqual(sum(statement == sql for statement, _ in db.calls), 7)
+        self.assertEqual(sum(sql.startswith("SET TRANSACTION ") for sql, _ in db.calls), 7)
+        self.assertEqual(db.connections[0].rollbacks, 14)  # Seven txn rollbacks plus seven cleanup rollbacks.
+        self.assertEqual(db.connections[0].commits, 0)
+        self.assertLess(elapsed, 0.20)  # Seven delayed TLS opens alone would take 0.28s.
+
+    def test_reused_connection_has_fresh_actor_and_revocation_and_old_abort_is_detached(self):
+        class Stream:
+            def __init__(self): self.shutdowns = self.closes = 0
+            def shutdown(self, _): self.shutdowns += 1
+            def close(self): self.closes += 1
+        db = FakeDatabase(); store = store_for(db); self.addCleanup(store.close)
+        owners = []; stream = Stream()
+        def first(cursor, _, uid):
+            cursor.c._sock = stream; owners.extend(store._active)
+            return {"uid": uid}
+        self.assertEqual(store.read_authenticated(db.identity, first, access_token=db.access), {"uid": "actor"})
+        self.assertIsNone(owners[0].connection)
+        session, access = db.tokens.mint("peer", "device-B", 0, NOW)
+        db.state["sessions"][session["session_id"]] = session
+        peer = NativeIdentity("peer", True, session["session_id"], NOW, NOW + 900)
+        def second(_, __, uid):
+            owners[0].abort()
+            self.assertEqual((stream.shutdowns, stream.closes), (0, 0))
+            return {"uid": uid}
+        self.assertEqual(store.read_authenticated(peer, second, access_token=access["accessToken"]), {"uid": "peer"})
+        self.assertEqual(len(db.connections), 1)
+        db.state["accounts"]["peer"][0] = 1; actions = []
+        with self.assertRaises(RuntimeRejected):
+            store.read_authenticated(peer, lambda *_: actions.append(True), access_token=access["accessToken"])
+        self.assertFalse(actions); self.assertTrue(db.connections[0].closed)
+        self.assertFalse(store._read_idle)
+
+    def test_stale_read_or_cleanup_failure_never_reconnects_or_reuses(self):
+        for failure in ("sql", "callback", "rollback", "cursor_close"):
+            with self.subTest(failure=failure):
+                db = FakeDatabase(); store = store_for(db); self.addCleanup(store.close)
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+                if failure == "sql": db.fail_contains = "SHOW GRANTS"
+                if failure == "rollback": db.rollback_error = True
+                def action(*_):
+                    if failure == "callback": raise OSError("synthetic callback failure")
+                    return {"ok": True}
+                cleanup = patch.object(FakeCursor, "__exit__", side_effect=OSError("synthetic close failure")) if failure == "cursor_close" else nullcontext()
+                with cleanup:
+                    with self.assertRaises(RuntimeUnavailable):
+                        store.read_authenticated(db.identity, action, access_token=db.access)
+                self.assertEqual(len(db.connections), 1)
+                self.assertTrue(db.connections[0].closed); self.assertFalse(store._read_idle)
+                db.fail_contains = None; db.rollback_error = False
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+                self.assertEqual(len(db.connections), 2)
+
+    def test_canceled_reused_read_holds_admission_until_real_worker_settles(self):
+        db = FakeDatabase(); store = store_for(db, request_seconds=0.04, concurrency=1)
+        self.addCleanup(store.close)
+        store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+        entered = threading.Event(); release = threading.Event()
+        def held(*_):
+            entered.set(); release.wait(1)
+            return {"ok": True}
+        try:
+            with self.assertRaises(RuntimeUnavailable):
+                store.read_authenticated(db.identity, held, access_token=db.access)
+            self.assertTrue(entered.is_set()); self.assertTrue(store._active)
+            with self.assertRaises(RuntimeUnavailable):
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+            self.assertEqual(len(db.connections), 1); self.assertFalse(store._read_idle)
+            self.assertFalse(store._connection_slots.acquire(blocking=False))
+        finally: release.set()
+        limit = time.monotonic() + 1
+        while store._active and time.monotonic() < limit: time.sleep(0.001)
+        self.assertFalse(store._active); self.assertTrue(db.connections[0].closed)
+        store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+        self.assertEqual(len(db.connections), 2)
+
+    def test_four_owned_connections_and_fresh_write_keep_physical_bound(self):
+        class ParallelRead(FakeConnection):
+            def begin(self): self.held = True; self.state = copy.deepcopy(self.db.state)
+            def rollback(self): self.rollbacks += 1; self.held = False
+        db = FakeDatabase(); high_water = []; lock = threading.Lock()
+        def connect(**configuration):
+            self.assertEqual(configuration["ssl"].verify_mode, ssl.CERT_REQUIRED)
+            connection = ParallelRead(db)
+            with lock:
+                db.connections.append(connection)
+                high_water.append(sum(not value.closed for value in db.connections))
+            return connection
+        store = RuntimeMutationStore(ENV, db.tokens, connect=connect, clock=lambda: NOW)
+        self.addCleanup(store.close)
+        store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+        entered = []; ready = threading.Event(); release = threading.Event(); results = []; errors = []
+        def action(*_):
+            with lock:
+                entered.append(True)
+                if len(entered) == 4: ready.set()
+            release.wait(1); return {"ok": True}
+        def read():
+            try: results.append(store.read_authenticated(db.identity, action, access_token=db.access))
+            except Exception as error: errors.append(error)
+        threads = [threading.Thread(target=read) for _ in range(4)]
+        try:
+            for thread in threads: thread.start()
+            self.assertTrue(ready.wait(1))
+            with self.assertRaises(RuntimeUnavailable):
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+            self.assertEqual(len(db.connections), 4); self.assertLessEqual(max(high_water), 4)
+        finally:
+            release.set()
+            for thread in threads: thread.join(1)
+        self.assertFalse(errors); self.assertEqual(len(results), 4)
+        self.assertEqual(len(store._read_idle), 4)
+        def write_connect(**configuration):
+            connection = db.connect(**configuration)
+            high_water.append(sum(not value.closed for value in db.connections))
+            return connection
+        store._connect = write_connect
+        retiring = threading.Event(); retire_release = threading.Event(); write_results = []; write_errors = []
+        for connection in db.connections:
+            actual_close = connection.close
+            def delayed_close(actual_close=actual_close):
+                retiring.set(); retire_release.wait(1); actual_close()
+            connection.close = delayed_close
+        def write():
+            try: write_results.append(store._run(db.identity, db.access, lambda *_: {"ok": True}))
+            except Exception as error: write_errors.append(error)
+        writer = threading.Thread(target=write)
+        try:
+            writer.start(); self.assertTrue(retiring.wait(1))
+            # Four old sockets are still physically owned although their idle
+            # entries were removed. Other workers cannot open a fifth socket.
+            for _ in range(3):
+                with self.assertRaises(RuntimeUnavailable):
+                    store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+            self.assertEqual(len(db.connections), 4)
+            self.assertEqual(sum(not value.closed for value in db.connections), 4)
+        finally:
+            retire_release.set(); writer.join(1)
+        self.assertFalse(write_errors); self.assertEqual(write_results, [{"ok": True}])
+        self.assertLessEqual(max(high_water), 4)
+        self.assertEqual(len(db.connections), 5)
+        self.assertTrue(all(value.closed for value in db.connections))
+        self.assertFalse(store._read_idle); self.assertEqual(db.connections[-1].commits, 1)
+
+    def test_idle_expiry_configuration_and_ca_change_retire_read_connection(self):
+        for change in ("expiry", "credentials", "ca"):
+            with self.subTest(change=change):
+                db = FakeDatabase(); now = [1.0]
+                store = store_for(db, monotonic=lambda: now[0]); self.addCleanup(store.close)
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+                if change == "expiry": now[0] += 6
+                elif change == "credentials":
+                    store._env["CLRS_RUNTIME_DB_URL"] = ENV["CLRS_RUNTIME_DB_URL"].replace("fixture:fixture@", "fixture:different@")
+                else:
+                    original = store._configuration
+                    def configuration():
+                        value = original(); value["ssl"] = ssl.create_default_context()
+                        return value
+                    store._configuration = configuration
+                store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+                self.assertEqual(len(db.connections), 2); self.assertTrue(db.connections[0].closed)
+        self.assertEqual(len(store._read_idle), 1)
+        store.close(); self.assertTrue(db.connections[-1].closed); self.assertFalse(store._read_idle)
+        with self.assertRaises(RuntimeUnavailable):
+            store.read_authenticated(db.identity, lambda *_: {"ok": True}, access_token=db.access)
+
+    def test_configuration_change_and_store_close_during_read_do_not_publish_idle(self):
+        for change in ("configuration", "close"):
+            with self.subTest(change=change):
+                db = FakeDatabase(); store = store_for(db); self.addCleanup(store.close)
+                def action(*_):
+                    if change == "close": store.close()
+                    else: store._env["CLRS_RUNTIME_DB_URL"] = ENV["CLRS_RUNTIME_DB_URL"].replace("fixture:fixture@", "fixture:different@")
+                    return {"ok": True}
+                if change == "close":
+                    with self.assertRaises(RuntimeUnavailable):
+                        store.read_authenticated(db.identity, action, access_token=db.access)
+                else: store.read_authenticated(db.identity, action, access_token=db.access)
+                self.assertEqual(len(db.connections), 1)
+                self.assertTrue(db.connections[0].closed); self.assertFalse(store._read_idle)
+
     def test_transaction_setup_preserves_semantics_with_two_roundtrips(self):
         for readonly in (True, False):
             with self.subTest(readonly=readonly):

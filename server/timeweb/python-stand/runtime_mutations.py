@@ -14,6 +14,7 @@ import os
 import re
 import secrets
 import socket
+import ssl
 import threading
 import time
 
@@ -152,7 +153,9 @@ class RuntimeMutationStore:
         self._env = dict(env); self.tokens = tokens; self._connect = connect
         self._clock = clock; self._monotonic = monotonic; self._seconds = request_seconds
         self._slots = threading.BoundedSemaphore(concurrency)
+        self._connection_slots = threading.BoundedSemaphore(concurrency)
         self._lock = threading.Lock(); self._active = set(); self._closed = False
+        self._read_idle = []
         self._replay_guards = {}
 
     @classmethod
@@ -182,6 +185,68 @@ class RuntimeMutationStore:
         config.update(connect_timeout=2, read_timeout=2, write_timeout=2,
                       autocommit=False, charset="utf8mb4")
         return config
+
+    @staticmethod
+    def _connection_key(configuration):
+        context = configuration["ssl"]
+        if (not isinstance(context, ssl.SSLContext) or not context.check_hostname
+                or context.verify_mode != ssl.CERT_REQUIRED):
+            raise RuntimeUnavailable()
+        # SSLContext is recreated for every request. Compare its verified TLS
+        # semantics and CA bytes, never its identity or a cached access proof.
+        return (tuple(sorted((name, value) for name, value in configuration.items() if name != "ssl")),
+            context.protocol, context.verify_mode, context.verify_flags, context.check_hostname,
+            context.minimum_version, context.maximum_version, context.options,
+            tuple((item["name"], item["protocol"], item["strength_bits"]) for item in context.get_ciphers()),
+            tuple(sorted(hashlib.sha256(cert).digest() for cert in context.get_ca_certs(binary_form=True))))
+
+    def _discard_read(self, connection):
+        discarded = False
+        stream = getattr(connection, "_sock", None)
+        if stream is not None:
+            try: stream.shutdown(socket.SHUT_RDWR)
+            except Exception: pass
+            try: stream.close(); discarded = True
+            except Exception: pass
+        try: connection.close(); discarded = True
+        except Exception: pass
+        # An uncertain physical close is quarantined, never reused or counted
+        # as a free connection slot merely because an idle entry was removed.
+        if discarded: self._connection_slots.release()
+
+    def _take_read_connection(self, key, readonly):
+        retired = []; connection = None
+        with self._lock:
+            if self._closed: raise RuntimeUnavailable()
+            if readonly:
+                while self._read_idle:
+                    candidate, previous_key, returned = self._read_idle.pop()
+                    if (previous_key == key and 0 <= self._monotonic() - returned <= 5
+                            and not getattr(candidate, "closed", False)
+                            and getattr(candidate, "open", True)):
+                        connection = candidate; break
+                    retired.append(candidate)
+            else:
+                # Writes always open their own connection. Retiring only idle
+                # reads keeps the existing bound without touching active owners.
+                retired = [item[0] for item in self._read_idle]; self._read_idle.clear()
+        for candidate in retired: self._discard_read(candidate)
+        return connection
+
+    def _return_read_connection(self, work, connection, key, deadline, clean):
+        if clean:
+            try: clean = self._connection_key(self._configuration()) == key
+            except Exception: clean = False
+        with work.lock:
+            # Detach BEFORE publishing idle: a late abort of this work can
+            # never shut down a connection already borrowed by another actor.
+            work.connection = None
+            with self._lock:
+                if (clean and not work.cancel.is_set() and not self._closed
+                        and self._monotonic() < deadline):
+                    self._read_idle.append((connection, key, self._monotonic()))
+                    return
+        self._discard_read(connection)
 
     def register_replay_guard(self, operation, callback, *, response_guard=False, operation_id_guard=False):
         if operation not in OPERATIONS or not callable(callback) or operation in self._replay_guards:
@@ -257,6 +322,7 @@ class RuntimeMutationStore:
 
     def _run(self, identity, access_token, action, *, readonly=False):
         configuration = self._configuration()
+        connection_key = self._connection_key(configuration) if readonly else None
         if type(identity) is not NativeIdentity:
             raise RuntimeRejected()
         try:
@@ -272,13 +338,18 @@ class RuntimeMutationStore:
         deadline = self._monotonic() + self._seconds
 
         def worker():
-            connection = None; commit_started = False
+            connection = None; commit_started = False; clean_read = False; connection_reserved = False
             try:
+                connection = self._take_read_connection(connection_key, readonly)
                 connect = self._connect
                 if connect is None:
                     import pymysql
                     connect = pymysql.connect
-                connection = connect(**configuration)
+                if connection is None:
+                    if not self._connection_slots.acquire(blocking=False): raise RuntimeUnavailable()
+                    connection_reserved = True
+                    connection = connect(**configuration)
+                else: connection_reserved = True  # Idle connections retain their physical reservation.
                 with work.lock:
                     work.connection = connection
                 statements = 0
@@ -333,21 +404,35 @@ class RuntimeMutationStore:
                     if work.cancel.is_set() or self._monotonic() >= deadline:
                         raise RuntimeCommitUnknown() if commit_started else RuntimeUnavailable()
                     work.value = value
+                clean_read = readonly
             except (RuntimeInvalidRequest, RuntimeRejected, RuntimeConflict, RuntimeUnavailable) as error:
                 work.error = error
             except Exception:
                 work.error = RuntimeCommitUnknown() if commit_started else RuntimeUnavailable()
             finally:
                 if connection is not None:
+                    rollback_ok = False
                     if not commit_started:
                         try:
                             connection.rollback()
+                            rollback_ok = True
                         except Exception:
                             pass
-                    try:
-                        connection.close()
-                    except Exception:
-                        pass
+                    if readonly:
+                        self._return_read_connection(work, connection, connection_key, deadline,
+                            clean_read and rollback_ok and work.error is None)
+                        connection_reserved = False  # Returned idle or discarded, never release twice.
+                    else:
+                        try:
+                            connection.close()
+                        except Exception:
+                            self._discard_read(connection)
+                        else: self._connection_slots.release()
+                        connection_reserved = False
+                if connection_reserved:
+                    # A late/failed connect owns admission until its real worker
+                    # returns, even if no connection object reached the caller.
+                    self._connection_slots.release()
                 with self._lock:
                     self._active.discard(work)
                 self._slots.release(); work.done.set()
@@ -491,5 +576,7 @@ class RuntimeMutationStore:
     def close(self):
         with self._lock:
             self._closed = True; active = list(self._active)
+            idle = [item[0] for item in self._read_idle]; self._read_idle.clear()
         for work in active:
             work.abort()
+        for connection in idle: self._discard_read(connection)

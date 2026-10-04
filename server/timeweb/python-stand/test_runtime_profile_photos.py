@@ -160,7 +160,9 @@ class CurrentProfilePhotoTests(unittest.TestCase):
             self.assertEqual(BODY, b"".join(lease.iter_bytes()))
             self.assertEqual("private, no-store", lease.headers["Cache-Control"])
         self.assertEqual(before, self.db.state)
-        self.assertTrue(all(c.readonly and c.closed and c.rollbacks and c.commits == 0 for c in self.db.connections))
+        self.assertTrue(all(c.readonly and c.rollbacks and c.commits == 0 for c in self.db.connections))
+        self.store.close()
+        self.assertTrue(all(c.closed for c in self.db.connections))
         self.assertTrue(all(not sql.startswith(("INSERT", "UPDATE", "DELETE")) for sql, _ in self.db.calls))
         self.assertEqual([], os.listdir(self.temp.name))
 
@@ -183,13 +185,13 @@ class CurrentProfilePhotoTests(unittest.TestCase):
         self.assertEqual([], self.page()["items"])
 
     def test_three_current_proofs_before_fetch_after_spool_before_first_byte(self):
-        reference = self.reference(); prior = len(self.db.connections)
+        reference = self.reference(); prior = sum(sql == "SHOW GRANTS" for sql, _ in self.db.calls)
         lease = self.open(reference)
-        self.assertEqual(prior + 2, len(self.db.connections))
+        self.assertEqual(prior + 2, sum(sql == "SHOW GRANTS" for sql, _ in self.db.calls))
         self.db.state["accounts"]["peer"][0] = 1
         with self.assertRaises(photos.RuntimeProfilePhotoNotFound): next(lease.iter_bytes())
         self.assertTrue(lease._closed)
-        self.assertEqual(prior + 3, len(self.db.connections))
+        self.assertEqual(prior + 3, sum(sql == "SHOW GRANTS" for sql, _ in self.db.calls))
 
     def test_after_download_target_or_relation_change_returns_no_lease(self):
         reference = self.reference()

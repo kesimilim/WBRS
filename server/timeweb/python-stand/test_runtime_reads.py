@@ -200,6 +200,7 @@ class RuntimeReadTests(unittest.TestCase):
         self.messages(); self.reads.own_chats(self.db.identity, access_token=self.db.access)
         self.reads.own_events(self.db.identity, access_token=self.db.access)
         self.assertEqual(sum(c.commits for c in self.db.connections), commits)
+        self.store.close()
         self.assertTrue(all(c.closed for c in self.db.connections))
 
 

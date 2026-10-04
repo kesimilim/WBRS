@@ -180,7 +180,8 @@ class ProfilePhotoHttpTests(unittest.TestCase):
         started = []
         def start(status, headers):
             started.append((status, dict(headers)))
-            self.assertEqual(4, len(self.db.connections))  # descriptor + three content proofs
+            self.assertEqual(4, sum(sql == "SHOW GRANTS" for sql, _ in self.db.calls))  # Descriptor + three fresh content proofs.
+            self.assertEqual(8, sum("FROM clrs_staging.device_sessions AS s" in sql for sql, _ in self.db.calls))
         body = reply.respond(start)
         blocks = list(body); body.close()
         self.assertEqual(BODY, b"".join(blocks)); self.assertTrue(all(0 < len(x) <= 65_536 for x in blocks))

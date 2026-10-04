@@ -507,7 +507,7 @@ Future<_Reply> _peopleAttempt(_PeopleFlight flight, String bearer) async {
     } finally {
       flight.aborts.remove(abort);
       flight.cancellations.remove(cancelReader);
-      owner._inflightRequests--;
+      owner._releaseRequestSlot();
     }
   }
 }

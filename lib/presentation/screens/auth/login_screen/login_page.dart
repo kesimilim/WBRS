@@ -49,12 +49,12 @@ class _LoginPageState extends State<LoginPage> {
   Future<AppSessionResult>? _nativeAttempt;
   int? _nativeEpoch;
   bool _nativeUnknown = false;
+  bool get _nativeRuntimeAvailable =>
+      _runtime != null &&
+      _runtime!.session.state.phase != AppSessionPhase.stopped &&
+      _runtime!.session.state.phase != AppSessionPhase.closed;
   bool get _nativeAvailable =>
-      !_native ||
-      (_runtime != null &&
-          !_nativeUnknown &&
-          _runtime!.session.state.phase != AppSessionPhase.stopped &&
-          _runtime!.session.state.phase != AppSessionPhase.closed);
+      !_native || (!_nativeUnknown && _nativeRuntimeAvailable);
   String get _rememberKey => _native ? 'timeweb_remember_me' : 'remember_me';
   String get _emailKey => _native ? 'timeweb_email' : 'email';
 
@@ -93,6 +93,13 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(children: [
             if (!_nativeAvailable)
               Text(context.tr('Сервис пока недоступен. Попробуйте позднее.')),
+            if (_nativeUnknown)
+              TextButton(
+                onPressed: _isLoading || !_nativeRuntimeAvailable
+                    ? null
+                    : _beginNewNativeLogin,
+                child: Text(context.tr('Начать новый вход')),
+              ),
             TextFormField(
               controller: _emailController,
               readOnly: _authPending || _isLoading,
@@ -378,6 +385,24 @@ class _LoginPageState extends State<LoginPage> {
       _ => 'Сервис пока недоступен. Попробуйте позднее.',
     };
     showSnackbar(context, LrsTheme.danger, context.tr(message));
+  }
+
+  void _beginNewNativeLogin() {
+    if (!_nativeUnknown ||
+        !_nativeRuntimeAvailable ||
+        _isLoading ||
+        _authPending ||
+        _nativeAttempt != null ||
+        ModalRoute.of(context)?.isCurrent == false) {
+      return;
+    }
+    // This only prepares a new user intent. The lost POST remains unknown;
+    // credentials must be entered again and sent by a separate explicit login.
+    setState(() {
+      _nativeUnknown = false;
+      _nativeEpoch = null;
+      _passwordController.clear();
+    });
   }
 
   Future<void> _handleRememberMe(bool value) async {

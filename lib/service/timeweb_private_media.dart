@@ -367,7 +367,7 @@ Future<_PrivateMediaReply> _privateMediaAttempt(
     } finally {
       flight.aborts.remove(trigger);
       flight.cancellations.remove(cancelReader);
-      owner._inflightRequests--;
+      owner._releaseRequestSlot();
     }
   }
 }

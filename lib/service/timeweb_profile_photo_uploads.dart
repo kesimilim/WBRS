@@ -663,7 +663,7 @@ final class _PhotoPutFlight {
     } finally {
       abort();
       await cancel();
-      owner._inflightRequests--;
+      owner._releaseRequestSlot();
       owner._profilePhotoUploadFlights.remove(this);
       settled.complete();
     }

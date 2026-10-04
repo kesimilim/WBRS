@@ -318,8 +318,8 @@ class NativeSessionStore:
                 tls = cursor.fetchone()
                 if not tls or not tls[1]:
                     raise SessionUnavailable()
-                self._execute(cursor, "SET SESSION time_zone = '+00:00'", deadline=deadline)
-                self._execute(cursor, "SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'", deadline=deadline)
+                self._execute(cursor, "SET SESSION time_zone = '+00:00', "
+                              "sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'", deadline=deadline)
                 self._execute(cursor, "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE", deadline=deadline)
                 connection.begin()
                 result = action(cursor)

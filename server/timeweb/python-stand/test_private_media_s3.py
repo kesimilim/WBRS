@@ -94,9 +94,13 @@ class PrivatePortTests(unittest.TestCase):
         self.assertEqual(self.port.body, self.sink.read())
         self.assertEqual(len(self.port.body), result["size"])
         self.assertEqual(2, len(self.probes))
-        self.assertEqual(["GetBucketAcl", "GetBucketPolicy", "GetObjectAcl", "GetObject", "GetBucketAcl", "GetBucketPolicy", "GetObjectAcl"], [call[0] for call in self.port.calls])
+        operations = [call[0] for call in self.port.calls]
+        original = operations.index("GetObject")
+        self.assertEqual(7, len(operations))
+        self.assertCountEqual(["GetBucketAcl", "GetBucketPolicy", "GetObjectAcl"], operations[:original])
+        self.assertCountEqual(["GetBucketAcl", "GetBucketPolicy", "GetObjectAcl"], operations[original + 1:])
         self.assertTrue(all(reply.closed for reply in self.port.replies))
-        body_reply = self.port.replies[3]
+        body_reply = next(reply for reply in self.port.replies if reply.headers[1][1] == "image/jpeg")
         self.assertTrue(all(size <= CHUNK_BYTES for size in body_reply.read_sizes))
         self.assertEqual("private, no-store", result["headers"]["Cache-Control"])
         self.assertEqual("nosniff", result["headers"]["X-Content-Type-Options"])
@@ -131,7 +135,7 @@ class PrivatePortTests(unittest.TestCase):
             self.state_override = state
             with self.assertRaises(PrivateMediaUnavailable):
                 self.fetch()
-        self.assertEqual([], self.port.calls)
+        self.assertFalse(any(call[0] == "GetObject" for call in self.port.calls))
 
     def test_acl_owner_only_for_bucket_and_object_with_no_entities(self):
         invalid = [acl("other-owner"), acl(grant_owner="other-owner"), acl(permission="READ"),
@@ -200,10 +204,142 @@ class PrivatePortTests(unittest.TestCase):
         self.assertEqual(b"", self.sink.getvalue())
 
     def test_privacy_control_duration_cannot_make_freshness_stale(self):
-        self.port.override = lambda op: Reply(acl(), hook=lambda: setattr(self, "now", 6)) if op == "GetBucketAcl" else None
+        state_read = threading.Event()
+        original_state = self.media._state
+        def state(*args):
+            result = original_state(*args)
+            state_read.set()
+            return result
+        self.media._state = state
+        def delayed_acl():
+            self.assertTrue(state_read.wait(.5))
+            self.now = 6
+        self.port.override = lambda op: Reply(acl(), hook=delayed_acl) if op == "GetBucketAcl" else None
         with self.assertRaises(PrivateMediaUnavailable):
             self.fetch()
         self.assertFalse(any(call[0] == "GetObject" for call in self.port.calls))
+
+    def test_controls_overlap_but_original_and_acceptance_wait_for_both_lanes(self):
+        before = threading.Event(); after = threading.Event()
+        before_bucket = threading.Event(); after_bucket = threading.Event()
+        before_object = threading.Event(); after_object = threading.Event()
+        finished = threading.Event(); results = []; failures = []; bucket_reads = [0]; object_reads = [0]
+        def override(operation):
+            if operation == "GetBucketAcl":
+                bucket_reads[0] += 1
+                gate = before if bucket_reads[0] == 1 else after
+                entered = before_bucket if bucket_reads[0] == 1 else after_bucket
+                def held():
+                    entered.set(); gate.wait(1)
+                return Reply(acl(), hook=held)
+            if operation == "GetObjectAcl":
+                object_reads[0] += 1
+                (before_object if object_reads[0] == 1 else after_object).set()
+            return None
+        self.port.override = override
+        def fetch():
+            try: results.append(self.fetch())
+            except Exception as error: failures.append(error)
+            finally: finished.set()
+        caller = threading.Thread(target=fetch, daemon=True); caller.start()
+        try:
+            self.assertTrue(before_object.wait(.5), "Object ACL must overlap the held bucket ACL")
+            self.assertTrue(before_bucket.wait(.5))
+            self.assertFalse(any(call[0] == "GetObject" for call in self.port.calls))
+            self.assertFalse(finished.is_set())
+            before.set()
+            self.assertTrue(after_object.wait(.5), "Post-download object ACL must overlap the held bucket ACL")
+            self.assertTrue(after_bucket.wait(.5))
+            self.assertEqual(1, sum(call[0] == "GetObject" for call in self.port.calls))
+            self.assertFalse(finished.is_set(), "Unfinished post-download privacy never accepts bytes")
+            self.assertEqual([], results)
+            after.set(); self.assertTrue(finished.wait(.5))
+            self.assertEqual([], failures)
+            self.assertEqual(BODY, self.sink.getvalue())
+            self.assertEqual(2, len(self.probes))
+            self.assertEqual(7, len(self.port.calls))
+        finally:
+            before.set(); after.set(); caller.join(1)
+
+    def test_request_cancel_closes_parallel_controls_before_or_after_download(self):
+        for cancelled_phase in [1, 2]:
+            self.cancel = threading.Event(); self.sink = io.BytesIO()
+            self.port = Port(); self.media._transport = self.port
+            entered = threading.Event(); finished = threading.Event(); failures = []; count = [0]
+            def override(operation):
+                if operation == "GetBucketAcl":
+                    count[0] += 1
+                    if count[0] == cancelled_phase:
+                        def held():
+                            entered.set(); self.cancel.wait(1)
+                        return Reply(acl(), hook=held)
+                return None
+            self.port.override = override
+            def fetch():
+                try: self.fetch()
+                except Exception as error: failures.append(error)
+                finally: finished.set()
+            caller = threading.Thread(target=fetch, daemon=True); caller.start()
+            try:
+                self.assertTrue(entered.wait(.5))
+                self.cancel.set(); self.assertTrue(finished.wait(.5))
+                self.assertEqual(1, len(failures))
+                self.assertIs(type(failures[0]), PrivateMediaUnavailable)
+                self.assertEqual(b"", self.sink.getvalue())
+                self.assertEqual(cancelled_phase - 1, sum(call[0] == "GetObject" for call in self.port.calls))
+            finally:
+                self.cancel.set(); caller.join(1)
+
+    def test_changed_object_acl_after_download_erases_spool_without_acceptance(self):
+        downloaded = [False]
+        def override(operation):
+            if operation == "GetObject": downloaded[0] = True
+            if operation == "GetObjectAcl" and downloaded[0]: return Reply(acl("different-owner"))
+            return None
+        self.port.override = override
+        with self.assertRaises(PrivateMediaUnavailable): self.fetch()
+        self.assertEqual(b"", self.sink.getvalue())
+        self.assertEqual(2, len(self.probes))
+        self.assertEqual(1, sum(call[0] == "GetObject" for call in self.port.calls))
+
+    def test_timed_out_controls_keep_two_real_worker_admissions_until_settled(self):
+        release = threading.Event(); both = threading.Event(); lock = threading.Lock()
+        started = [0]; maximum = [0]; active = [0]; failures = []; callers = []
+        class HeldPort(Port):
+            def open(port, operation, bucket, key, deadline, cancel):
+                if operation == "GetBucketAcl":
+                    with lock:
+                        started[0] += 1; active[0] += 1
+                        maximum[0] = max(maximum[0], active[0])
+                        if started[0] == 2: both.set()
+                    try: release.wait(1)
+                    finally:
+                        with lock: active[0] -= 1
+                return super().open(operation, bucket, key, deadline, cancel)
+        def media(port):
+            return PrivateMediaS3(BUCKET, OWNER, port,
+                lambda bucket, deadline, cancel: {"bucket": bucket, "type": "private", "checked_at": time.monotonic()})
+        def fetch(port):
+            try: media(port).get_verified_to_file(record(), io.BytesIO(), time.monotonic() + .08, threading.Event())
+            except Exception as error: failures.append(error)
+        try:
+            for _ in range(2):
+                caller = threading.Thread(target=fetch, args=(HeldPort(),), daemon=True)
+                callers.append(caller); caller.start()
+            self.assertTrue(both.wait(.5))
+            for caller in callers: caller.join(.5)
+            self.assertTrue(all(not caller.is_alive() for caller in callers))
+            self.assertEqual(2, len(failures))
+            self.assertTrue(all(type(error) is PrivateMediaUnavailable for error in failures))
+            extra = Port()
+            with self.assertRaises(PrivateMediaUnavailable):
+                media(extra).get_verified_to_file(record(), io.BytesIO(), time.monotonic() + .5, threading.Event())
+            self.assertEqual([], extra.calls, "Timeout cannot grow the queue while two actual controls remain held")
+            self.assertEqual(2, maximum[0])
+        finally:
+            release.set()
+            for caller in callers: caller.join(1)
+            media_port._PRIVACY_EXECUTOR.submit(lambda: None).result(timeout=1)
 
     def test_short_writes_supported_and_failed_sink_never_verified(self):
         class ShortSink(io.BytesIO):

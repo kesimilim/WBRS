@@ -13,7 +13,7 @@ import 'package:wbrs/app/pages/policy/confidecialnost.dart';
 import 'package:wbrs/service/auth_service.dart';
 import 'package:wbrs/service/app_backend.dart';
 import 'package:wbrs/service/timeweb_auth_lifecycle.dart';
-import 'package:wbrs/shared/timeweb_email_lifecycle_form.dart';
+import 'package:wbrs/shared/timeweb_registration_form.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
@@ -60,10 +60,10 @@ class _RegisterPageState extends State<RegisterPage> {
           _lifecycle =
               widget.timewebLifecycle ??
               widget.nativeRuntime?.createEmailLifecycleClient(
-                TimewebLifecyclePurpose.registerEmail,
+                TimewebLifecyclePurpose.registration,
               ) ??
               AppBackend.createEmailLifecycleClient(
-                TimewebLifecyclePurpose.registerEmail,
+                TimewebLifecyclePurpose.registration,
               );
         } catch (_) {
           /* Native configuration failure must not create a Firebase account. */
@@ -91,9 +91,15 @@ class _RegisterPageState extends State<RegisterPage> {
       ? ClrsAuthShell(
           child: Column(
             children: [
-              TimewebEmailLifecycleForm(
+              TimewebRegistrationForm(
                 client: _lifecycle,
-                purpose: TimewebLifecyclePurpose.registerEmail,
+                onLogin: (email) => nextScreenReplace(
+                  context,
+                  LoginPage(
+                    initialEmail: email,
+                    nativeRuntime: widget.nativeRuntime,
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
               Text(

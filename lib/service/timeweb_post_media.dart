@@ -300,7 +300,7 @@ final class TimewebPostMediaReader {
       } finally {
         f.aborts.remove(abort);
         f.cancellations.remove(cancel);
-        _owner._inflightRequests--;
+        _owner._releaseRequestSlot();
       }
     }
   }

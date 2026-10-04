@@ -592,7 +592,7 @@ Future<_Reply> _currentReadAttempt(
     } finally {
       flight.aborts.remove(abort);
       flight.cancellations.remove(cancelReader);
-      owner._inflightRequests--;
+      owner._releaseRequestSlot();
     }
   }
 }

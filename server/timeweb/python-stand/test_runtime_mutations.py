@@ -3,6 +3,7 @@ import base64
 import copy
 from dataclasses import replace
 import json
+import re
 import ssl
 import threading
 import time
@@ -58,11 +59,15 @@ class FakeConnection:
     def __init__(self, db):
         self.db = db; self.state = None; self.held = False; self.closed = False
         self.commits = 0; self.rollbacks = 0; self.readonly = False
+        self.session_variables = {}; self.transaction_characteristics = {}
+        self.setup_at_begin = None
 
     def cursor(self):
         return FakeCursor(self)
 
     def begin(self):
+        self.setup_at_begin = (dict(self.session_variables), dict(self.transaction_characteristics),
+                               list(self.db.calls))
         self.db.lock.acquire(); self.held = True; self.state = copy.deepcopy(self.db.state)
 
     def commit(self):
@@ -116,8 +121,20 @@ class FakeCursor:
         elif sql == "SHOW SESSION STATUS LIKE 'Ssl_cipher'":
             self.rows = [("Ssl_cipher", "TLS_AES_256_GCM_SHA384")]
         elif sql.startswith("SET "):
-            if sql == "SET TRANSACTION READ ONLY":
-                self.c.readonly = True
+            if sql.startswith("SET TRANSACTION "):
+                for characteristic in sql.removeprefix("SET TRANSACTION ").split(","):
+                    characteristic = characteristic.strip()
+                    if characteristic.startswith("ISOLATION LEVEL "):
+                        self.c.transaction_characteristics["isolation"] = characteristic.removeprefix("ISOLATION LEVEL ")
+                    elif characteristic in {"READ ONLY", "READ WRITE"}:
+                        self.c.transaction_characteristics["access"] = characteristic
+                        self.c.readonly = characteristic == "READ ONLY"
+                    else:
+                        raise AssertionError("unexpected fixture transaction characteristic")
+            else:
+                assert sql.startswith("SET SESSION ")
+                for name, value in re.findall(r"(?:SESSION\s+)?([a-z_]+)\s*=\s*('[^']*'|\d+)", sql[4:]):
+                    self.c.session_variables[name] = value[1:-1] if value.startswith("'") else int(value)
         elif "FROM clrs_staging.device_sessions AS s" in sql:
             self.assert_share(sql)
             session = state["sessions"].get(params[0])
@@ -204,6 +221,37 @@ def store_for(db, **kwargs):
 
 
 class MutationTests(unittest.TestCase):
+    def test_transaction_setup_preserves_semantics_with_two_roundtrips(self):
+        for readonly in (True, False):
+            with self.subTest(readonly=readonly):
+                db = FakeDatabase(); store = store_for(db)
+                def action(cursor, _, uid):
+                    return cursor.c.setup_at_begin, uid
+                observed, uid = store._run(db.identity, db.access, action, readonly=readonly)
+                session, transaction, setup = observed
+                self.assertEqual(uid, "actor")
+                self.assertEqual(session, {"time_zone": "+00:00",
+                    "sql_mode": "STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION",
+                    "innodb_lock_wait_timeout": 2})
+                self.assertEqual(transaction, {"isolation": "SERIALIZABLE",
+                    "access": "READ ONLY" if readonly else "READ WRITE"})
+                self.assertEqual([sql for sql, _ in setup[:3]], ["SHOW GRANTS",
+                    "SELECT DATABASE(), VERSION()", "SHOW SESSION STATUS LIKE 'Ssl_cipher'"])
+                self.assertEqual(len(setup), 5)  # Three checks plus two setup roundtrips.
+                self.assertEqual(sum(sql.startswith("SET ") for sql, _ in setup), 2)
+                self.assertEqual(sum("FROM clrs_staging.device_sessions AS s" in sql for sql, _ in db.calls), 2)
+                self.assertEqual(db.connections[0].commits, 0 if readonly else 1)
+
+    def test_session_setup_failure_never_begins_or_runs_action(self):
+        db = FakeDatabase(); db.fail_contains = "sql_mode"; store = store_for(db)
+        actions = []
+        with self.assertRaises(RuntimeUnavailable):
+            store.read_authenticated(db.identity, lambda *_: actions.append(True), access_token=db.access)
+        self.assertFalse(actions)
+        self.assertIsNone(db.connections[0].setup_at_begin)
+        self.assertEqual(db.connections[0].commits, 0)
+        self.assertTrue(db.connections[0].closed)
+
     def test_flags_tls_and_exact_grants(self):
         self.assertIsNone(RuntimeMutationStore.from_env({}))
         db = FakeDatabase(); store = store_for(db)

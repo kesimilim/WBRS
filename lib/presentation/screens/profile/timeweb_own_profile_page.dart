@@ -36,6 +36,31 @@ import 'package:wbrs/presentation/screens/auth/writing_profile_page/timeweb_init
 
 const timewebOwnProfileRoute = '/timeweb/own-profile';
 
+class _OwnProfileViewportClipper extends CustomClipper<Rect> {
+  _OwnProfileViewportClipper(this.controller, this.headerHeight)
+    : super(reclip: controller);
+
+  final ScrollController controller;
+  final double headerHeight;
+
+  @override
+  Rect getClip(Size size) {
+    // Account invalidation changes the navigation wrapper. Its outgoing and
+    // replacement ListViews may briefly coexist; use the newest viewport.
+    final positions = controller.positions;
+    final position = positions.isEmpty ? null : positions.last;
+    final offset = position?.hasPixels == true ? position!.pixels : 0.0;
+    // Keep the original hero at rest; scrolling content leaves the brand clear.
+    final top = offset.clamp(0.0, headerHeight).clamp(0.0, size.height);
+    return Rect.fromLTRB(0, top.toDouble(), size.width, size.height);
+  }
+
+  @override
+  bool shouldReclip(_OwnProfileViewportClipper oldClipper) =>
+      oldClipper.controller != controller ||
+      oldClipper.headerHeight != headerHeight;
+}
+
 /// The approved CLRS profile composition over current native fields. No legacy
 /// hydration, Firebase destinations, inferred presence or fake media gallery.
 class TimewebOwnProfilePage extends StatefulWidget {
@@ -55,6 +80,7 @@ class TimewebOwnProfilePage extends StatefulWidget {
 }
 
 class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
+  final _profileScroll = ScrollController();
   StreamSubscription<AppSessionState>? _subscription;
   TimewebCurrentOwnProfile? _profile;
   TimewebProfileEditFlow? _editor;
@@ -670,6 +696,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     _geography?.close();
     _geography = null;
     unawaited(_subscription?.cancel());
+    _profileScroll.dispose();
     super.dispose();
   }
 
@@ -947,42 +974,49 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.only(bottom: 24),
-        children: [
-          if (profile != null && widget.runtime.profilePhotosEnabled)
-            TimewebOwnProfileGallery(
-              key: ValueKey(
-                'own-gallery:${snapshot!.uid}:${profile.updatedAt}:$_epoch',
-              ),
-              runtime: widget.runtime,
-              targetUid: snapshot.uid,
-              portraitBuilder: (photo) => _portrait(profile, photo),
-              abovePhotos: above,
-              belowPhotos: below,
-              appendControl: append,
-            )
-          else ...[
-            _portrait(
-              profile,
-              const ColoredBox(
-                color: Color(0x4431241D),
-                child: Icon(
-                  Icons.person_outline,
-                  size: 90,
-                  color: LrsTheme.peachLight,
+      body: ClipRect(
+        clipper: _OwnProfileViewportClipper(
+          _profileScroll,
+          MediaQuery.paddingOf(context).top + kToolbarHeight,
+        ),
+        child: ListView(
+          controller: _profileScroll,
+          padding: const EdgeInsets.only(bottom: 24),
+          children: [
+            if (profile != null && widget.runtime.profilePhotosEnabled)
+              TimewebOwnProfileGallery(
+                key: ValueKey(
+                  'own-gallery:${snapshot!.uid}:${profile.updatedAt}:$_epoch',
+                ),
+                runtime: widget.runtime,
+                targetUid: snapshot.uid,
+                portraitBuilder: (photo) => _portrait(profile, photo),
+                abovePhotos: above,
+                belowPhotos: below,
+                appendControl: append,
+              )
+            else ...[
+              _portrait(
+                profile,
+                const ColoredBox(
+                  color: Color(0x4431241D),
+                  child: Icon(
+                    Icons.person_outline,
+                    size: 90,
+                    color: LrsTheme.peachLight,
+                  ),
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [above, ...below],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [above, ...below],
+                ),
               ),
-            ),
+            ],
           ],
-        ],
+        ),
       ),
     );
     final navigation = _navigation();

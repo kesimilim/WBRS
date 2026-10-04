@@ -138,6 +138,21 @@ TimewebAppRuntime _runtime(
   waitTimeout: waitTimeout,
 );
 
+Future<bool?> _stopRuntime(
+  WidgetTester tester,
+  TimewebAppRuntime runtime,
+) async {
+  late Future<bool> stopped;
+  // Session stream delivery belongs to the widget clock. Let it drain between
+  // starting shutdown and awaiting the runtime's real asynchronous teardown.
+  await tester.runAsync(() async {
+    stopped = runtime.stop();
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+  });
+  await tester.pumpAndSettle();
+  return tester.runAsync(() => stopped);
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -229,6 +244,114 @@ void main() {
       expect(Firebase.apps, isEmpty);
     },
   );
+
+  for (final failure in ['network', 'deadline']) {
+    testWidgets(
+      'native $failure unknown allows a new explicit login without replaying the lost POST',
+      (tester) async {
+        final platform = _Platform();
+        var loginCalls = 0;
+        final wire = _Wire((request) async {
+          if (request.url.path == '/v1/auth/login') {
+            loginCalls++;
+            if (loginCalls == 1) {
+              if (failure == 'network') {
+                throw http.ClientException('Synthetic network failure');
+              }
+              throw const TimewebAuthException(
+                TimewebAuthOperation.login,
+                TimewebAuthError.deadline,
+              );
+            }
+            return _reply(_tokens('B'));
+          }
+          expect(request.url.path, '/v1/me/full-profile');
+          return _reply(_fullProfile('B', missing: true));
+        });
+        final runtime = _runtime(platform, wire);
+        await tester.runAsync(() => runtime.start(remember: true));
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: LrsTheme.theme,
+            home: LoginPage(nativeRuntime: runtime),
+          ),
+        );
+        await tester.pumpAndSettle();
+        final fields = find.byType(TextFormField);
+        await tester.enterText(fields.at(0), _email);
+        await tester.enterText(fields.at(1), _password);
+        Future<void> submitLogin() => tester.runAsync(() async {
+          tester
+              .widget<ElevatedButton>(
+                find.widgetWithText(ElevatedButton, 'Вход'),
+              )
+              .onPressed!();
+          await Future<void>.delayed(const Duration(milliseconds: 20));
+        });
+        await submitLogin();
+        await tester.pumpAndSettle();
+        expect(loginCalls, 1);
+        expect(runtime.session.state.phase, AppSessionPhase.unresolved);
+        expect(runtime.session.currentUid, isNull);
+        expect(platform.protectedPayload, isNull);
+        expect(
+          tester.widget<TextFormField>(fields.at(1)).controller!.text,
+          isEmpty,
+        );
+        expect(
+          tester
+              .widget<ElevatedButton>(
+                find.widgetWithText(ElevatedButton, 'Вход'),
+              )
+              .onPressed,
+          isNull,
+        );
+
+        await tester.tap(find.text('Начать новый вход'));
+        await tester.pumpAndSettle();
+        expect(find.text('Начать новый вход'), findsNothing);
+        expect(loginCalls, 1);
+        expect(runtime.session.state.phase, AppSessionPhase.unresolved);
+        expect(runtime.session.currentUid, isNull);
+        expect(platform.writes, 0);
+        expect(
+          tester
+              .widget<ElevatedButton>(
+                find.widgetWithText(ElevatedButton, 'Вход'),
+              )
+              .onPressed,
+          isNotNull,
+        );
+        // Resetting the form never reuses the old password or sends a POST.
+        await submitLogin();
+        await tester.pumpAndSettle();
+        expect(loginCalls, 1);
+        expect(find.text('Пароль должен содержать 6 символов'), findsOneWidget);
+
+        const newPassword = 'new explicit password';
+        await tester.enterText(fields.at(1), newPassword);
+        await submitLogin();
+        await tester.pumpAndSettle();
+        expect(loginCalls, 2);
+        final loginRequests = wire.calls.where(
+          (request) => request.url.path == '/v1/auth/login',
+        );
+        expect(loginRequests, hasLength(2));
+        expect(
+          jsonDecode((loginRequests.last as http.Request).body)['password'],
+          newPassword,
+        );
+        expect(runtime.session.currentUid, 'B');
+        expect(platform.writes, 1);
+        expect(find.byType(TimewebSessionGate), findsOneWidget);
+        expect(find.byType(SessionGate), findsNothing);
+        expect(Firebase.apps, isEmpty);
+        await tester.pumpWidget(const SizedBox.shrink());
+        expect(await _stopRuntime(tester, runtime), isTrue);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
 
   testWidgets(
     'existing login waits on one native attempt, reads full typed gate, and cannot render late A after B',
@@ -358,7 +481,7 @@ void main() {
       await staleCheck;
       expect(() => retained!.source, throwsA(isA<AppSessionException>()));
       expect(Firebase.apps, isEmpty);
-      await tester.runAsync(runtime.stop);
+      await _stopRuntime(tester, runtime);
       await tester.pumpAndSettle();
       expect(find.byType(CircularProgressIndicator), findsNothing);
       expect(

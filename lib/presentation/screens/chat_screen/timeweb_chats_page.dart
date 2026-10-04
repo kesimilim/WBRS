@@ -42,6 +42,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
   String? _error;
   String _filter = 'Все', _search = '';
   int _generation = 0;
+  int _avatarRefresh = 0;
   @override
   void initState() {
     super.initState();
@@ -147,7 +148,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     }
   }
 
-  Future<bool> _load({bool more = false}) async {
+  Future<bool> _load({bool more = false, bool refreshAvatars = false}) async {
     if (!_current || _working || (more && _next == null)) return false;
     final generation = ++_generation;
     setState(() {
@@ -170,6 +171,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
       setState(() {
         _chats = chats;
         _next = bounded ? null : page.nextCursor;
+        if (refreshAvatars) _avatarRefresh++;
       });
       return true;
     } catch (_) {
@@ -213,7 +215,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     } finally {
       if (mounted) setState(() => _working = false);
     }
-    if (_current) await _load();
+    if (_current) await _load(refreshAvatars: true);
     if (_current && _foreground) _events?.start();
   }
 
@@ -266,7 +268,9 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
           ),
           IconButton(
             tooltip: context.tr('Обновить'),
-            onPressed: _current && !_working ? _load : null,
+            onPressed: _current && !_working
+                ? () => _load(refreshAvatars: true)
+                : null,
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -430,10 +434,15 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                                     ),
                                     leading: TimewebChatAvatar(
                                       key: ValueKey(
-                                        '${chat.chatId}/$_generation',
+                                        '${_lease!.identity.uid}/${_lease!.epoch}/${chat.chatId}',
                                       ),
                                       runtime: widget.runtime,
                                       uid: chat.counterpartUid,
+                                      photoIdentity: (
+                                        chat.counterpartUid,
+                                        chat.name,
+                                        _avatarRefresh,
+                                      ),
                                     ),
                                     title: Text(
                                       chat.name ?? context.tr('Чаты'),

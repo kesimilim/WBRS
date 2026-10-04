@@ -579,7 +579,7 @@ Future<_Reply> _meetingAttempt(_PeopleFlight f, Uri uri, String bearer) async {
     return _Reply(200, decoded);
   } on FormatException { _peopleInvalid(); }
   finally { try { if (!abort.isCompleted) abort.complete(); await cancel(); }
-    finally { f.aborts.remove(abort); f.cancellations.remove(cancel); owner._inflightRequests--; } }
+    finally { f.aborts.remove(abort); f.cancellations.remove(cancel); owner._releaseRequestSlot(); } }
 }
 
 bool _meetingIdentifier(Object? value) => _currentIdentifier(value) && !(value as String).contains(RegExp(r'[/\\%?#]'));

@@ -13,6 +13,7 @@ TimewebAuthClient _client(
   PeopleStore? store,
   DateTime Function()? clock,
   Duration? mediaDeadline,
+  Duration? requestDeadline,
 }) => TimewebAuthClient(
   configuration: TimewebAuthConfiguration(
     endpoint: Uri.parse('https://api.example.invalid'),
@@ -23,7 +24,7 @@ TimewebAuthClient _client(
   secureStore: store ?? PeopleStore(),
   transport: wire,
   clock: clock ?? () => peopleNow,
-  requestDeadline: const Duration(seconds: 2),
+  requestDeadline: requestDeadline ?? const Duration(seconds: 2),
   mediaRequestDeadline: mediaDeadline ?? const Duration(seconds: 2),
 );
 Matcher _error(TimewebAuthError error) =>
@@ -35,8 +36,116 @@ Future<void> _until(bool Function() ready) async {
   expect(ready(), isTrue);
 }
 
+class _ClearGateStore extends PeopleStore {
+  Completer<void>? clearGate;
+  @override
+  Future<void> clear() async {
+    await clearGate?.future;
+    await super.clear();
+  }
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'opt-in photo wait rechecks a single released slot; closing remaining waiter sends no GET',
+    () async {
+      final releases = List.generate(4, (_) => Completer<void>());
+      final firstPhoto = Completer<void>();
+      var held = 0, metadata = 0;
+      final wire = PeopleWire((request) async {
+        if (request.url.path.endsWith('/notifications')) {
+          await releases[held++].future;
+          return peopleReply({
+            'kind': 'native-notifications',
+            'items': [],
+            'nextCursor': null,
+          });
+        }
+        metadata++;
+        await firstPhoto.future;
+        return peopleReply(photoPage(request.url.pathSegments[3], []));
+      });
+      final client = _client(wire);
+      await client.restore();
+      final holders = [
+        for (var i = 1; i <= 4; i++) client.readNotifications(limit: i),
+      ];
+      await _until(() => held == 4);
+      final first = client.openProfilePhotos('P0');
+      final second = client.openProfilePhotos('P1');
+      final read = first.photos(waitForCapacity: true);
+      final cancelled = second.photos(waitForCapacity: true);
+      final rejected = expectLater(
+        cancelled,
+        throwsA(_error(TimewebAuthError.staleSession)),
+      );
+      releases.first.complete();
+      await _until(() => metadata == 1);
+      expect(metadata, 1);
+      final drain = second.close();
+      await rejected;
+      await drain;
+      expect(
+        metadata,
+        1,
+        reason:
+            'The losing wakeup must re-wait locally and unregister on close',
+      );
+      firstPhoto.complete();
+      await read;
+      for (final release in releases.skip(1)) {
+        release.complete();
+      }
+      await Future.wait(holders);
+      await first.close();
+      await client.close();
+    },
+  );
+
+  test(
+    'opt-in photo wait includes contention in original request deadline without sending HTTP',
+    () async {
+      final release = Completer<void>();
+      var held = 0;
+      final wire = PeopleWire((request) async {
+        held++;
+        await release.future;
+        return peopleReply({
+          'kind': 'native-notifications',
+          'items': [],
+          'nextCursor': null,
+        });
+      });
+      final client = _client(
+        wire,
+        requestDeadline: const Duration(milliseconds: 30),
+      );
+      await client.restore();
+      final holders = [
+        for (var i = 1; i <= 4; i++)
+          client
+              .readNotifications(limit: i)
+              .then<void>((_) {}, onError: (Object _) {}),
+      ];
+      await _until(() => held == 4);
+      final reader = client.openProfilePhotos('P0');
+      await expectLater(
+        reader.photos(waitForCapacity: true),
+        throwsA(_error(TimewebAuthError.deadline)),
+      );
+      expect(
+        held,
+        4,
+        reason: 'Expired flight may not start a late metadata GET',
+      );
+      release.complete();
+      await Future.wait(holders);
+      await reader.close();
+      await client.close();
+    },
+  );
+
   test('existing gates and exact target fail before any transfer', () async {
     final wire = PeopleWire((_) async => peopleReply(photoPage('A', [])));
     final disabled = _client(wire, enabled: false);
@@ -404,4 +513,108 @@ void main() {
       await client.close();
     },
   );
+
+  for (final invalidation in [
+    'reader-close',
+    'client-close',
+    'B-login',
+    'deadline',
+  ]) {
+    test(
+      'capacity waiter ends on $invalidation while original cancellation still holds all four slots',
+      () async {
+        final releaseCancellation = Completer<void>();
+        var cancelling = 0, next = 0;
+        final streams = List.generate(
+          4,
+          (_) => StreamController<List<int>>(
+            onCancel: () {
+              cancelling++;
+              return releaseCancellation.future;
+            },
+          ),
+        );
+        final store = _ClearGateStore();
+        final wire = PeopleWire((request) async {
+          if (request.url.path.endsWith('/auth/login')) {
+            return peopleReply(peopleTokens('B'));
+          }
+          return peopleReply({}, stream: streams[next++].stream);
+        });
+        final client = _client(
+          wire,
+          store: store,
+          requestDeadline: invalidation == 'deadline'
+              ? const Duration(milliseconds: 30)
+              : null,
+        );
+        await client.restore();
+        final holders = List.generate(
+          4,
+          (i) => client.openProfilePhotos('B$i'),
+        );
+        final failures = [
+          for (final reader in holders)
+            expectLater(
+              reader.photos(),
+              throwsA(_error(TimewebAuthError.staleSession)),
+            ),
+        ];
+        await _until(() => wire.calls.length == 4);
+        final drains = holders.map((reader) => reader.close()).toList();
+        await _until(() => cancelling == 4);
+        final waitingReader = client.openProfilePhotos('A');
+        final waiting = waitingReader.waitForReadCapacity();
+        expect(identical(waiting, waitingReader.waitForReadCapacity()), isTrue);
+        final rejected = expectLater(
+          waiting,
+          throwsA(
+            _error(
+              invalidation == 'deadline'
+                  ? TimewebAuthError.deadline
+                  : TimewebAuthError.staleSession,
+            ),
+          ),
+        );
+        Future<TimewebSession>? login;
+        if (invalidation == 'reader-close') {
+          await waitingReader.close();
+        } else if (invalidation == 'client-close') {
+          await client.close();
+        } else if (invalidation == 'B-login') {
+          store.clearGate = Completer<void>();
+          login = client.login(
+            email: 'b@example.invalid',
+            password: 'synthetic-password',
+            deviceId: 'synthetic-device',
+          );
+        }
+        await rejected;
+        expect(
+          wire.calls,
+          hasLength(4),
+          reason: 'Waiting never sends or reserves a transfer',
+        );
+        expect(releaseCancellation.isCompleted, isFalse);
+        releaseCancellation.complete();
+        await Future.wait(drains);
+        await Future.wait(failures);
+        if (login != null) {
+          store.clearGate!.complete();
+          await login;
+          expect(client.currentUid, 'B');
+          await expectLater(
+            waitingReader.photos(),
+            throwsA(_error(TimewebAuthError.staleSession)),
+          );
+          expect(
+            wire.calls,
+            hasLength(5),
+            reason: 'Late A waiter cannot send a photo GET as B',
+          );
+        }
+        await client.close();
+      },
+    );
+  }
 }

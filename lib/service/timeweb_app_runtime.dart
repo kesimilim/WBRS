@@ -609,9 +609,10 @@ final class TimewebAppRuntime {
       configuration: client.configuration,
       enabled:
           live &&
-          emailLifecycleEnabled &&
-          (purpose != TimewebLifecyclePurpose.registerEmail ||
-              registrationEnabled),
+          (purpose == TimewebLifecyclePurpose.registration
+              ? registrationEnabled
+              : emailLifecycleEnabled &&
+                  (purpose != TimewebLifecyclePurpose.registerEmail || registrationEnabled)),
       session: session,
     );
   }

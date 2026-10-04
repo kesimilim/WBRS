@@ -17,6 +17,7 @@ import 'package:wbrs/service/on_device_content_translation.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_meeting_chat_flow.dart';
+import 'package:wbrs/service/timeweb_meeting_membership_flow.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
@@ -93,6 +94,16 @@ Future<void> _tap(WidgetTester tester, String key) async {
   await tester.pump();
   await tester.runAsync(() => tester.tap(target));
   await tester.pump();
+}
+
+Future<void> _stopRuntime(WidgetTester tester, TimewebAppRuntime runtime) async {
+  var stopped = false;
+  final stopping = runtime.stop().then((result) {
+    stopped = true;
+    return result;
+  });
+  await _until(tester, () => stopped);
+  expect(await stopping, isTrue);
 }
 
 void main() {
@@ -218,6 +229,7 @@ void main() {
         clearLocal: () async {},
         currentOwnProfileEnabled: true,
         meetingChatJournal: TimewebMeetingChatJournal(directory: () async => directory),
+        meetingMembershipJournal: TimewebMeetingMembershipJournal(directory: () async => directory),
       ),
     ))!;
     try {
@@ -262,9 +274,13 @@ void main() {
       );
       await _until(tester, () => find.text('Знакомство в парке').evaluate().isNotEmpty);
       await tester.runAsync(
-        () => precacheImage(const AssetImage('assets/final_design/family_back.png'), boundary.currentContext!),
+        () => precacheImage(const AssetImage('assets/family_main.jpg'), boundary.currentContext!),
       );
       await tester.pump();
+      await _until(
+        tester,
+        () => tester.widget<TextButton>(find.byKey(ValueKey('native-meeting-translate-$_messageId'))).onPressed != null,
+      );
       expect(find.text(_local), findsOneWidget);
       expect(find.text('Мария'), findsOneWidget);
       expect(find.text(_original), findsOneWidget);
@@ -366,15 +382,17 @@ void main() {
       }
 
       await staleFirstBuild('stale-A-first-build-under-B');
-      await tester.runAsync(() => runtime.stop());
+      await _stopRuntime(tester, runtime);
       await staleFirstBuild('stale-A-first-build-anonymous');
 
       expect(Firebase.apps, isEmpty);
       expect(tester.takeException(), isNull);
     } finally {
       if (!device.output.isCompleted) device.output.complete('late');
+      if (!post.isCompleted) post.complete(peopleReply({'error': 'unavailable'}, status: 503));
+      if (!freshRead.isCompleted) freshRead.complete(peopleReply({'error': 'meeting_unavailable'}, status: 404));
       await tester.pumpWidget(const SizedBox());
-      await tester.runAsync(() => runtime.stop());
+      await _stopRuntime(tester, runtime);
       directory.deleteSync(recursive: true);
       await tester.binding.setSurfaceSize(null);
     }

@@ -308,11 +308,11 @@ class RuntimeMutationStore:
                     tls = cursor.fetchone()
                     if not tls or len(tls) != 2 or not tls[1]:
                         raise RuntimeUnavailable()
-                    execute("SET SESSION time_zone = '+00:00'")
-                    execute("SET SESSION sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION'")
-                    execute("SET SESSION innodb_lock_wait_timeout = 2")
-                    execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE")
-                    execute("SET TRANSACTION READ ONLY" if readonly else "SET TRANSACTION READ WRITE")
+                    execute("SET SESSION time_zone = '+00:00', "
+                            "sql_mode = 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION', "
+                            "innodb_lock_wait_timeout = 2")
+                    execute("SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, "
+                            + ("READ ONLY" if readonly else "READ WRITE"))
                     connection.begin()
                     uid = self._authenticated(cursor, execute, identity, access_token)
                     value = action(cursor, execute, uid)

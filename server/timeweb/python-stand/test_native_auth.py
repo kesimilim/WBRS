@@ -86,6 +86,8 @@ class FakeConnection:
     def __init__(self, db):
         self.db = db; self.working = None; self.result = []; self.rowcount = 0
         self._held = False
+        self.session_variables = {}; self.transaction_characteristics = {}
+        self.setup_at_begin = None
 
     def cursor(self):
         return self
@@ -97,6 +99,8 @@ class FakeConnection:
         return False
 
     def begin(self):
+        self.setup_at_begin = (dict(self.session_variables), dict(self.transaction_characteristics),
+                               list(self.db.calls))
         self.db._lock.acquire(); self._held = True
         self.working = copy.deepcopy(self.db.state)
 
@@ -152,7 +156,19 @@ class FakeConnection:
         elif sql.startswith("SHOW SESSION STATUS"):
             self.result = [("Ssl_cipher", "TLS_AES_256_GCM_SHA384")]
         elif sql.startswith("SET "):
-            pass
+            if sql.startswith("SET TRANSACTION "):
+                for characteristic in sql.removeprefix("SET TRANSACTION ").split(","):
+                    characteristic = characteristic.strip()
+                    if characteristic.startswith("ISOLATION LEVEL "):
+                        self.transaction_characteristics["isolation"] = characteristic.removeprefix("ISOLATION LEVEL ")
+                    elif characteristic in {"READ ONLY", "READ WRITE"}:
+                        self.transaction_characteristics["access"] = characteristic
+                    else:
+                        raise AssertionError("unexpected fixture transaction characteristic")
+            else:
+                assert sql.startswith("SET SESSION ")
+                for name, value in re.findall(r"(?:SESSION\s+)?([a-z_]+)\s*=\s*('[^']*'|\d+)", sql[4:]):
+                    self.session_variables[name] = value[1:-1] if value.startswith("'") else int(value)
         elif "WHERE a.email_normalized = %s" in sql:
             self.result = [self._account_row(row) for row in self.working["accounts"].values() if row["email"] == params[0]]
         elif "WHERE a.uid = %s" in sql:
@@ -206,6 +222,32 @@ class NativeAuthTests(unittest.TestCase):
 
     def login(self, device="synthetic-device"):
         return self.service.login({**self.body, "deviceId": device}, peer="synthetic-peer")
+
+    def test_transaction_setup_preserves_semantics_with_two_roundtrips(self):
+        session, transaction, setup = self.store._transaction(
+            lambda cursor: cursor.setup_at_begin, deadline=time.monotonic() + 5)
+        self.assertEqual(session, {"time_zone": "+00:00",
+            "sql_mode": "STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION"})
+        self.assertEqual(transaction, {"isolation": "SERIALIZABLE"})
+        self.assertEqual([sql for sql, _ in setup[:3]], ["SHOW GRANTS",
+            "SELECT DATABASE(), VERSION()", "SHOW SESSION STATUS LIKE 'Ssl_cipher'"])
+        self.assertEqual(len(setup), 5)
+        self.assertEqual(sum(sql.startswith("SET ") for sql, _ in setup), 2)
+        self.assertEqual(self.db.commits, 1)
+
+    def test_session_setup_failure_never_begins_or_runs_action(self):
+        execute = FakeConnection.execute
+        actions = []; connections = []
+        def fail_setup(connection, sql, params=()):
+            connections.append(connection)
+            if sql.startswith("SET ") and "sql_mode" in sql:
+                raise OSError("synthetic setup failure")
+            return execute(connection, sql, params)
+        with patch.object(FakeConnection, "execute", fail_setup), self.assertRaises(SessionUnavailable):
+            self.store._transaction(lambda *_: actions.append(True), deadline=time.monotonic() + 5)
+        self.assertFalse(actions)
+        self.assertIsNone(connections[-1].setup_at_begin)
+        self.assertEqual(self.db.commits, 0)
 
     def test_absent_ca_uses_bundled_verified_tls_and_bad_explicit_ca_never_connects(self):
         self.env.pop("CLRS_NATIVE_AUTH_DB_CA_FILE")

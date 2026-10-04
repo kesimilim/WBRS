@@ -18,6 +18,7 @@ import ssl
 import threading
 import time
 import xml.etree.ElementTree as ET
+from concurrent.futures import ThreadPoolExecutor
 
 
 PREFIX = "clrs-import-quarantine/"
@@ -30,7 +31,20 @@ CONTENT_TYPES = frozenset({"image/jpeg", "image/png", "image/webp", "image/gif",
     "audio/mpeg", "audio/mp4", "audio/ogg", "audio/aac", "video/mp4",
     "application/pdf", "application/octet-stream"})
 _SETUP_SLOTS = threading.BoundedSemaphore(4)
+_PRIVACY_WORKERS = threading.BoundedSemaphore(2)
+_PRIVACY_EXECUTOR = ThreadPoolExecutor(max_workers=2, thread_name_prefix="clrs-private-controls")
 _EMPTY_HASH = hashlib.sha256(b"").hexdigest()
+
+
+class _PrivacyCancel:
+    def __init__(self, request_cancel):
+        self._request = request_cancel; self._failed = threading.Event()
+
+    def is_set(self):
+        return self._request.is_set() or self._failed.is_set()
+
+    def abort(self):
+        self._failed.set()
 
 
 class PrivateMediaUnavailable(Exception):
@@ -170,26 +184,57 @@ class PrivateMediaS3:
         finally:
             response.close()
 
-    def _privacy(self, deadline, cancel):
+    def _privacy(self, key, deadline, cancel):
         self._check(deadline, cancel)
-        state = self._state(self._bucket, deadline, cancel)
-        now = self._clock()
-        if (not isinstance(state, dict) or set(state) != {"bucket", "type", "checked_at"}
-                or state["bucket"] != self._bucket or state["type"] != "private"
-                or type(state["checked_at"]) not in {int, float} or not math.isfinite(state["checked_at"])
-                or not 0 <= now - state["checked_at"] <= PRIVACY_MAX_AGE):
+        # Two admitted auxiliary jobs, no growing executor queue. Each photo
+        # keeps one synchronous lane and one auxiliary lane; all four controls
+        # must complete before the object GET or before accepting its bytes.
+        if not _PRIVACY_WORKERS.acquire(blocking=False):
             raise PrivateMediaUnavailable()
-        _owner_acl(self._control("GetBucketAcl", None, deadline, cancel), self._owner)
-        policy = self._control("GetBucketPolicy", None, deadline, cancel, absent_policy=True)
-        if policy is not None:
-            value = json.loads(policy, object_pairs_hook=_json_pairs)
-            if (not isinstance(value, dict) or set(value) != {"Version", "Statement"}
-                    or value["Version"] != "2012-10-17" or value["Statement"] != []):
+        local_cancel = _PrivacyCancel(cancel)
+        def bucket_controls():
+            try:
+                _owner_acl(self._control("GetBucketAcl", None, deadline, local_cancel), self._owner)
+                policy = self._control("GetBucketPolicy", None, deadline, local_cancel, absent_policy=True)
+                if policy is not None:
+                    value = json.loads(policy, object_pairs_hook=_json_pairs)
+                    if (not isinstance(value, dict) or set(value) != {"Version", "Statement"}
+                            or value["Version"] != "2012-10-17" or value["Statement"] != []):
+                        raise PrivateMediaUnavailable()
+            except Exception:
+                local_cancel.abort()
+                raise PrivateMediaUnavailable() from None
+            finally:
+                # Cancellation never frees an admission while its real worker
+                # is still using the transport, including a late setup result.
+                _PRIVACY_WORKERS.release()
+        try:
+            pending = _PRIVACY_EXECUTOR.submit(bucket_controls)
+        except Exception:
+            _PRIVACY_WORKERS.release()
+            raise PrivateMediaUnavailable() from None
+        try:
+            state = self._state(self._bucket, deadline, local_cancel)
+            now = self._clock()
+            if (not isinstance(state, dict) or set(state) != {"bucket", "type", "checked_at"}
+                    or state["bucket"] != self._bucket or state["type"] != "private"
+                    or type(state["checked_at"]) not in {int, float} or not math.isfinite(state["checked_at"])
+                    or not 0 <= now - state["checked_at"] <= PRIVACY_MAX_AGE):
                 raise PrivateMediaUnavailable()
-        self._check(deadline, cancel)
-        if self._clock() - state["checked_at"] > PRIVACY_MAX_AGE:
-            raise PrivateMediaUnavailable()
-        return state["checked_at"]
+            _owner_acl(self._control("GetObjectAcl", key, deadline, local_cancel), self._owner)
+            self._check(deadline, local_cancel)
+            pending.result(timeout=max(0, deadline - self._clock()))
+            self._check(deadline, local_cancel)
+            if self._clock() - state["checked_at"] > PRIVACY_MAX_AGE:
+                raise PrivateMediaUnavailable()
+            return state["checked_at"]
+        except Exception:
+            local_cancel.abort()
+            # Best-effort drain within the SAME budget. A late worker retains
+            # its bounded admission; caller cancellation is never reset.
+            try: pending.result(timeout=max(0, deadline - self._clock()))
+            except Exception: pass
+            raise PrivateMediaUnavailable() from None
 
     def get_verified_to_file(self, record, sink, deadline, cancel):
         response = None; sink_accepted = False
@@ -209,8 +254,7 @@ class PrivateMediaS3:
                 raise PrivateMediaUnavailable()
             sink.seek(0); sink_accepted = True
             deadline = min(deadline, self._clock() + MAX_REQUEST_SECONDS)
-            checked_at = self._privacy(deadline, cancel)
-            _owner_acl(self._control("GetObjectAcl", key, deadline, cancel), self._owner)
+            checked_at = self._privacy(key, deadline, cancel)
             if self._clock() - checked_at > PRIVACY_MAX_AGE:
                 raise PrivateMediaUnavailable()
             response = self._transport.open("GetObject", self._bucket, key, deadline, cancel)
@@ -239,8 +283,7 @@ class PrivateMediaS3:
             if total != record["size"] or not hmac.compare_digest(digest.hexdigest(), record["sha256"]):
                 raise PrivateMediaUnavailable()
             # Privacy may have changed while a larger full object was downloaded.
-            checked_at = self._privacy(deadline, cancel)
-            _owner_acl(self._control("GetObjectAcl", key, deadline, cancel), self._owner)
+            checked_at = self._privacy(key, deadline, cancel)
             if self._clock() - checked_at > PRIVACY_MAX_AGE:
                 raise PrivateMediaUnavailable()
             self._check(deadline, cancel)

@@ -12,6 +12,7 @@ from typing import NamedTuple
 from native_auth import NativeRateLimited
 from native_credentials import unique_json
 from native_auth_lifecycle import (NativeAuthLifecycle, LifecycleInvalid, LifecycleRefused)
+from native_registration import NativeRegistration
 
 
 class LifecycleHttpReply(NamedTuple):
@@ -48,10 +49,17 @@ def _body(environ):
 
 
 class NativeAuthLifecycleHttp:
-    def __init__(self, env, native_service, *, service_factory=NativeAuthLifecycle.from_env):
+    def __init__(self, env, native_service, *, service_factory=NativeAuthLifecycle.from_env,
+                 registration_factory=NativeRegistration.from_env):
         self._enabled = env.get('CLRS_NATIVE_AUTH_LIFECYCLE_ENABLED') == '1'
         self._registration = env.get('CLRS_NATIVE_REGISTRATION_ENABLED') == '1'
         self._service = None
+        self._registration_service = None
+        if self._registration:
+            try:
+                self._registration_service = registration_factory(env, native_service)
+            except Exception:
+                pass
         if self._enabled:
             try:
                 self._service = service_factory(env, native_service)
@@ -59,11 +67,16 @@ class NativeAuthLifecycleHttp:
                 pass
 
     def close(self):
+        if self._registration_service is not None:
+            self._registration_service.close()
+            self._registration_service = None
         if self._service is not None:
             self._service.close()
             self._service = None
 
     def dispatch(self, environ):
+        if environ.get('PATH_INFO', '') in ('/v1/auth/register', '/v1/auth/register/lookup'):
+            return self._dispatch_registration(environ)
         route = _ROUTES.get(environ.get('PATH_INFO', ''))
         if route is None:
             return None
@@ -90,6 +103,31 @@ class NativeAuthLifecycleHttp:
             return LifecycleHttpReply('400 Bad Request', {'error': 'invalid_request'})
         except LifecycleRefused:
             return LifecycleHttpReply('400 Bad Request', {'status': 'refused'})
+        except NativeRateLimited:
+            return LifecycleHttpReply('429 Too Many Requests', {'error': 'rate_limited'}, retry=True)
+        except Exception:
+            return LifecycleHttpReply('503 Service Unavailable', {'error': 'service_unavailable'})
+
+    def _dispatch_registration(self, environ):
+        # Signup is independent of default-off SMTP/password recovery.
+        if not self._registration:
+            return LifecycleHttpReply('404 Not Found', {'error': 'not_found'})
+        if environ.get('REQUEST_METHOD') != 'POST':
+            return LifecycleHttpReply('405 Method Not Allowed', {'error': 'method_not_allowed'})
+        try:
+            body = _body(environ)
+            service = self._registration_service
+            if service is None:
+                return LifecycleHttpReply('503 Service Unavailable', {'error': 'service_unavailable'})
+            action = service.lookup if environ['PATH_INFO'].endswith('/lookup') else service.register
+            result = action(body, peer=environ.get('REMOTE_ADDR', ''))
+            token = service.operation_token(result.fingerprint)
+            if result.state == 'completed' and result.outcome is not None:
+                status = {200: '200 OK', 400: '400 Bad Request'}[result.outcome.status]
+                return LifecycleHttpReply(status, {**result.outcome.result, 'operationToken': token})
+            return LifecycleHttpReply('503 Service Unavailable', {'error': 'outcome_unknown', 'operationToken': token})
+        except LifecycleInvalid:
+            return LifecycleHttpReply('400 Bad Request', {'error': 'invalid_request'})
         except NativeRateLimited:
             return LifecycleHttpReply('429 Too Many Requests', {'error': 'rate_limited'}, retry=True)
         except Exception:

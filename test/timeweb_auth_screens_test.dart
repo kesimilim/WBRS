@@ -13,6 +13,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_auth_lifecycle.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/password_reset_sheet.dart';
+import 'package:wbrs/shared/timeweb_registration_form.dart';
 
 const _challenge = '00000000-0000-4000-8000-000000000009';
 const _token = 'Opaque_sealed-digest';
@@ -126,6 +127,25 @@ Future<void> _fields(WidgetTester tester) async {
         .obscureText,
     isTrue,
   );
+}
+
+Future<void> _registrationFields(WidgetTester tester) async {
+  await tester.enterText(
+    find.byKey(const ValueKey('timeweb-nickname')),
+    ' Новый ник ',
+  );
+  await tester.enterText(find.byKey(const ValueKey('timeweb-email')), _email);
+  await tester.enterText(
+    find.byKey(const ValueKey('timeweb-password')),
+    _password,
+  );
+}
+
+Future<void> _registerTap(WidgetTester tester) async {
+  final button = find.byKey(const ValueKey('timeweb-registration-submit'));
+  await tester.ensureVisible(button);
+  await tester.tap(button);
+  await tester.pumpAndSettle();
 }
 
 void main() {
@@ -250,20 +270,13 @@ void main() {
   );
 
   testWidgets(
-    'registration confirms only account stage and drops late completion after actual native account change/navigation',
+    'original registration fields create account without mail and drop late completion after native account change',
     (tester) async {
       final session = (await tester.runAsync(_nativeSession))!;
       AppBackend.bindEmailLifecycleSession(session);
       Completer<http.StreamedResponse>? late;
       var pending = false;
       final wire = _Wire((request) async {
-        if (request.url.path.endsWith('/request')) {
-          return _reply({
-            'status': 'accepted',
-            'challengeId': _challenge,
-            'operationToken': _token,
-          }, 202);
-        }
         if (pending) {
           late = Completer<http.StreamedResponse>();
           return late!.future;
@@ -282,21 +295,23 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('timeweb-email')),
-        _email,
-      );
-      await _tap(tester);
-      await _fields(tester);
-      await _tap(tester);
-      expect(wire.calls.map((v) => v.url.path), [
-        '/v1/auth/register-email/request',
-        '/v1/auth/register-email/complete',
-      ]);
+      expect(find.text('Никнэйм'), findsOneWidget);
+      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('Пароль'), findsOneWidget);
+      expect(find.byKey(const ValueKey('timeweb-code')), findsNothing);
+      await _registrationFields(tester);
+      await _registerTap(tester);
+      expect(wire.calls.map((v) => v.url.path), ['/v1/auth/register']);
+      expect(_body(wire.calls.single).keys.toSet(), {
+        'email',
+        'password',
+        'nickname',
+        'operationId',
+      });
+      expect(_body(wire.calls.single)['nickname'], ' Новый ник ');
+      expect(_body(wire.calls.single)['password'], _password);
       expect(
-        find.text(
-          'Email подтверждён. Создание аккаунта завершено. Заполнение анкеты пока недоступно.',
-        ),
+        find.text('Аккаунт создан. Войдите, чтобы заполнить анкету.'),
         findsOneWidget,
       );
       expect(find.byType(SessionGate), findsNothing);
@@ -317,13 +332,8 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byKey(const ValueKey('timeweb-email')),
-        _email,
-      );
-      await _tap(tester);
-      await _fields(tester);
-      final submit = find.byKey(const ValueKey('timeweb-email-submit'));
+      await _registrationFields(tester);
+      final submit = find.byKey(const ValueKey('timeweb-registration-submit'));
       await tester.ensureVisible(submit);
       await tester.tap(submit);
       await tester.pump();
@@ -343,7 +353,10 @@ void main() {
       expect(tester.widget<ElevatedButton>(submit).onPressed, isNull);
       late!.complete(_reply({'status': 'completed', 'operationToken': _token}));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Создание аккаунта завершено'), findsNothing);
+      expect(
+        find.text('Аккаунт создан. Войдите, чтобы заполнить анкету.'),
+        findsNothing,
+      );
       expect(find.byType(SessionGate), findsNothing);
       await tester.pumpWidget(const MaterialApp(home: SizedBox()));
       await tester.pumpAndSettle();
@@ -351,4 +364,144 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+
+  testWidgets(
+    'registration keeps all fields empty despite saved old-account data and reconciles lost ACK only',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({
+        'name': 'Old name',
+        'email': 'old@example.invalid',
+        'phone': 'old phone',
+        'registration_intent_v1':
+            '{"name":"Old nickname","email":"old@example.invalid"}',
+      });
+      final session = (await tester.runAsync(_nativeSession))!;
+      AppBackend.bindEmailLifecycleSession(session);
+      final wire = _Wire((request) async {
+        if (request.url.path == '/v1/auth/register') {
+          throw StateError('lost entire ACK');
+        }
+        return _reply({'status': 'completed', 'operationToken': _token});
+      });
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: LrsTheme.theme,
+          home: RegisterPage(
+            consentConfirmed: true,
+            timewebLifecycle: _client(wire, session),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final key in [
+        'timeweb-nickname',
+        'timeweb-email',
+        'timeweb-password',
+      ]) {
+        final field = tester.widget<TextFormField>(find.byKey(ValueKey(key)));
+        expect(field.controller!.text, isEmpty);
+      }
+      expect(find.text('Политика конфиденциальности'), findsOneWidget);
+      expect(find.text('Пользовательское соглашение'), findsOneWidget);
+      await _registrationFields(tester);
+      await _registerTap(tester);
+      expect(find.text('Проверить регистрацию'), findsOneWidget);
+      expect(wire.calls.length, 1);
+      final original = _body(wire.calls.single);
+      for (final key in [
+        'timeweb-nickname',
+        'timeweb-email',
+        'timeweb-password',
+      ]) {
+        expect(
+          tester
+              .widget<TextField>(
+                find.descendant(
+                  of: find.byKey(ValueKey(key)),
+                  matching: find.byType(TextField),
+                ),
+              )
+              .readOnly,
+          isTrue,
+        );
+      }
+      await _registerTap(tester);
+      expect(wire.calls.map((v) => v.url.path), [
+        '/v1/auth/register',
+        '/v1/auth/register/lookup',
+      ]);
+      expect(_body(wire.calls.last), {
+        'purpose': 'register.v1',
+        'stage': 'complete',
+        'original': original,
+      });
+      expect(
+        find.text('Аккаунт создан. Войдите, чтобы заполнить анкету.'),
+        findsOneWidget,
+      );
+      expect(session.currentUid, 'A');
+      expect(find.byType(SessionGate), findsNothing);
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.byKey(const ValueKey('timeweb-password')),
+            )
+            .controller!
+            .text,
+        isEmpty,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getString('registration_intent_v1'),
+        '{"name":"Old nickname","email":"old@example.invalid"}',
+      );
+      await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+      await tester.pumpAndSettle();
+      await tester.runAsync(session.stop);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('confirmed registration requires explicit login tap', (
+    tester,
+  ) async {
+    final session = (await tester.runAsync(_nativeSession))!;
+    var logins = 0;
+    String? loginEmail;
+    final wire = _Wire(
+      (_) async => _reply({'status': 'completed', 'operationToken': _token}),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LrsTheme.theme,
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TimewebRegistrationForm(
+              client: _client(wire, session),
+              onLogin: (email) {
+                logins++;
+                loginEmail = email;
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await _registrationFields(tester);
+    await _registerTap(tester);
+    expect(logins, 0);
+    expect(session.currentUid, 'A');
+    final login = find.byKey(const ValueKey('timeweb-registration-login'));
+    await tester.ensureVisible(login);
+    await tester.tap(login);
+    await tester.pumpAndSettle();
+    expect(logins, 1);
+    expect(loginEmail, _email);
+    expect(wire.calls.length, 1);
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
+    await tester.pumpAndSettle();
+    await tester.runAsync(session.stop);
+    expect(tester.takeException(), isNull);
+  });
 }

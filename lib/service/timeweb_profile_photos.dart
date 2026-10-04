@@ -136,6 +136,7 @@ final class TimewebProfilePhotoReader {
   void Function()? _sessionGuard;
   bool _closed = false;
   Future<void>? _drain;
+  Future<void>? _capacityWait;
   void requireCurrent() {
     _client._checkEpoch(_epoch, _photoOperation);
     if (_closed ||
@@ -163,22 +164,47 @@ final class TimewebProfilePhotoReader {
   Future<TimewebProfilePhotosPage> photos({
     int limit = 30,
     TimewebProfilePhotosCursor? cursor,
+    bool waitForCapacity = false,
   }) => _startPhotoRead(
     this,
     limit,
     cursor,
     null,
+    waitForCapacity: waitForCapacity,
   ).then((v) => v as TimewebProfilePhotosPage);
   Future<TimewebProfilePhotoBytes> readOriginal(
-    TimewebProfilePhotoReference reference,
-  ) => _startPhotoRead(
+    TimewebProfilePhotoReference reference, {
+    bool waitForCapacity = false,
+  }) => _startPhotoRead(
     this,
     0,
     null,
     reference,
+    waitForCapacity: waitForCapacity,
   ).then((v) => v as TimewebProfilePhotoBytes);
+
+  /// Wait at most the existing request deadline for a real shared slot release.
+  /// Reader/session revocation wakes it immediately, without sending a GET.
+  Future<void> waitForReadCapacity() {
+    try {
+      requireCurrent();
+      final pending = _capacityWait;
+      if (pending != null) return pending;
+      late final Future<void> waiting;
+      waiting = _client._waitForRequestCapacity(requireCurrent).whenComplete(
+        () {
+          if (identical(_capacityWait, waiting)) _capacityWait = null;
+        },
+      );
+      return _capacityWait = waiting;
+    } catch (error) {
+      return Future<void>.error(error);
+    }
+  }
+
   Future<void> close() {
     _closed = true;
+    _client._wakeRequestCapacity();
     return _drain ??= _cancelPhotoFlights(_client, reader: this);
   }
 
@@ -228,6 +254,7 @@ final class _ProfilePhotoFlight {
     this.cursor,
     this.reference,
     this.key,
+    this.waitForCapacity,
   ) {
     startedAt = owner._clock();
     var deadline = reference == null
@@ -248,6 +275,7 @@ final class _ProfilePhotoFlight {
   final TimewebProfilePhotosCursor? cursor;
   final TimewebProfilePhotoReference? reference;
   final String key;
+  final bool waitForCapacity;
   TimewebAuthClient get owner => reader._client;
   final result = Completer<Object>();
   final settled = Completer<void>();
@@ -271,6 +299,7 @@ final class _ProfilePhotoFlight {
   void abort(TimewebAuthError error) {
     reason ??= error;
     timer.cancel();
+    owner._wakeRequestCapacity();
     for (final a in aborts.toList()) {
       if (!a.isCompleted) a.complete();
     }
@@ -300,8 +329,9 @@ Future<Object> _startPhotoRead(
   TimewebProfilePhotoReader reader,
   int limit,
   TimewebProfilePhotosCursor? cursor,
-  TimewebProfilePhotoReference? reference,
-) {
+  TimewebProfilePhotoReference? reference, {
+  bool waitForCapacity = false,
+}) {
   try {
     reader.requireCurrent();
     if (reference != null) {
@@ -327,7 +357,14 @@ Future<Object> _startPhotoRead(
         TimewebAuthError.unavailable,
       );
     }
-    final flight = _ProfilePhotoFlight(reader, limit, cursor, reference, key);
+    final flight = _ProfilePhotoFlight(
+      reader,
+      limit,
+      cursor,
+      reference,
+      key,
+      waitForCapacity,
+    );
     client._profilePhotoFlights[key] = flight;
     unawaited(_executePhotoRead(flight));
     return flight.result.future;
@@ -415,6 +452,12 @@ Future<(int, Uint8List?)> _photoAttempt(
 ) async {
   final owner = f.owner;
   f.check();
+  while (f.waitForCapacity && owner._inflightRequests >= 4) {
+    // Waking does not reserve a slot. Recheck before starting any HTTP, within
+    // the original flight budget; a competing reader simply waits again.
+    await owner._waitForRequestCapacity(f.check);
+    f.check();
+  }
   if (owner._inflightRequests >= 4) {
     throw const TimewebAuthException(
       _photoOperation,
@@ -512,7 +555,7 @@ Future<(int, Uint8List?)> _photoAttempt(
     } finally {
       f.aborts.remove(abort);
       f.cancellations.remove(cancel);
-      owner._inflightRequests--;
+      owner._releaseRequestSlot();
     }
   }
 }

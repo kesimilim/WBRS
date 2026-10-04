@@ -574,7 +574,8 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
   );
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/family_back.png',
+    backgroundAsset: 'assets/family_main.jpg',
+    backgroundScale: 1.42,
     bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
         ? const TimewebBottomNavigationBar()
         : null,

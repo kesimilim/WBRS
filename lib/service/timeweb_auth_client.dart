@@ -425,6 +425,13 @@ Object? _immutableJson(Object? value, [int depth = 0]) {
   );
 }
 
+final class _RequestCapacityWaiter {
+  _RequestCapacityWaiter(this.requireCurrent);
+  final void Function() requireCurrent;
+  final result = Completer<void>();
+  late final Timer timer;
+}
+
 /// Migration adapter only. Native backend flags and client configuration stay
 /// off until imported credentials, runtime grants and live Auth proof pass.
 class TimewebAuthClient {
@@ -474,6 +481,7 @@ class TimewebAuthClient {
   bool _secureStoreUnsafe = false;
   bool _closed = false;
   int _inflightRequests = 0;
+  final Set<_RequestCapacityWaiter> _requestCapacityWaiters = {};
   final Map<String, _PrivateMediaFlight> _mediaFlights = {};
   bool _mediaPumping = false;
   final Map<String, TimewebMutationReference> _mutationReferences = {};
@@ -490,6 +498,61 @@ class TimewebAuthClient {
   String? get currentUid => _stopping || _closed ? null : _session?.uid;
   bool get hasSession =>
       _session != null && !_secureStoreUnsafe && !_closed && !_stopping;
+
+  // This observes capacity; it never queues or starts a transport request.
+  // Only the photo reader exposes it for its one fresh recovery read.
+  Future<void> _waitForRequestCapacity(void Function() requireCurrent) {
+    try {
+      requireCurrent();
+      if (_inflightRequests < 4) return Future<void>.value();
+      if (_requestCapacityWaiters.length >= 4) {
+        throw const TimewebAuthException(
+          _photoOperation,
+          TimewebAuthError.unavailable,
+        );
+      }
+      final waiter = _RequestCapacityWaiter(requireCurrent);
+      _requestCapacityWaiters.add(waiter);
+      waiter.timer = Timer(requestDeadline, () {
+        _finishCapacityWaiter(
+          waiter,
+          const TimewebAuthException(
+            _photoOperation,
+            TimewebAuthError.deadline,
+          ),
+        );
+      });
+      return waiter.result.future;
+    } catch (error) {
+      return Future<void>.error(error);
+    }
+  }
+
+  void _finishCapacityWaiter(_RequestCapacityWaiter waiter, [Object? error]) {
+    if (!_requestCapacityWaiters.remove(waiter)) return;
+    waiter.timer.cancel();
+    if (error == null) {
+      waiter.result.complete();
+    } else {
+      waiter.result.completeError(error);
+    }
+  }
+
+  void _wakeRequestCapacity() {
+    for (final waiter in _requestCapacityWaiters.toList()) {
+      try {
+        waiter.requireCurrent();
+        if (_inflightRequests < 4) _finishCapacityWaiter(waiter);
+      } catch (error) {
+        _finishCapacityWaiter(waiter, error);
+      }
+    }
+  }
+
+  void _releaseRequestSlot() {
+    _inflightRequests--;
+    _wakeRequestCapacity();
+  }
 
   void _checkEnabled(TimewebAuthOperation operation) {
     if (_closed || _stopping) {
@@ -548,6 +611,7 @@ class TimewebAuthClient {
 
   int _newEpoch() {
     _epoch++;
+    _wakeRequestCapacity();
     _cancelPrivateMedia(this);
     _mutationReferences.clear();
     unawaited(_cancelMutationTransfers(this));
@@ -1182,7 +1246,7 @@ class TimewebAuthClient {
         try {
           await cancelReader();
         } finally {
-          _inflightRequests--;
+          _releaseRequestSlot();
         }
       }
     }
@@ -1240,6 +1304,7 @@ class TimewebAuthClient {
       );
     }
     _stopping = true;
+    _wakeRequestCapacity();
     _session = null;
     _cancelPrivateMedia(this);
     _cancelCurrentReads(this);

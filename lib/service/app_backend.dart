@@ -94,10 +94,11 @@ class AppBackend {
         session.state.phase == AppSessionPhase.stopped) {
       throw StateError('Native email lifecycle session is unavailable.');
     }
-    final enabled =
-        timewebEmailLifecycleEnabled &&
-        (purpose != TimewebLifecyclePurpose.registerEmail ||
-            timewebRegistrationEnabled);
+    final enabled = purpose == TimewebLifecyclePurpose.registration
+        ? timewebRegistrationEnabled
+        : timewebEmailLifecycleEnabled &&
+              (purpose != TimewebLifecyclePurpose.registerEmail ||
+                  timewebRegistrationEnabled);
     return TimewebAuthLifecycleClient(
       configuration: TimewebAuthConfiguration(
         endpoint: Uri.parse(timewebApiOrigin),

@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'app_session.dart';
 import 'timeweb_auth_client.dart';
 
-enum TimewebLifecyclePurpose { passwordReset, registerEmail }
+enum TimewebLifecyclePurpose { passwordReset, registerEmail, registration }
 
 enum TimewebLifecycleStage { request, complete }
 
@@ -35,6 +35,7 @@ final class TimewebLifecycleException implements Exception {
 String _purpose(TimewebLifecyclePurpose purpose) => switch (purpose) {
   TimewebLifecyclePurpose.passwordReset => 'password-reset.v1',
   TimewebLifecyclePurpose.registerEmail => 'register-email.v1',
+  TimewebLifecyclePurpose.registration => 'register.v1',
 };
 bool _uuid(String value) => RegExp(
   r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
@@ -269,7 +270,7 @@ final class TimewebAuthLifecycleClient {
     required String operationId,
     required String email,
   }) {
-    if (!_email(email)) {
+    if (purpose == TimewebLifecyclePurpose.registration || !_email(email)) {
       throw const TimewebLifecycleException(
         TimewebLifecycleError.invalidRequest,
       );
@@ -288,7 +289,8 @@ final class TimewebAuthLifecycleClient {
     required String code,
     required String password,
   }) {
-    if (!_uuid(challengeId) ||
+    if (purpose == TimewebLifecyclePurpose.registration ||
+        !_uuid(challengeId) ||
         !RegExp(r'^[0-9]{6}$').hasMatch(code) ||
         password.runes.length < 6 ||
         utf8.encode(password).length > 4096 ||
@@ -303,6 +305,39 @@ final class TimewebAuthLifecycleClient {
       'password': password,
       'operationId': operationId,
     });
+  }
+
+  TimewebLifecycleOperation register({
+    required TimewebLifecycleScope scope,
+    required String operationId,
+    required String email,
+    required String nickname,
+    required String password,
+  }) {
+    if (!_email(email) ||
+        nickname.trim().isEmpty ||
+        nickname.runes.length > 1000 ||
+        utf8.encode(nickname).length > 4000 ||
+        !_utf8Exact(nickname) ||
+        nickname.runes.any((v) => v < 32 || v == 127) ||
+        password.runes.length < 6 ||
+        utf8.encode(password).length > 4096 ||
+        !_utf8Exact(password)) {
+      throw const TimewebLifecycleException(
+        TimewebLifecycleError.invalidRequest,
+      );
+    }
+    return _bind(
+      scope,
+      TimewebLifecyclePurpose.registration,
+      TimewebLifecycleStage.complete,
+      {
+        'email': email,
+        'nickname': nickname,
+        'password': password,
+        'operationId': operationId,
+      },
+    );
   }
 
   TimewebLifecycleOperation _bind(
@@ -404,7 +439,11 @@ final class TimewebAuthLifecycleClient {
                     'original': operation._body!,
                   }
           : operation._body!;
-      final path = flight.lookup
+      final path = operation.purpose == TimewebLifecyclePurpose.registration
+          ? flight.lookup
+                ? '/v1/auth/register/lookup'
+                : '/v1/auth/register'
+          : flight.lookup
           ? '/v1/auth/operations/lookup'
           : '/v1/auth/${operation.purpose == TimewebLifecyclePurpose.passwordReset ? 'password-reset' : 'register-email'}/${operation.stage.name}';
       final request =

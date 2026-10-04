@@ -24,7 +24,7 @@ import uuid
 from native_credentials import unique_json, CredentialUnavailable
 
 OPERATIONS = frozenset({"password-reset.request.v1", "password-reset.complete.v1",
-    "register-email.request.v1", "register-email.complete.v1"})
+    "register-email.request.v1", "register-email.complete.v1", "register.complete.v1"})
 MAX_PAYLOAD_BYTES = 8192
 _QUERY = """SELECT context_hmac, request_hmac, state, response_status, response,
  completed_at FROM clrs_staging.native_auth_receipts
@@ -148,7 +148,16 @@ class SensitiveAuthReceipts:
         if not isinstance(email_identity, bytes) or len(email_identity) != 32:
             raise AuthReceiptInvalid()
         request = operation.endswith(".request.v1")
-        if request:
+        if operation == 'register.complete.v1':
+            if (actor_uid is not None or challenge_id is not None or type(payload) is not dict
+                    or set(payload) != {'email', 'nickname', 'password'}):
+                raise AuthReceiptInvalid()
+            _text(payload['email'], 1280)
+            _text(payload['nickname'], 4000)
+            _text(payload['password'], 4096)
+            if not 1 <= len(payload['email']) <= 320 or not 1 <= len(payload['nickname']) <= 1000:
+                raise AuthReceiptInvalid()
+        elif request:
             if (actor_uid is not None or challenge_id is not None
                     or type(payload) is not dict or set(payload) != {"email"}):
                 raise AuthReceiptInvalid()

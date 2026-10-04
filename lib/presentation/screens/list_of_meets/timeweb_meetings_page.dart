@@ -84,7 +84,7 @@ AppBar _bar(
                     : Theme.of(context).textTheme.titleLarge,
               ),
             ),
-            if (action != null) SizedBox(width: 138, child: action),
+            if (action != null) action,
           ],
         ),
       ),
@@ -993,7 +993,16 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
           ? OutlinedButton.icon(
               key: const ValueKey('native-meeting-create'),
               style: OutlinedButton.styleFrom(
-                backgroundColor: const Color(0x4031241D),
+                backgroundColor: LrsTheme.peach.withValues(alpha: .25),
+                foregroundColor: LrsTheme.text,
+                minimumSize: const Size(0, 36),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                textStyle: const TextStyle(
+                  fontFamily: 'Lato',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               onPressed:
                   !_current || !_runtime.meetingCreationEnabled || _loading
@@ -1003,7 +1012,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
                         builder: (_) => MeetingForm(nativeRuntime: _runtime),
                       ),
                     ),
-              icon: const Icon(Icons.add),
+              icon: const Icon(Icons.add, size: 18),
               label: Text(
                 context.tr('Создать'),
                 maxLines: 2,
@@ -1201,7 +1210,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          if (person.uid == _owner)
+                          if (person.uid == _meeting!.organizerUid)
                             Text(
                               context.tr('Организатор'),
                               style: Theme.of(context).textTheme.labelSmall,

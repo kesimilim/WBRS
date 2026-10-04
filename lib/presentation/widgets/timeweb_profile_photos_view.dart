@@ -252,8 +252,9 @@ const _maxPhotoSide = 8192;
 Future<ui.Image> decodeProfilePhoto(
   Uint8List bytes,
   String mime,
-  void Function() requireCurrent,
-) async {
+  void Function() requireCurrent, {
+  int? displayPixels,
+}) async {
   requireCurrent();
   final expected = profilePhotoDimensions(bytes, mime);
   ui.ImmutableBuffer? buffer;
@@ -276,12 +277,21 @@ Future<ui.Image> decodeProfilePhoto(
       throw const TimewebProfilePhotoUnavailable();
     }
     final maxSide = w > h ? w : h;
-    final targetW = maxSide <= 1024
+    final minSide = w < h ? w : h;
+    // BoxFit.cover needs the short side to fill the avatar at its display DPR.
+    // Keep the existing maximum dimension, and never upscale source pixels.
+    final decodeSide = displayPixels == null
+        ? 1024
+        : (maxSide * displayPixels.clamp(1, 1024) / minSide).ceil().clamp(
+            1,
+            1024,
+          );
+    final targetW = maxSide <= decodeSide
         ? w
-        : (w * 1024 / maxSide).round().clamp(1, 1024);
-    final targetH = maxSide <= 1024
+        : (w * decodeSide / maxSide).round().clamp(1, 1024);
+    final targetH = maxSide <= decodeSide
         ? h
-        : (h * 1024 / maxSide).round().clamp(1, 1024);
+        : (h * decodeSide / maxSide).round().clamp(1, 1024);
     codec = await descriptor.instantiateCodec(
       targetWidth: targetW,
       targetHeight: targetH,

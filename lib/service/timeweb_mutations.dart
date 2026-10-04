@@ -1237,7 +1237,7 @@ Future<_Reply> _mutationTransfer(
         if (!abort.isCompleted) abort.complete();
         await cancelReader();
       } finally {
-        owner._inflightRequests--;
+        owner._releaseRequestSlot();
         owner._mutationTransfers.remove(flight);
         if (!flight.done.isCompleted) flight.done.complete();
       }

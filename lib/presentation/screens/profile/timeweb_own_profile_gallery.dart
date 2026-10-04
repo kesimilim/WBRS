@@ -262,7 +262,14 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
             return;
           }
           _reader = reader;
-          final page = await reader.photos(cursor: appendPage ? _cursor : null);
+          if (attempt == 1) {
+            await reader.waitForReadCapacity();
+            _check(generation, reader);
+          }
+          final page = await reader.photos(
+            cursor: appendPage ? _cursor : null,
+            waitForCapacity: attempt == 1,
+          );
           stage = 'original';
           await _append(
             page,
@@ -280,8 +287,6 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
           if (attempt == 0 && retryTransient && recoverable) {
             setState(() => _loading = true);
             await drained;
-            // Draining this reader cannot release other requests' shared slots.
-            await Future<void>.delayed(const Duration(milliseconds: 250));
             if (!_ownCurrent || generation != _generation) return;
             continue;
           }

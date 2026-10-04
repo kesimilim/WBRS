@@ -11,11 +11,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.dart';
+import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meeting_chat_page.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/meetings.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_meeting_create_flow.dart';
+import 'package:wbrs/service/timeweb_meeting_chat_flow.dart';
+import 'package:wbrs/service/timeweb_meeting_join_flow.dart';
+import 'package:wbrs/service/timeweb_meeting_membership_flow.dart';
 import 'package:wbrs/shared/meeting_form.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
@@ -55,7 +59,12 @@ Map<String, Object?> _roster(List<Object?> items, [String? cursor]) => {
   'nextCursor': cursor,
   'mediaReady': false,
 };
-TimewebAppRuntime _runtime(PeopleWire wire, {TimewebMeetingCreateJournal? journal}) => TimewebAppRuntime(
+TimewebAppRuntime _runtime(PeopleWire wire, {
+  TimewebMeetingCreateJournal? journal,
+  TimewebMeetingJoinJournal? joinJournal,
+  TimewebMeetingMembershipJournal? membershipJournal,
+  TimewebMeetingChatJournal? chatJournal,
+}) => TimewebAppRuntime(
   configuration: TimewebAuthConfiguration(
     endpoint: Uri.parse('https://api.example.invalid'),
     enabled: true,
@@ -70,6 +79,9 @@ TimewebAppRuntime _runtime(PeopleWire wire, {TimewebMeetingCreateJournal? journa
   clock: () => peopleNow,
   currentOwnProfileEnabled: true,
   meetingCreateJournal: journal,
+  meetingJoinJournal: joinJournal,
+  meetingMembershipJournal: membershipJournal,
+  meetingChatJournal: chatJournal,
 );
 Future<void> _until(WidgetTester tester, bool Function() ready, {String Function()? reason}) async {
   for (var i = 0; i < 150 && !ready(); i++) {
@@ -263,6 +275,114 @@ void main() {
       await tester.binding.setSurfaceSize(null);
     }
   });
+
+  testWidgets(
+    'native roster labels the actual organizer for an ordinary participant',
+    (tester) async {
+      final folder = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('native-roster-role-'),
+      ))!;
+      var rosterReads = 0;
+      final wire = PeopleWire((request) async {
+        if (request.url.path == '/v1/runtime/meetings/m') {
+          return peopleReply({
+            'kind': 'canonical-current',
+            'meeting': {..._meeting('m'), 'organizerUid': 'C'},
+            'mediaReady': false,
+          });
+        }
+        if (request.url.path == '/v1/runtime/meetings/m/participants') {
+          rosterReads++;
+          return peopleReply(_roster([
+            for (final person in {'A': 'Current participant', 'C': 'Meeting creator'}.entries)
+              {
+                'uid': person.key,
+                'fullName': person.value,
+                'primaryGroup': null,
+                'joinedAt': peopleStamp,
+                'membershipRevision': 0,
+                'avatar': null,
+                'mediaReady': false,
+              },
+          ]));
+        }
+        if (request.url.path == '/v1/runtime/meetings/m/messages') {
+          return peopleReply({
+            'kind': 'canonical-current',
+            'meetingId': 'm',
+            'chatRevision': 0,
+            'ordering': 'sequence_desc',
+            'items': <Object?>[],
+            'nextCursor': null,
+            'mediaReady': false,
+          });
+        }
+        fail('Unexpected native request');
+      });
+      final runtime = _runtime(
+        wire,
+        joinJournal: TimewebMeetingJoinJournal(directory: () async => folder),
+        membershipJournal: TimewebMeetingMembershipJournal(directory: () async => folder),
+        chatJournal: TimewebMeetingChatJournal(directory: () async => folder),
+      );
+      await tester.binding.setSurfaceSize(const Size(360, 800));
+      try {
+        await tester.runAsync(() => runtime.start(remember: true));
+        await tester.pumpWidget(
+          _app(TimewebMeetingsPageView(runtime: runtime, meetingId: 'm')),
+        );
+        await _until(
+          tester,
+          () {
+            final discussion = find.byKey(const ValueKey('native-meeting-discussion'));
+            return discussion.evaluate().isNotEmpty &&
+                tester.widget<TextButton>(discussion).onPressed != null;
+          },
+        );
+        await _tap(tester, 'native-meeting-discussion', 'native-meetings-scroll');
+        await _until(
+          tester,
+          () => find.byType(TimewebMeetingChatPageView).evaluate().isNotEmpty,
+        );
+        // Exercise the discussion's public request to refresh the parent roster.
+        // The dedicated participants route renders a different list.
+        final chat = find.byType(TimewebMeetingChatPageView);
+        tester.widget<TimewebMeetingChatPageView>(chat).onParticipants();
+        Navigator.of(tester.element(chat)).pop();
+        await _until(tester, () => rosterReads == 2);
+        await tester.pump(const Duration(milliseconds: 400));
+        final scroll = find.descendant(
+          of: find.byKey(const ValueKey('native-meetings-scroll')),
+          matching: find.byType(Scrollable),
+        ).first;
+        await tester.scrollUntilVisible(find.text('Meeting creator'), 150, scrollable: scroll);
+        final creator = find.ancestor(
+          of: find.text('Meeting creator'),
+          matching: find.byType(ClrsPanel),
+        );
+        final participant = find.ancestor(
+          of: find.text('Current participant'),
+          matching: find.byType(ClrsPanel),
+        );
+        expect(creator, findsOneWidget);
+        expect(participant, findsOneWidget);
+        expect(
+          find.descendant(of: creator, matching: find.text('Организатор')),
+          findsOneWidget,
+        );
+        expect(
+          find.descendant(of: participant, matching: find.text('Организатор')),
+          findsNothing,
+        );
+        expect(find.byTooltip('Исключить участника'), findsNothing);
+        expect(tester.takeException(), isNull);
+      } finally {
+        await _stop(tester, runtime);
+        await tester.binding.setSurfaceSize(null);
+        await tester.runAsync(() => folder.delete(recursive: true));
+      }
+    },
+  );
 
   testWidgets(
     'native form before Firebase init: no legacy edit, unknown checks original once then ACK before native navigation',

@@ -23,9 +23,10 @@ from runtime_meetings import RuntimeMeetingsService, TRUSTED_POLICY
 from native_auth_lifecycle_http import NativeAuthLifecycleHttp
 from runtime_profile_photos_http import RuntimeProfilePhotoMediaReply, RuntimeProfilePhotosHttpReply
 from runtime_profile_photos_factory import create_profile_photos_http
-from native_profile_photo_factory import create_native_profile_photos_http
+from native_profile_photo_factory import create_native_profile_photos_http, create_append_profile_photos_http
 from runtime_versioned_profile_photos_factory import create_versioned_profile_photos_http
 from runtime_profile_photo_delta_factory import create_delta_profile_photos_http
+from final_runtime_readiness import FinalRuntimeAcceptance, load_final_runtime_acceptance
 
 
 def _reply(start_response, status, payload, *, head=False, authenticate=False, retry=False):
@@ -124,7 +125,7 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                profile_photos_http=None,
                profile_photos_http_factory=create_profile_photos_http,
                imported_meeting_authority=None, imported_meeting_binding=None,
-               profile_photo_versions=None, profile_photo_delta=None):
+               profile_photo_versions=None, profile_photo_delta=None, final_runtime_acceptance=None):
     """Construct WSGI app with injectable dependencies for offline tests."""
     if env is None:
         env = os.environ
@@ -148,6 +149,17 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
             preview_key = None
     native_configured = (env.get("CLRS_NATIVE_AUTH_ENABLED") == "1"
                          and env.get("CLRS_NATIVE_AUTH_WRITES_ENABLED") == "1")
+    def final_accepted():
+        if (type(final_runtime_acceptance) is not FinalRuntimeAcceptance or not native_configured
+                or env.get("CLRS_RUNTIME_WRITES_ENABLED") != "1"
+                or env.get("CLRS_RUNTIME_MEMBERSHIP_AUTHORITY") != "canonical-current-v1"):
+            return False
+        try:
+            final_runtime_acceptance.require(imported_meeting_authority,
+                                             imported_meeting_binding, env)
+            return True
+        except Exception:
+            return False
     def initialize():
         nonlocal native_service, legacy_http, media_http, runtime_http, lifecycle_http, profile_photos_http, initialized
         with init_lock:
@@ -167,6 +179,10 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                 env, profile_photos_http, snapshot=profile_photo_versions)
             profile_photos_http = create_delta_profile_photos_http(
                 env, profile_photos_http, snapshot=profile_photo_delta)
+            profile_photos_http = create_append_profile_photos_http(env, profile_photos_http)
+            append_context = getattr(profile_photos_http, 'imported_append_context', None)
+            if append_context is not None and isinstance(runtime_http, RuntimeMutationHttp):
+                runtime_http.bind_imported_photo_context(append_context)
             if native_configured:
                 try:
                     native_service = native_service_factory(env)
@@ -195,18 +211,24 @@ def create_app(*, env=None, verify_token=verify_firebase_id_token,
                           {"service": "clrs-timeweb-stand", "state": state},
                           head=method == "HEAD")
         if path == "/readyz" and method in ("GET", "HEAD"):
-            # Data staging is not application cutover. A preview must also
-            # avoid unauthenticated DB work from readiness probes.
+            # Final source readiness requires the separately authenticated
+            # all-15 acceptance as well as imported barrier/delta authority.
             connected = False
-            if api and not preview:
+            if api and not preview and final_accepted():
                 try:
                     connected = database_probe(env=env) is True
                 except Exception:
                     connected = False
-            return _reply(start_response, "503 Service Unavailable",
-                          {"state": "migration_incomplete" if api else "api_not_configured",
+            ready = api and not preview and connected and final_accepted()
+            return _reply(start_response, "200 OK" if ready else "503 Service Unavailable",
+                          {"state": "final_source_ready" if ready else
+                           "migration_incomplete" if api else "api_not_configured",
                            "database_connected": connected},
                           head=method == "HEAD")
+
+        # Turning the preview guard off is never itself cutover authority.
+        if api and not preview and not final_accepted():
+            return _reply(start_response, "503 Service Unavailable", {"error": "service_unavailable"})
 
         if preview:
             if preview_key is None:
@@ -405,8 +427,10 @@ def _deployed_app():
                 "CLRS_PREVIEW_ACCESS_KEY_B64", "CLRS_LEGACY_MEDIA_PROMOTION_RECEIPT_KEY_B64")))
     from imported_authority_bootstrap import load_reviewed_imported_authority
     authority, binding = load_reviewed_imported_authority(settings)
+    final_acceptance = load_final_runtime_acceptance(settings, authority=authority, binding=binding)
     return create_app(env=settings, profile_photo_versions=versions, profile_photo_delta=delta,
-                      imported_meeting_authority=authority, imported_meeting_binding=binding)
+                      imported_meeting_authority=authority, imported_meeting_binding=binding,
+                      final_runtime_acceptance=final_acceptance)
 
 
 app = _deployed_app()

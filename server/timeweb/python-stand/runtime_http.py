@@ -163,6 +163,16 @@ class RuntimeMutationHttp:
                                                   imported_authority=imported_authority)
             self._push_worker.start()
 
+    def bind_imported_photo_context(self, context):
+        from native_profile_photo_factory import ImportedPhotoAppendContext
+        if type(context) is not ImportedPhotoAppendContext: raise RuntimeUnavailable()
+        if self._services is not None and self._services[8] is not None:
+            photos = self._services[8]._photos
+            if (self._services[9] is not None and self._services[9]._service is not None
+                    and self._services[9]._service is not photos): raise RuntimeUnavailable()
+            if photos._imported_context is not None and photos._imported_context is not context: raise RuntimeUnavailable()
+            photos._imported_context = context
+
     def close(self):
         if self._push_worker is not None:
             self._push_worker.close()

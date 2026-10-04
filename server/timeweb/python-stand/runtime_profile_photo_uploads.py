@@ -1,6 +1,6 @@
-"""Native-only pending/ready photos. No S3 credentials, route mount or activation.
+"""Owner-bound pending/ready appends. Retained imports are never rewritten.
 
-The trusted injected writer must prove conditional private PUT/checksum support;
+The trusted injected writer must prove conditional private PUT/full server verification;
 None is the production default. Neither a PUT ACK nor a client URL proves ready.
 Existing imported media/readers and their provenance remain untouched.
 """
@@ -106,10 +106,11 @@ def _prepared(mid, payload):
     return {"mediaId": mid, **payload, "status": "pending", "profileAuthority": AUTHORITY}
 
 
-def native_gallery(rows, uid):
-    if len(rows) > MAX_PHOTOS: raise PhotoUploadTargetRejected()
+def native_gallery(rows, uid, *, ordinal_offset=0):
+    if type(ordinal_offset) is not int or not 0 <= ordinal_offset <= MAX_PHOTOS: raise PhotoUploadTargetRejected()
+    if len(rows) + ordinal_offset > MAX_PHOTOS: raise PhotoUploadTargetRejected()
     ids = set()
-    for ordinal, row in enumerate(rows):
+    for ordinal, row in enumerate(rows, ordinal_offset):
         if (len(row) != 15 or row[0] in ids or row[0] != row[4] or row[3] is not None
                 or type(row[1]) is not int or row[1] != ordinal or type(row[2]) is not int or row[2] != int(ordinal == 0)
                 or row[5] != uid or row[6] != "profile" or row[11] != "ready"
@@ -140,12 +141,14 @@ def validate_commit_response(request, response, context, photo):
 
 
 class RuntimeProfilePhotoUploadsService:
-    def __init__(self, store, *, writer=None, monotonic=time.monotonic, clock=time.time):
+    def __init__(self, store, *, writer=None, imported_context=None, monotonic=time.monotonic, clock=time.time):
         # Strict-table legacy roles do not grant the needed photo writes.
         if (store is None or store._env.get("CLRS_RUNTIME_PERMISSION_MODEL") != "provider-database-v1"
+                or imported_context is not None and not callable(imported_context)
                 or not callable(monotonic) or not callable(clock) or writer is not None and not all(callable(getattr(writer, name, None))
                     for name in ("prepare_put", "verify_ready", "require_verified"))):
             raise RuntimeUnavailable()
+        self._imported_context = imported_context
         self._store = store; self._writer = writer; self._clock = monotonic; self._wall = clock
         self._slots = threading.BoundedSemaphore(2)
         for operation, guard in ((PREPARE_OPERATION, self._prepare_guard), (COMMIT_OPERATION, self._commit_guard)):
@@ -162,8 +165,11 @@ class RuntimeProfilePhotoUploadsService:
         if len(row) != 2 or row[0] != uid: raise RuntimeUnavailable()
         return _stamp(row[1])
 
-    @staticmethod
-    def _photos(cursor, execute, uid, write=False):
+    def _photos(self, cursor, execute, uid, write=False):
+        if self._imported_context is not None:
+            execute(_INITIAL, (uid, uid)); origin = cursor.fetchone()
+            if origin is not None and len(origin) == 3 and type(origin[2]) is int and origin[2] == 0:
+                return self._imported_context(cursor, execute, uid, write=write)
         execute(_PHOTOS.replace("FOR SHARE", "FOR UPDATE") if write else _PHOTOS, (uid, uid))
         rows = cursor.fetchall()
         if (len(rows) > MAX_PHOTOS or any(len(row) != 3 or type(row[1]) is not int or row[1] != ordinal
@@ -175,8 +181,11 @@ class RuntimeProfilePhotoUploadsService:
     def _upload_target(self, cursor, execute, uid, write=False, *, completed_only=False):
         execute(_INITIAL.replace("FOR SHARE", "FOR UPDATE") if write else _INITIAL, (uid, uid))
         row = cursor.fetchone()
-        # A finished native gallery remains writable. Transitional flags and
-        # imported/mixed galleries have no append authority in this adapter.
+        # Imported owners only append through the verified old-source layout.
+        # Native onboarding/three-photo requirements remain unchanged.
+        if (row is not None and len(row) == 3 and all(type(value) is int for value in row)
+                and row[2] == 0 and tuple(row[:2]) == (1, 1) and self._imported_context is not None):
+            return self._imported_context(cursor, execute, uid, write=write)
         if (row is None or len(row) != 3 or any(type(value) is not int for value in row)
                 or row[2] != 1 or tuple(row[:2]) not in ((0, 0), (1, 1))
                 or completed_only and tuple(row[:2]) != (1, 1)):
@@ -196,7 +205,7 @@ class RuntimeProfilePhotoUploadsService:
                 "photoLimit": MAX_PHOTOS, "profileAuthority": AUTHORITY}
         return self._store.read_authenticated(identity, action, access_token=access_token)
 
-    def _context(self, cursor, execute, uid, payload, write=False):
+    def _context(self, cursor, execute, uid, payload, write=False, *, photos=None):
         stamp = self._profile(cursor, execute, uid, write)
         if stamp is None: return {"error": "profile_not_found"}
         mid, key = photo_identity(uid, payload["prepareOperationId"])
@@ -212,7 +221,7 @@ class RuntimeProfilePhotoUploadsService:
         if (status != 201 or revision is not None or wrapper != {"request": fields, "response": _prepared(mid, fields)}):
             raise PhotoUploadTargetRejected()
         return {"record": record,
-            "status": row[7], "updatedAt": stamp, "photos": self._photos(cursor, execute, uid, write)}
+            "status": row[7], "updatedAt": stamp, "photos": self._photos(cursor, execute, uid, write) if photos is None else photos}
 
     def _prepare_guard(self, cursor, execute, uid, op, request, response):
         validate_prepare(request); _uuid(op)
@@ -232,9 +241,9 @@ class RuntimeProfilePhotoUploadsService:
     def prepare(self, identity, operation_id, payload, *, access_token):
         _uuid(operation_id); request = validate_prepare(payload)
         def action(cursor, execute, uid):
-            self._upload_target(cursor, execute, uid, True)
+            photos = self._upload_target(cursor, execute, uid, True)
             if self._profile(cursor, execute, uid, True) is None: return 404, {"error": "profile_not_found"}, None
-            if len(self._photos(cursor, execute, uid, True)) >= MAX_PHOTOS: return 409, {"error": "photo_limit_reached"}, None
+            if len(photos) >= MAX_PHOTOS: return 409, {"error": "photo_limit_reached"}, None
             mid, key = photo_identity(uid, operation_id)
             execute("""INSERT INTO clrs_staging.media_objects
  (media_id, owner_uid, purpose, object_key, mime_type, byte_size, sha256, status, legacy_storage_path)
@@ -250,8 +259,9 @@ class RuntimeProfilePhotoUploadsService:
 
     def _read(self, identity, request, token, *, upload_target=False):
         def action(cursor, execute, uid):
-            if upload_target: self._upload_target(cursor, execute, uid)
-            return self._context(cursor, execute, uid, request)
+            photos = self._upload_target(cursor, execute, uid) if upload_target else None
+            return self._context(cursor, execute, uid, request,
+                photos=None if photos is None else [row[:3] for row in photos])
         return self._store.read_authenticated(identity, action, access_token=token)
 
     def upload_lease(self, identity, media_id, prepare_operation_id, *, access_token):
@@ -296,8 +306,8 @@ class RuntimeProfilePhotoUploadsService:
                 except PhotoUploadVerificationFailed: mismatch = True
                 if self._clock() >= deadline: raise RuntimeUnavailable()
             def action(cursor, execute, uid):
-                self._upload_target(cursor, execute, uid, True)
-                current = self._context(cursor, execute, uid, request, True)
+                photos = self._upload_target(cursor, execute, uid, True)
+                current = self._context(cursor, execute, uid, request, True, photos=[row[:3] for row in photos])
                 if "error" in current: return _ERRORS[current["error"]], {"error": current["error"]}, None
                 if "error" in before or current["record"] != before["record"]: raise PhotoUploadTargetRejected()
                 # Ready is replayable only through its already stored ORIGINAL

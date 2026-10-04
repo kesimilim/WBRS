@@ -41,6 +41,47 @@ Future<void> tick(bool Function() ready) async {for(var i=0;i<100&&!ready();i++)
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('retained historical text and sequence survive independent meeting revision; native send stays strict', () async {
+    var reads = 0;
+    final wire = PeopleWire((call) async {
+      if (call.method == 'POST') {
+        final original = request(jsonDecode((call as http.Request).body)['operationId']);
+        final result = {...row(155, uuid: original.operationId, value: text), 'chatRevision': 3};
+        return peopleReply(envelope(original, result, revision: original.operationId == op ? 3 : 4), status: 201);
+      }
+      expect(call.method, 'GET');
+      return peopleReply(++reads == 1
+        ? page([{...row(154, value: ' '), 'messageId': 'retained-source-document'}], revision: 2, cursor: 'older')
+        : page([{...row(153, value: '\t \r\n'), 'messageId': 'retained-older-document'}], revision: 2));
+    });
+    final owner = client(wire);
+    try {
+      await owner.restore();
+      final first = await owner.readMeetingMessages(meeting, limit: 1);
+      expect(first.items.single.sequence, 154);
+      expect(first.items.single.text, ' ');
+      expect(first.chatRevision, 2);
+      final older = await owner.readMeetingMessages(meeting, limit: 1, cursor: first.nextCursor);
+      expect(older.items.single.sequence, 153);
+      expect(older.items.single.text, '\t \r\n');
+      expect(older.nextCursor, isNull);
+      for (final blank in [' ', '\t \r\n']) {
+        expect(() => TimewebMutationRequest.sendMeetingText(operationId: op, meetingId: meeting, text: blank), throwsArgumentError);
+      }
+      final confirmed = await owner.mutate(owner.bindMutation(request(), expectedOwnerUid: 'A'));
+      expect(confirmed.state, TimewebMutationState.confirmed);
+      expect(confirmed.sentMeetingMessage!.sequence, 155);
+      expect(confirmed.sentMeetingMessage!.chatRevision, 3);
+      expect(confirmed.canAcknowledge, isTrue);
+      final forged = await owner.mutate(owner.bindMutation(request('22345678-1234-4234-8234-123456789abc'), expectedOwnerUid: 'A'));
+      expect(forged.state, TimewebMutationState.unknown);
+      expect(forged.canAcknowledge, isFalse);
+      expect(wire.calls, hasLength(4));
+    } finally {
+      await owner.stop();
+    }
+  });
+
   test('messages exact descending window binds tail/revision/target/limit/original expiry and nested runtime guards',()async{
     var now=peopleNow;
     final wire=PeopleWire((call)async{
@@ -61,7 +102,7 @@ void main() {
       now=now.add(const Duration(seconds:200));await expectLater(owner.readMeetingMessages(meeting,limit:2,cursor:second.nextCursor),throwsA(authError(TimewebAuthError.invalidRequest)));
     }finally{await owner.stop();}
     for(final invalid in [page([],cursor:'empty'),page([row(1),row(2)]),page([row(1),row(1)]),
-        page([{...row(1),'url':'https://invalid.example'}]),page([{...row(1),'createdAt':null}]),page([{...row(1),'text':' '}]),
+        page([{...row(1),'url':'https://invalid.example'}]),page([{...row(1),'createdAt':null}]),page([{...row(1),'text':''}]),
         page([{...row(1),'sequence':1.0}]),page([{...row(1),'meetingId':'foreign'}]),page([{...row(1),'quote':null}])]){
       final check=client(PeopleWire((_)async=>peopleReply(invalid)));try{await check.restore();await expectLater(check.readMeetingMessages(meeting),throwsA(authError(TimewebAuthError.invalidResponse)));}finally{await check.stop();}
     }

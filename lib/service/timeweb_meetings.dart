@@ -420,11 +420,15 @@ TimewebMeetingArchivePage _decodeMeetingArchive(_PeopleFlight f, Map<String, dyn
     TimewebMeetingArchiveWindow._(frozen, _meetingReadCheck(f)), _meetingReadCheck(f));
 }
 
+bool _retainedMeetingText(Object? value) => value is String && value.isNotEmpty &&
+  value.runes.length <= 4096 && utf8.encode(value).length <= 16384 &&
+  utf8.decode(utf8.encode(value)) == value;
+
 bool _meetingMessageFields(Map<String, dynamic> value, String id, {bool retainedRead = false}) => value['meetingId'] == id &&
   (retainedRead ? _mutationId(value['messageId']) :
     value['messageId'] is String && RegExp(r'^tw-meet-msg-[a-f0-9]{64}$').hasMatch(value['messageId'])) &&
   _mutationInteger(value['sequence'], positive: true) && _currentIdentifier(value['senderUid']) &&
-  _mutationText(value['text']) && _mutationStamp(value['createdAt']);
+  (retainedRead ? _retainedMeetingText(value['text']) : _mutationText(value['text'])) && _mutationStamp(value['createdAt']);
 
 TimewebMeetingMessagePage _decodeMeetingMessages(_PeopleFlight f, Map<String, dynamic> body, Map<String, String> query,
   String id, TimewebMeetingCursor? cursor, String scope) {
@@ -437,7 +441,7 @@ TimewebMeetingMessagePage _decodeMeetingMessages(_PeopleFlight f, Map<String, dy
   final rows = <TimewebMeetingMessage>[], ids = <String>{}; int? previous = cursor?._beforeSequence;
   for (final value in raw) {
     if (value is! Map<String, dynamic> || !_mutationExact(value, {'meetingId','messageId','sequence','senderUid','text','createdAt'}) ||
-        !_meetingMessageFields(value, id, retainedRead: true) || value['sequence'] > body['chatRevision'] ||
+        !_meetingMessageFields(value, id, retainedRead: true) ||
         cursor != null && value['sequence'] > cursor._capSequence! || previous != null && value['sequence'] >= previous || !ids.add(value['messageId'])) _peopleInvalid();
     previous = value['sequence']; rows.add(TimewebMeetingMessage._(Map.unmodifiable(value), _meetingReadCheck(f)));
   }
@@ -452,7 +456,7 @@ TimewebMutationResult _decodeSentMeetingMessage(TimewebMutationReference ref, in
   final expected = 'tw-meet-msg-${crypto.sha256.convert(utf8.encode('clrs-native-meeting-message-v1\u0000${_mutationCanonical([input['meetingId'], ref._uid, ref._request.operationId])}'))}';
   if (status != 201 || !_mutationExact(result, {'meetingId','messageId','sequence','senderUid','text','createdAt','chatRevision'}) ||
       !_meetingMessageFields(result, input['meetingId']) || result['messageId'] != expected || result['senderUid'] != ref._uid ||
-      result['text'] != input['text'] || !_mutationInteger(result['chatRevision']) || revision != result['chatRevision'] || revision! < result['sequence']) _mutationInvalidReply();
+      result['text'] != input['text'] || !_mutationInteger(result['chatRevision']) || revision != result['chatRevision']) _mutationInvalidReply();
   return TimewebMutationResult._(ref, TimewebMutationState.confirmed, status, replayed: replayed, revision: revision,
     meetingMessage: TimewebSentMeetingMessageReceipt._(result, ref.requireCurrent), receiptConfirmed: true);
 }

@@ -413,6 +413,184 @@ class WireConnection:
             self.sock.closed.set()
 
 
+class KeepAliveWire:
+    """Real HTTPResponse framing; only socket/TLS setup and remote bytes are synthetic."""
+    def __init__(self, reply=None, setup_seconds=0):
+        self.reply = reply or (lambda path: {'body': b'x'})
+        self.setup_seconds = setup_seconds; self.connections = []; self.requests = []
+        self.connects = 0; self.fail_request = False
+
+    def factory(self):
+        owner = self
+        class Stream(io.BytesIO):
+            def __init__(self, sock, plan):
+                body = plan['body']; headers = plan.get('headers', [('Content-Length', str(len(body)))])
+                raw = ('HTTP/1.1 200 OK\r\nContent-Type: ' + plan.get('type', 'image/jpeg') + '\r\n'
+                    + 'Connection: ' + plan.get('connection', 'keep-alive') + '\r\n'
+                    + ''.join(name + ': ' + value + '\r\n' for name,value in headers) + '\r\n').encode() + body
+                super().__init__(raw); self.sock = sock; self.hang = plan.get('hang', False); self.plan = plan
+            def read(self, size=-1):
+                if self.hang:
+                    if self.plan.get('read_started'): self.plan['read_started'].set()
+                    self.sock.closed.wait(2)
+                    if self.plan.get('read_gate'): self.plan['read_gate'].wait(2)
+                    raise OSError('synthetic blocked body')
+                return super().read(size)
+        class KeepSocket(Sock):
+            def makefile(self, *_): return Stream(self, owner.reply(connection.path))
+        class Connection:
+            def __init__(self): self.sock = None; self.closed = False; self.path = None
+            def connect(self):
+                owner.connects += 1
+                time.sleep(owner.setup_seconds)
+                self.sock = KeepSocket()
+            def request(self, method, path, *, headers):
+                assert method == 'GET'
+                owner.requests.append((path, dict(headers))); self.path = path
+                if owner.fail_request: raise OSError('synthetic stale connection')
+            def getresponse(self):
+                result = http.client.HTTPResponse(self.sock, method='GET'); result.begin(); return result
+            def close(self):
+                self.closed = True
+                if self.sock: self.sock.closed.set()
+        connection = Connection(); self.connections.append(connection); return connection
+
+    def close(self):
+        for connection in self.connections: connection.close()
+
+
+class KeepAliveTests(unittest.TestCase):
+    def transport(self, wire):
+        self.addCleanup(wire.close)
+        return SigV4HTTPSReadTransport('https://s3.twcstorage.ru/', 'ru-1', 'foo', 'bar',
+            connection_factory=wire.factory)
+
+    def consume(self, response):
+        value = bytearray()
+        while True:
+            block = response.read(CHUNK_BYTES)
+            if not block: break
+            value.extend(block)
+        response.close(); return bytes(value)
+
+    def test_full_photo_reuses_tls_but_all_nine_fresh_reads_repeat_and_public_change_refuses(self):
+        public = [False]
+        api = KeepAliveWire(lambda path: {'type': 'application/json', 'body': json.dumps({'bucket': {
+            'id': 1, 'name': BUCKET, 'type': 'public' if public[0] else 'private'}}).encode()}, 0.025)
+        def object_reply(path):
+            if path.endswith('?acl='): return {'body': acl(), 'type': 'application/xml'}
+            if path.endswith('?policy='): return {'body': b'{"Version":"2012-10-17","Statement":[]}', 'type': 'application/json'}
+            return {'body': BODY}
+        s3 = KeepAliveWire(object_reply, 0.025); transport = self.transport(s3); self.addCleanup(api.close)
+        state = TimewebPrivateBucketState(1, BUCKET, 'synthetic-api-token', connection_factory=api.factory)
+        media = PrivateMediaS3(BUCKET, OWNER, transport, state)
+        for attempt in range(2):
+            with io.BytesIO() as sink:
+                media.get_verified_to_file(record(BODY), sink, time.monotonic() + 2, threading.Event())
+                self.assertEqual(BODY, sink.read())
+            if attempt == 0: first_setups = s3.connects + api.connects
+            self.assertLessEqual(s3.connects + api.connects, 3)
+        self.assertEqual(first_setups, s3.connects + api.connects)
+        self.assertEqual(14, len(s3.requests)); self.assertEqual(4, len(api.requests))
+        self.assertTrue(all(headers['connection'] == 'keep-alive' for _,headers in s3.requests + api.requests))
+        originals = sum(not path.endswith(('?acl=', '?policy=')) for path,_ in s3.requests)
+        public[0] = True
+        with io.BytesIO() as sink:
+            with self.assertRaises(PrivateMediaUnavailable):
+                media.get_verified_to_file(record(BODY), sink, time.monotonic() + 2, threading.Event())
+            self.assertEqual(b'', sink.getvalue())
+        self.assertEqual(originals, sum(not path.endswith(('?acl=', '?policy=')) for path,_ in s3.requests))
+
+    def test_released_owner_cancel_and_deadline_cannot_close_reused_connection(self):
+        wire = KeepAliveWire(); transport = self.transport(wire); first_cancel = threading.Event()
+        self.assertEqual(b'x', self.consume(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 0.08, first_cancel)))
+        second = transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())
+        first_cancel.set(); time.sleep(0.1)
+        self.assertEqual(b'x', self.consume(second)); self.assertEqual(1, wire.connects)
+        self.assertFalse(wire.connections[0].closed)
+
+    def test_reused_socket_hanging_body_respects_current_deadline_and_cancel(self):
+        for cause in ('deadline', 'cancel'):
+            with self.subTest(cause=cause):
+                hang = [False]; wire = KeepAliveWire(lambda path: {'body': b'x', 'hang': hang[0]})
+                transport = self.transport(wire)
+                self.consume(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event()))
+                hang[0] = True; cancel = threading.Event()
+                response = transport.open('GetObject', BUCKET, KEY, time.monotonic() + (0.08 if cause == 'deadline' else 1), cancel)
+                timer = threading.Timer(0.08, cancel.set) if cause == 'cancel' else None
+                if timer: timer.start()
+                before = time.monotonic()
+                try:
+                    with self.assertRaises(PrivateMediaUnavailable): response.read(1)
+                finally:
+                    if timer: timer.cancel()
+                    response.close()
+                self.assertLess(time.monotonic() - before, 0.6); self.assertEqual(1, wire.connects)
+                self.assertTrue(wire.connections[0].closed); self.assertFalse(transport._pool._owned)
+
+    def test_unread_unknown_length_and_connection_close_are_never_reused(self):
+        for plan, read in [({'body': b'x'}, False), ({'body': b'x', 'headers': []}, True),
+                ({'body': b'x', 'connection': 'close'}, True)]:
+            with self.subTest(plan=plan, read=read):
+                wire = KeepAliveWire(lambda path: plan); transport = self.transport(wire)
+                first = transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())
+                if read: self.consume(first)
+                else: first.close()
+                second = transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event()); second.close()
+                self.assertEqual(2, wire.connects); self.assertTrue(all(connection.closed for connection in wire.connections))
+
+    def test_four_connections_are_bounded_until_real_response_owner_releases(self):
+        wire = KeepAliveWire(); transport = self.transport(wire); responses = []
+        try:
+            for _ in range(4): responses.append(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 2, threading.Event()))
+            with self.assertRaises(PrivateMediaUnavailable):
+                transport.open('GetObject', BUCKET, KEY, time.monotonic() + 2, threading.Event())
+            self.assertEqual(4, wire.connects); self.assertEqual(4, len(wire.requests))
+            for response in responses: response.close()
+            self.assertEqual(b'x', self.consume(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())))
+            self.assertEqual(5, wire.connects)
+            transport.close(); self.assertTrue(all(connection.closed for connection in wire.connections))
+            with self.assertRaises(PrivateMediaUnavailable):
+                transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())
+        finally:
+            for response in responses: response.close()
+
+    def test_stale_connection_failure_has_no_get_replay(self):
+        wire = KeepAliveWire(); transport = self.transport(wire)
+        self.consume(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event()))
+        wire.fail_request = True
+        with self.assertRaises(PrivateMediaUnavailable):
+            transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())
+        self.assertEqual(1, wire.connects); self.assertEqual(2, len(wire.requests))
+        self.assertFalse(transport._pool._owned)
+
+    def test_canceled_body_retains_admission_until_actual_read_returns(self):
+        started = threading.Event(); release = threading.Event(); cancel = threading.Event(); hang = [True]
+        wire = KeepAliveWire(lambda path: {'body': b'x', 'hang': hang[0], 'read_started': started, 'read_gate': release})
+        transport = self.transport(wire); responses = []
+        response = transport.open('GetObject', BUCKET, KEY, time.monotonic() + 2, cancel)
+        errors = []
+        def read():
+            try: response.read(1)
+            except PrivateMediaUnavailable: errors.append('closed')
+            finally: response.close()
+        caller = threading.Thread(target=read); caller.start()
+        try:
+            self.assertTrue(started.wait(0.5)); cancel.set()
+            self.assertTrue(wire.connections[0].sock.closed.wait(0.5)); self.assertTrue(caller.is_alive())
+            hang[0] = False
+            for _ in range(3): responses.append(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 2, threading.Event()))
+            with self.assertRaises(PrivateMediaUnavailable):
+                transport.open('GetObject', BUCKET, KEY, time.monotonic() + 2, threading.Event())
+            self.assertEqual(4, len(transport._pool._owned)); self.assertEqual(4, wire.connects)
+            release.set(); caller.join(0.5); self.assertFalse(caller.is_alive()); self.assertEqual(['closed'], errors)
+            self.assertEqual(b'x', self.consume(transport.open('GetObject', BUCKET, KEY, time.monotonic() + 1, threading.Event())))
+            self.assertEqual(5, wire.connects)
+        finally:
+            release.set(); cancel.set(); caller.join(0.5); response.close()
+            for pending in responses: pending.close()
+
+
 class HTTPSReadTests(unittest.TestCase):
     def transport(self, connection, *, token=None):
         return SigV4HTTPSReadTransport("https://s3.twcstorage.ru/", "ru-1", "foo", "bar",
@@ -439,6 +617,8 @@ class HTTPSReadTests(unittest.TestCase):
             clock = staticmethod(time.monotonic)
             def check(self):
                 pass
+            def start_read(self): pass
+            def finish_read(self): pass
             def close(self):
                 sock.closed.set()
         response = media_port._Response(raw, Lease())

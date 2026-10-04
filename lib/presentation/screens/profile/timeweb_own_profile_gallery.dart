@@ -11,7 +11,7 @@ import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/profile_composition.dart';
 
 /// CLRS portrait and thumbnail strip over the existing private photo reader.
-/// Only small decoded thumbnails and one portrait live in this route's RAM.
+/// Small thumbnails, one portrait and two recent originals live in route RAM.
 class TimewebOwnProfileGallery extends StatefulWidget {
   const TimewebOwnProfileGallery({
     super.key,
@@ -37,6 +37,7 @@ class TimewebOwnProfileGallery extends StatefulWidget {
 }
 
 class _GalleryState extends State<TimewebOwnProfileGallery> {
+  static const _initialPageSize = 3;
   late final TimewebAppRuntime _runtime;
   late final String _targetUid;
   StreamSubscription<AppSessionState>? _states;
@@ -44,9 +45,12 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
   TimewebProfilePhotosCursor? _cursor;
   final _references = <TimewebProfilePhotoReference>[];
   final _thumbnails = <int, ui.Image>{};
+  final _recentOriginals = <TimewebProfilePhotoReference, ui.Image>{};
   ui.Image? _portrait;
+  TimewebProfilePhotoReference? _portraitReference;
   late final int _epoch;
   int _generation = 0, _selected = 0;
+  int _pageLimit = _initialPageSize;
   bool _active = false,
       _loading = false,
       _selecting = false,
@@ -124,6 +128,11 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     final reader = _reader;
     _reader = null;
     final draining = reader?.close();
+    for (final image in _recentOriginals.values) {
+      image.dispose();
+    }
+    _recentOriginals.clear();
+    _portraitReference = null;
     if (!keepPortrait || !_ownCurrent) {
       _portrait?.dispose();
       _portrait = null;
@@ -134,6 +143,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     _thumbnails.clear();
     _references.clear();
     _cursor = null;
+    _pageLimit = _initialPageSize;
     _loading = false;
     _selecting = false;
     return draining;
@@ -146,18 +156,47 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     reader.requireCurrent();
   }
 
+  bool _hasDecoded(TimewebProfilePhotoReference ref) =>
+      _recentOriginals.containsKey(ref) ||
+      identical(ref, _portraitReference) && _portrait != null;
+
   Future<ui.Image> _image(
     TimewebProfilePhotoReference ref,
     int generation,
     TimewebProfilePhotoReader reader,
   ) async {
+    _check(generation, reader);
+    ref.requireCurrent();
+    if (identical(ref, _portraitReference) && _portrait != null) {
+      return _portrait!.clone();
+    }
+    final recent = _recentOriginals.remove(ref);
+    if (recent != null) {
+      _recentOriginals[ref] = recent;
+      return recent.clone();
+    }
     final original = await reader.readOriginal(ref);
     _check(generation, reader);
-    return decodeProfilePhoto(
+    final decoded = await decodeProfilePhoto(
       original.bytes,
       original.contentType,
       () => _check(generation, reader),
     );
+    try {
+      _check(generation, reader);
+      ref.requireCurrent();
+      // References retain their own reader/actor/epoch and expiry guards.
+      // Independent handles share decoded pixels, bounded to two 1024-side
+      // originals (at most 8 MiB), and never survive fresh metadata or hiding.
+      _recentOriginals[ref] = decoded.clone();
+      while (_recentOriginals.length > 2) {
+        _recentOriginals.remove(_recentOriginals.keys.first)!.dispose();
+      }
+      return decoded;
+    } catch (_) {
+      decoded.dispose();
+      rethrow;
+    }
   }
 
   Future<void> _append(
@@ -177,6 +216,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       // Fresh metadata no longer associates the displayed photo with owner.
       _portrait?.dispose();
       _portrait = null;
+      _portraitReference = null;
     }
     final portraitOrdinal = selectedOrdinal != null && page.items.isNotEmpty
         ? page.items.any((ref) => ref.ordinal == selectedOrdinal)
@@ -189,6 +229,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
         _check(generation, reader);
         _portrait?.dispose();
         _portrait = decoded;
+        _portraitReference = _references.first;
       } catch (_) {
         decoded.dispose();
         rethrow;
@@ -220,6 +261,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
           _selected = ref.ordinal;
           _portrait?.dispose();
           _portrait = decoded;
+          _portraitReference = ref;
           decoded = null;
         }
         setState(() {});
@@ -238,6 +280,9 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
   }) async {
     if (_loading || !_current) return;
     final wantedOrdinal = selectedOrdinal ?? _selected;
+    final freshMinimum = more
+        ? (_references.length + _pageLimit).clamp(_initialPageSize, 20)
+        : _initialPageSize;
     final draining = more ? null : _clear(keepPortrait: _ownCurrent);
     var generation = _generation;
     setState(() {
@@ -266,7 +311,15 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
             await reader.waitForReadCapacity();
             _check(generation, reader);
           }
+          if (!appendPage) {
+            // Cold entry downloads only visible photos. A fresh recovery also
+            // includes the selected ordinal, without resetting it to the first.
+            _pageLimit = widget.showGallery
+                ? (wantedOrdinal + 1).clamp(freshMinimum, 20)
+                : 1;
+          }
           final page = await reader.photos(
+            limit: _pageLimit,
             cursor: appendPage ? _cursor : null,
             waitForCapacity: attempt == 1,
           );
@@ -281,7 +334,12 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
         } catch (error) {
           _logRead(stage, error);
           if (!_current || generation != _generation) return;
-          final recoverable = _ownCurrent && _transient(error);
+          final expiredPage =
+              more &&
+              stage == 'metadata' &&
+              error is TimewebAuthException &&
+              error.error == TimewebAuthError.invalidRequest;
+          final recoverable = _ownCurrent && (_transient(error) || expiredPage);
           final drained = _clear(keepPortrait: recoverable);
           generation = _generation;
           if (attempt == 0 && retryTransient && recoverable) {
@@ -303,7 +361,15 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
 
   Future<void> _select(TimewebProfilePhotoReference ref) async {
     final reader = _reader;
-    if (!_current || reader == null || _selecting || _loading) return;
+    if (!_current || reader == null || _selecting) return;
+    if (_loading) {
+      if (!_hasDecoded(ref)) return;
+      try {
+        ref.requireCurrent();
+      } catch (_) {
+        return;
+      }
+    }
     final generation = _generation;
     setState(() => _selecting = true);
     ui.Image? image;
@@ -312,6 +378,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       _check(generation, reader);
       _portrait?.dispose();
       _portrait = image;
+      _portraitReference = ref;
       image = null;
       _selected = ref.ordinal;
     } catch (error) {
@@ -389,7 +456,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
                             ProfilePhotoStrip(
                               urls: List<String>.filled(_references.length, ''),
                               onTap: (index) {
-                                if (!_current || _loading || _selecting) return;
+                                if (!_current || _selecting) return;
                                 unawaited(_select(_references[index]));
                               },
                               photoBuilder: (context, index) {

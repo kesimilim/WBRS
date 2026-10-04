@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 
 import 'package:wbrs/presentation/screens/admin/timeweb_admin_users_page.dart';
 import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
@@ -95,6 +96,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
   bool _initialPending = false, _initialChecked = false;
   TimewebGiftInventory? _gifts;
   bool _giftsError = false;
+  ui.Image? _visibleProfileImage, _drawerImage;
 
   @override
   void initState() {
@@ -191,6 +193,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
   }
 
   void _invalidate() {
+    _visibleProfileImage = null;
     if (!mounted || _invalidated) return;
     _invalidated = true;
     _generation++;
@@ -322,8 +325,9 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         _initialChecked = true;
       });
     } catch (_) {
-      if (_current && generation == _generation)
+      if (_current && generation == _generation) {
         setState(() => _initialPending = false);
+      }
     } finally {
       flow?.close();
     }
@@ -398,8 +402,9 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     if (!_current ||
         _loading ||
         _opening ||
-        !widget.runtime.profileEditorEnabled)
+        !widget.runtime.profileEditorEnabled) {
       return;
+    }
     setState(() {
       _opening = true;
       _notice = null;
@@ -428,8 +433,9 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         await _reload();
       }
     } catch (_) {
-      if (_current)
+      if (_current) {
         setState(() => _notice = 'Сервис пока недоступен. Попробуйте позднее.');
+      }
     } finally {
       if (mounted) setState(() => _opening = false);
     }
@@ -687,6 +693,9 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
 
   @override
   void dispose() {
+    _visibleProfileImage = null;
+    _drawerImage?.dispose();
+    _drawerImage = null;
     _generation++;
     _profile = null;
     _editor?.close();
@@ -965,6 +974,22 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: const ClrsLogo(size: 34),
+        leading: Builder(
+          builder: (menuContext) => IconButton(
+            tooltip: context.tr('Открыть меню навигации'),
+            icon: const Icon(Icons.menu),
+            onPressed: () {
+              if (!_current) return;
+              _drawerImage?.dispose();
+              _drawerImage = null;
+              try {
+                _drawerImage = _visibleProfileImage?.clone();
+              } catch (_) {}
+              setState(() {});
+              Scaffold.of(menuContext).openDrawer();
+            },
+          ),
+        ),
         actions: [
           IconButton(
             key: const ValueKey('timeweb-profile-refresh'),
@@ -990,7 +1015,10 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                 ),
                 runtime: widget.runtime,
                 targetUid: snapshot.uid,
-                portraitBuilder: (photo) => _portrait(profile, photo),
+                portraitBuilder: (photo) {
+                  _visibleProfileImage = photo is RawImage ? photo.image : null;
+                  return _portrait(profile, photo);
+                },
                 abovePhotos: above,
                 belowPhotos: below,
                 appendControl: append,
@@ -1025,78 +1053,227 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         : TimewebNavigationScope(navigation: navigation, child: page);
   }
 
-  Widget _drawer(bool available) => Drawer(
-    backgroundColor: const Color(0xED302110),
-    child: SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.all(14),
+  Widget _drawer(bool available) {
+    final profile = _current ? _profile?.profile : null;
+    final group = profile?.primaryGroup;
+    return Drawer(
+      width: MediaQuery.sizeOf(context).width * .85,
+      backgroundColor: Colors.transparent,
+      child: Stack(
         children: [
-          const ClrsBrandHeader(),
-          if (widget.runtime.ownProfileEnabled)
-            _menu(
-              'Уведомления',
-              Icons.notifications_outlined,
-              available ? _openNotifications : null,
+          Positioned.fill(
+            child: Image.asset(
+              'assets/final_design/family_right.png',
+              fit: BoxFit.cover,
             ),
-          _menu(
-            'Настройки',
-            Icons.settings_outlined,
-            available ? _openSettings : null,
-            key: const ValueKey('timeweb-profile-settings'),
           ),
-          if (widget.runtime.chatsEnabled)
-            _menu(
-              'Чаты',
-              Icons.chat_bubble_outline,
-              available ? _openChats : null,
-              key: const ValueKey('timeweb-open-chats'),
+          const Positioned.fill(child: ColoredBox(color: Color(0x88302110))),
+          SafeArea(
+            child: ListView(
+              key: const ValueKey('timeweb-profile-drawer-scroll'),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+              children: [
+                const ClrsLogo(size: 48),
+                const SizedBox(height: 14),
+                const ClrsMotto(size: 22),
+                const SizedBox(height: 14),
+                ClrsPanel(
+                  key: const ValueKey('timeweb-drawer-profile-card'),
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                  child: Column(
+                    children: [
+                      if (_current && _profile != null)
+                        SizedBox(
+                          width: 68,
+                          height: 68,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              ClipOval(
+                                child: _drawerImage == null
+                                    ? const ColoredBox(
+                                        color: Color(0x4431241D),
+                                        child: Icon(
+                                          Icons.person_outline,
+                                          color: LrsTheme.peachLight,
+                                        ),
+                                      )
+                                    : RawImage(
+                                        image: _drawerImage,
+                                        fit: BoxFit.cover,
+                                      ),
+                              ),
+                              if (group?.isNotEmpty == true)
+                                GroupRing(group: group!, size: 68),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      Text(
+                        profile?.fullName ?? context.tr('Профиль'),
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 19,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      if (profile?.relationStatus?.isNotEmpty == true) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x3031241D),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: LrsTheme.peach.withValues(alpha: .6),
+                            ),
+                          ),
+                          child: Text(
+                            context.tr(
+                              relationshipLabel(profile!.relationStatus),
+                            ),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
+                      if (group?.isNotEmpty == true) ...[
+                        const SizedBox(height: 8),
+                        Text(
+                          context.tr(
+                            'Группа: {group}',
+                            args: {'group': context.tr(group!)},
+                          ),
+                          style: const TextStyle(
+                            color: LrsTheme.muted,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _menu(
+                  'Лента',
+                  Icons.home_outlined,
+                  available && widget.runtime.socialEnabled
+                      ? () => _openNativePage(
+                          TimewebFeedPage(runtime: widget.runtime),
+                          selectedIndex: 0,
+                        )
+                      : null,
+                ),
+                _menu(
+                  'Пройти тест',
+                  Icons.quiz_outlined,
+                  available && _temperament != null ? _openTemperament : null,
+                ),
+                _menu('Поддержать проект', Icons.favorite_border, null),
+                if (widget.runtime.chatsEnabled)
+                  _menu(
+                    'Чаты',
+                    Icons.chat_bubble_outline,
+                    available ? _openChats : null,
+                    key: const ValueKey('timeweb-open-chats'),
+                  ),
+                _menu('Гости', Icons.visibility_outlined, null),
+                _menu(
+                  'Список пользователей',
+                  Icons.people_outline,
+                  available && _profile?.onboarding == TimewebOnboarding.search
+                      ? _openPeople
+                      : null,
+                ),
+                _menu('Друзья', Icons.person_add_alt_1_outlined, null),
+                if (widget.runtime.ownProfileEnabled)
+                  _menu(
+                    'Уведомления',
+                    Icons.notifications_outlined,
+                    available ? _openNotifications : null,
+                  ),
+                if (widget.runtime.giftsEnabled)
+                  _menu(
+                    'Дарить подарки',
+                    Icons.card_giftcard,
+                    available ? _openGifts : null,
+                  ),
+                if (widget.runtime.meetingsEnabled)
+                  _menu(
+                    'Встречи',
+                    Icons.event_outlined,
+                    available
+                        ? () => _openNativePage(
+                            TimewebMeetingsPageView(runtime: widget.runtime),
+                            selectedIndex: 3,
+                          )
+                        : null,
+                  ),
+                _menu(
+                  'О приложении',
+                  Icons.info_outline,
+                  available
+                      ? () => _openNativePage(
+                          TimewebAccountPage.about(
+                            runtime: widget.runtime,
+                            lease: widget.runtime.session.captureLease(),
+                          ),
+                        )
+                      : null,
+                ),
+                const Divider(color: Color(0x44E7B092)),
+                if (_adminAllowed && widget.runtime.adminUsersEnabled)
+                  _menu(
+                    'Панель для админа',
+                    Icons.admin_panel_settings_outlined,
+                    available ? _openAdmin : null,
+                    key: const ValueKey('timeweb-open-admin-users'),
+                  ),
+                _menu(
+                  'Настройки',
+                  Icons.settings_outlined,
+                  available ? _openSettings : null,
+                  key: const ValueKey('timeweb-profile-settings'),
+                ),
+                _menu(
+                  'Выйти',
+                  Icons.logout,
+                  available
+                      ? () async {
+                          if (_current) await widget.runtime.session.logout();
+                        }
+                      : null,
+                  key: const ValueKey('timeweb-profile-logout'),
+                ),
+                const SizedBox(height: 18),
+                const ClrsValuesFooter(),
+              ],
             ),
-          if (widget.runtime.meetingsEnabled)
-            _menu(
-              'Встречи',
-              Icons.groups_outlined,
-              available
-                  ? () => _openNativePage(
-                      TimewebMeetingsPageView(runtime: widget.runtime),
-                      selectedIndex: 3,
-                    )
-                  : null,
-            ),
-          if (widget.runtime.giftsEnabled)
-            _menu(
-              'Магазин подарков',
-              Icons.card_giftcard,
-              available ? _openGifts : null,
-            ),
-          if (_adminAllowed && widget.runtime.adminUsersEnabled)
-            _menu(
-              'Панель для админа',
-              Icons.admin_panel_settings_outlined,
-              available ? _openAdmin : null,
-              key: const ValueKey('timeweb-open-admin-users'),
-            ),
-          const Divider(),
-          _menu(
-            'Выйти',
-            Icons.logout,
-            available
-                ? () async {
-                    if (_current) await widget.runtime.session.logout();
-                  }
-                : null,
-            key: const ValueKey('timeweb-profile-logout'),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 
-  Widget _menu(String label, IconData icon, VoidCallback? action, {Key? key}) =>
-      Builder(
-        builder: (drawerContext) => ListTile(
+  Widget _menu(
+    String label,
+    IconData icon,
+    VoidCallback? action, {
+    Key? key,
+  }) => Builder(
+    builder: (drawerContext) => Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Semantics(
+        button: true,
+        enabled: action != null,
+        child: InkWell(
           key: key,
-          leading: Icon(icon),
-          title: Text(context.tr(label)),
+          borderRadius: BorderRadius.circular(14),
           onTap: action == null
               ? null
               : () {
@@ -1104,8 +1281,42 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                   Scaffold.of(drawerContext).closeDrawer();
                   action();
                 },
+          child: ClrsPanel(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 28),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    color: action == null
+                        ? LrsTheme.muted
+                        : LrsTheme.peachLight,
+                    size: 25,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      context.tr(label),
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: action == null ? LrsTheme.muted : LrsTheme.text,
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right,
+                    color: LrsTheme.peachLight,
+                    size: 25,
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      );
+      ),
+    ),
+  );
 
   Widget _quickAction(
     IconData icon,

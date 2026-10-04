@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -150,6 +149,40 @@ void main() {
         matching: find.byType(Scaffold),
       );
       expect(tester.state<ScaffoldState>(ownScaffold).isDrawerOpen, isTrue);
+      expect(
+        find.byKey(const ValueKey('timeweb-drawer-profile-card')),
+        findsOneWidget,
+      );
+      expect(find.text('Список пользователей'), findsOneWidget);
+      final drawerScroll = find.descendant(
+        of: find.byType(Drawer),
+        matching: find.byType(Scrollable),
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('timeweb-profile-settings')),
+        160,
+        scrollable: drawerScroll,
+      );
+      await tester.scrollUntilVisible(
+        find.byKey(const ValueKey('timeweb-profile-logout')),
+        160,
+        scrollable: drawerScroll,
+      );
+      expect(
+        tester
+            .getTopLeft(find.byKey(const ValueKey('timeweb-profile-settings')))
+            .dy,
+        lessThan(
+          tester
+              .getTopLeft(find.byKey(const ValueKey('timeweb-profile-logout')))
+              .dy,
+        ),
+      );
+      await tester.scrollUntilVisible(
+        find.text('Уведомления'),
+        -160,
+        scrollable: drawerScroll,
+      );
       await tester.tap(find.text('Уведомления'));
       await _until(
         tester,
@@ -163,7 +196,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(TimewebNotificationsPage), findsOneWidget);
       await tester.binding.handlePopRoute();
-      await tester.pumpAndSettle();
+      // Returning starts a fresh gallery read; allow route animation without
+      // waiting for an intentionally real-time transport deadline.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
       expect(find.byType(TimewebNotificationsPage), findsNothing);
       expect(find.byType(TimewebOwnProfilePage), findsOneWidget);
       expect(find.textContaining('Own A'), findsOneWidget);

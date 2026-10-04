@@ -158,7 +158,21 @@ void main() {
         await tester.tap(find.byIcon(Icons.menu));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 350));
-        await tester.tap(find.text('Уведомления').hitTestable().last);
+        await tester.scrollUntilVisible(
+          find.text('Уведомления'),
+          200,
+          scrollable: find.descendant(
+            of: find.byKey(const ValueKey('timeweb-profile-drawer-scroll')),
+            matching: find.byType(Scrollable),
+          ).first,
+        );
+        final notifications = find.ancestor(
+          of: find.text('Уведомления'),
+          matching: find.byType(InkWell),
+        ).first;
+        await Scrollable.ensureVisible(tester.element(notifications), alignment: .5);
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.tap(notifications);
         await _until(
           tester,
           () => find.byType(TimewebNotificationsPage).evaluate().isNotEmpty,
@@ -219,7 +233,10 @@ void main() {
         print('gallery renewed metadata=$photoLists originals=$originalReads');
 
         holdOriginal = true;
-        await tester.tap(second);
+        // The accepted recent selection now needs no GET. Exercise late
+        // cancellation with the first original, evicted from the bounded RAM.
+        final evicted = find.byKey(const ValueKey('timeweb-photo-select-0'));
+        await tester.tap(evicted);
         await _until(tester, () => originalHeld);
         print('gallery late original held');
         var changed = false;

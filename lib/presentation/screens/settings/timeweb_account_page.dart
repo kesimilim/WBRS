@@ -35,6 +35,12 @@ class TimewebAccountPage extends StatefulWidget {
     required this.lease,
     this.canEditProfile = false,
   }) : _view = _View.settings;
+  const TimewebAccountPage.about({
+    super.key,
+    required this.runtime,
+    required this.lease,
+  }) : canEditProfile = false,
+       _view = _View.about;
   const TimewebAccountPage._({
     required this.runtime,
     required this.lease,

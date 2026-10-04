@@ -335,9 +335,10 @@ def _signed_headers(method, host, path, query, region, service, access_key, secr
 
 
 class _Lease:
-    def __init__(self, connection, deadline, cancel, clock):
+    def __init__(self, connection, deadline, cancel, clock, pool=None):
         self.connection = connection; self.socket = None; self.closed = threading.Event()
         self.deadline = deadline; self.cancel = cancel; self.clock = clock
+        self._pool = pool; self._setup_active = True; self._reads = 0; self._returned = False
         self._lock = threading.Lock()
         self._watcher = threading.Thread(target=self._watch, daemon=True); self._watcher.start()
 
@@ -350,8 +351,40 @@ class _Lease:
             self.close()
 
     def check(self):
-        if self.closed.is_set() or self.cancel.is_set() or self.clock() >= self.deadline:
+        if (self.closed.is_set() or self.cancel.is_set() or self.clock() >= self.deadline
+                or self._pool is not None and self._pool.closed.is_set()):
             self.close(); raise PrivateMediaUnavailable()
+
+    def start_read(self):
+        self.check()
+        with self._lock:
+            if self.closed.is_set(): raise PrivateMediaUnavailable()
+            self._reads += 1
+
+    def finish_read(self):
+        with self._lock: self._reads -= 1
+        self._settle_closed()
+
+    def finish_setup(self):
+        with self._lock: self._setup_active = False
+        self._settle_closed()
+
+    def _settle_closed(self):
+        with self._lock:
+            if (self._pool is None or self._returned or not self.closed.is_set()
+                    or self._setup_active or self._reads): return
+            self._returned = True
+        self._pool.return_connection(self.connection, False)
+
+    def release(self):
+        with self._lock:
+            clean = (self._pool is not None and not self._returned and not self.closed.is_set()
+                and not self._setup_active and self._reads == 0 and not self.cancel.is_set()
+                and self.clock() < self.deadline and not self._pool.closed.is_set())
+            if clean:
+                self._returned = True; self.closed.set(); self.socket = None
+        if clean: self._pool.return_connection(self.connection, True)
+        else: self.close()
 
     def attach_socket(self):
         with self._lock:
@@ -359,9 +392,10 @@ class _Lease:
         self.check()
 
     def close(self):
-        self.closed.set()
         with self._lock:
-            stream = self.socket
+            if self._returned: return
+            self.closed.set()
+            stream = self.socket or self.connection.sock
         if stream is not None:
             try:
                 stream.shutdown(socket.SHUT_RDWR)
@@ -371,16 +405,78 @@ class _Lease:
             self.connection.close()
         except Exception:
             pass
+        self._settle_closed()
+
+
+class _ConnectionPool:
+    """Four owned connections, no wait queue; responses and proofs are never cached."""
+    def __init__(self, factory, clock):
+        self._factory = factory; self._clock = clock; self._owned = set(); self._idle = []
+        self._opening = 0; self._lock = threading.Lock(); self.closed = threading.Event()
+
+    @staticmethod
+    def _discard(connection):
+        try:
+            if connection.sock is not None: connection.sock.shutdown(socket.SHUT_RDWR)
+        except Exception: pass
+        try: connection.close()
+        except Exception: pass
+
+    def borrow(self):
+        retired = []
+        with self._lock:
+            if self.closed.is_set(): raise PrivateMediaUnavailable()
+            while self._idle:
+                connection, returned = self._idle.pop()
+                if connection.sock is not None and 0 <= self._clock() - returned <= 5:
+                    break
+                self._owned.remove(connection); retired.append(connection)
+            else:
+                if len(self._owned) + self._opening >= 4: raise PrivateMediaUnavailable()
+                self._opening += 1; connection = None
+        for old in retired: self._discard(old)
+        if connection is not None: return connection
+        try: connection = self._factory()
+        except Exception:
+            with self._lock: self._opening -= 1
+            raise
+        with self._lock:
+            self._opening -= 1
+            if not self.closed.is_set():
+                self._owned.add(connection); return connection
+        self._discard(connection); raise PrivateMediaUnavailable()
+
+    def return_connection(self, connection, reusable):
+        with self._lock:
+            if (reusable and not self.closed.is_set() and connection in self._owned
+                    and connection.sock is not None):
+                self._idle.append((connection, self._clock())); return
+            self._owned.discard(connection)
+        self._discard(connection)
+
+    def close(self):
+        with self._lock:
+            self.closed.set(); connections = list(self._owned)
+            self._owned.clear(); self._idle.clear()
+        for connection in connections: self._discard(connection)
+
+    def __del__(self):
+        try: self.close()
+        except Exception: pass
 
 
 class _Response:
     def __init__(self, response, lease):
         self._response = response; self._lease = lease
         self.status = response.status; self.headers = response.getheaders()
+        self._read_bytes = 0; self._failed = False; self._closed = False
+        try: self._length = _length(_headers(self), MAX_OBJECT_BYTES)
+        except Exception: self._length = None
 
     def read(self, maximum):
+        reading = False
         try:
-            self._lease.check()
+            self._lease.start_read(); reading = True
             if type(maximum) is not int or not 1 <= maximum <= CHUNK_BYTES:
                 raise PrivateMediaUnavailable()
             # http.client closes the response file when Content-Length bytes
@@ -391,21 +487,33 @@ class _Response:
             self._lease.socket.settimeout(min(2, max(0.001, self._lease.deadline - self._lease.clock())))
             result = self._response.read(maximum)
             self._lease.check()
+            if type(result) is not bytes or len(result) > maximum: raise PrivateMediaUnavailable()
+            self._read_bytes += len(result)
             return result
         except Exception:
+            self._failed = True
             self._lease.close()
             raise PrivateMediaUnavailable() from None
+        finally:
+            if reading: self._lease.finish_read()
 
     def close(self):
-        self._lease.close()
+        if self._closed: return
+        self._closed = True
+        reusable = (not self._failed and self._length is not None and self._read_bytes == self._length
+            and isinstance(self._response, http.client.HTTPResponse) and self._response.length == 0
+            and self._response.version == 11 and not self._response.will_close and not self._response.chunked)
+        if not reusable: self._lease.close()
         try:
             self._response.close()
         except Exception:
+            self._lease.close()
             raise PrivateMediaUnavailable() from None
+        if reusable: self._lease.release()
 
 
-def _https_get(factory, path, headers, deadline, cancel, clock):
-    lease = None; response = None; slot_owned = False
+def _https_get(factory, path, headers, deadline, cancel, clock, *, pool=None):
+    lease = None; response = None; connection = None; slot_owned = False; setup_started = False
     try:
         if (type(deadline) not in {int, float} or not math.isfinite(deadline)
                 or not callable(getattr(cancel, "is_set", None)) or cancel.is_set() or deadline <= clock()
@@ -413,12 +521,15 @@ def _https_get(factory, path, headers, deadline, cancel, clock):
             raise PrivateMediaUnavailable()
         slot_owned = True
         deadline = min(deadline, clock() + MAX_REQUEST_SECONDS)
-        connection = factory()
-        lease = _Lease(connection, deadline, cancel, clock)
+        connection = pool.borrow() if pool is not None else factory()
+        lease = _Lease(connection, deadline, cancel, clock, pool)
         result = []; done = threading.Event()
         def setup():
             try:
-                lease.check(); connection.connect(); lease.attach_socket()
+                lease.check()
+                if connection.sock is None: connection.connect()
+                lease.attach_socket()
+                lease.socket.settimeout(min(2, max(0.001, deadline - clock())))
                 connection.request("GET", path, headers=headers)
                 lease.check(); candidate = connection.getresponse()
                 with lease._lock:
@@ -428,9 +539,10 @@ def _https_get(factory, path, headers, deadline, cancel, clock):
             except Exception:
                 lease.close()
             finally:
+                lease.finish_setup()
                 done.set(); _SETUP_SLOTS.release()
         worker = threading.Thread(target=setup, daemon=True)
-        worker.start(); slot_owned = False
+        worker.start(); setup_started = True; slot_owned = False
         setup_deadline = min(deadline, clock() + 5)
         while not done.wait(0.025):
             lease.check()
@@ -444,6 +556,10 @@ def _https_get(factory, path, headers, deadline, cancel, clock):
     except Exception:
         if lease is not None:
             lease.close()
+            if not setup_started: lease.finish_setup()
+        elif connection is not None:
+            if pool is not None: pool.return_connection(connection, False)
+            else: connection.close()
         if response is not None:
             response.close()
         elif "result" in locals():
@@ -472,6 +588,9 @@ class TimewebPrivateBucketState:
             raise PrivateMediaUnavailable()
         self._id = bucket_id; self._bucket = _bucket(bucket); self._token = token; self._clock = monotonic
         self._factory = connection_factory or _https_factory("api.timeweb.cloud")
+        self._pool = _ConnectionPool(self._factory, self._clock)
+
+    def close(self): self._pool.close()
 
     def __call__(self, bucket, deadline, cancel):
         response = None
@@ -480,9 +599,9 @@ class TimewebPrivateBucketState:
                 raise PrivateMediaUnavailable()
             deadline = min(deadline, self._clock() + PRIVACY_MAX_AGE)
             headers = {"host": "api.timeweb.cloud", "authorization": "Bearer " + self._token,
-                "accept": "application/json", "accept-encoding": "identity", "connection": "close",
+                "accept": "application/json", "accept-encoding": "identity", "connection": "keep-alive",
                 "cache-control": "no-store"}
-            response = _https_get(self._factory, "/api/v1/storages/buckets/" + str(self._id), headers, deadline, cancel, self._clock)
+            response = _https_get(self._factory, "/api/v1/storages/buckets/" + str(self._id), headers, deadline, cancel, self._clock, pool=self._pool)
             found_headers = _headers(response); length = _length(found_headers, MAX_CONTROL_BYTES)
             if response.status != 200 or found_headers.get("content-type", "").split(";")[0].strip() != "application/json":
                 raise PrivateMediaUnavailable()
@@ -534,6 +653,9 @@ class SigV4HTTPSReadTransport:
         self._region = region; self._access = access_key; self._secret = secret_key; self._token = session_token
         self._clock = monotonic; self._wall = wall_clock or (lambda: datetime.datetime.now(datetime.timezone.utc))
         self._factory = connection_factory or _https_factory("s3.twcstorage.ru")
+        self._pool = _ConnectionPool(self._factory, self._clock)
+
+    def close(self): self._pool.close()
 
     def open(self, operation, bucket, key, deadline, cancel):
         try:
@@ -548,7 +670,7 @@ class SigV4HTTPSReadTransport:
                 raise PrivateMediaUnavailable()
             stamp = self._wall().astimezone(datetime.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
             headers = _signed_headers("GET", "s3.twcstorage.ru", path, query, self._region, "s3", self._access, self._secret, stamp, self._token)
-            headers.update({"connection": "close", "accept-encoding": "identity"})
-            return _https_get(self._factory, path + ("?" + query if query else ""), headers, deadline, cancel, self._clock)
+            headers.update({"connection": "keep-alive", "accept-encoding": "identity"})
+            return _https_get(self._factory, path + ("?" + query if query else ""), headers, deadline, cancel, self._clock, pool=self._pool)
         except Exception:
             raise PrivateMediaUnavailable() from None

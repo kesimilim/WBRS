@@ -23,6 +23,7 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/group_badge.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'package:wbrs/shared/profile_composition.dart'
     show ProfilePortrait, ProfileSection, relationshipLabel;
 import 'package:wbrs/core/utils/compatibility.dart';
@@ -60,6 +61,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
   TimewebTemperamentFlow? _temperament;
   TimewebGeographyFlow? _geography;
   late final int _epoch;
+  late final AppSessionLease _navigationLease;
   int _generation = 0;
   bool _loading = false, _opening = false, _error = false, _invalidated = false;
   String? _notice;
@@ -72,6 +74,11 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
   void initState() {
     super.initState();
     _epoch = widget.runtime.session.state.epoch;
+    try {
+      _navigationLease = widget.runtime.session.captureLease();
+    } catch (_) {
+      _invalidated = true;
+    }
     _profile = widget.initialProfile;
     _error = widget.initialError;
     unawaited(_prepareInitialAndTemperament());
@@ -96,6 +103,65 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     } catch (_) {
       return false;
     }
+  }
+
+  TimewebNavigationBinding? _navigation() {
+    final inherited = TimewebNavigationScope.maybeOf(context);
+    if (inherited != null) return inherited;
+    if (!_current) return null;
+    final ownRoute = ModalRoute.of(context);
+    return TimewebNavigationBinding(
+      lease: _navigationLease,
+      selectedIndex: 4,
+      availableIndices: {
+        if (widget.runtime.socialEnabled) 0,
+        if (widget.runtime.peopleEnabled &&
+            _profile?.onboarding == TimewebOnboarding.search)
+          1,
+        if (widget.runtime.chatsEnabled) 2,
+        if (widget.runtime.meetingsEnabled) 3,
+        4,
+      },
+      onSelect: (_, index) async {
+        if (!_current || ownRoute == null || !ownRoute.isActive) return;
+        _navigationLease.requireCurrent();
+        Navigator.of(context).popUntil((route) => route == ownRoute);
+        // The old opener must finish closing its original flow before another
+        // section opens. Journals remain on disk, including unknown outcomes.
+        await WidgetsBinding.instance.endOfFrame;
+        if (!_current) return;
+        switch (index) {
+          case 0:
+            if (widget.runtime.socialEnabled) {
+              await _openNativePage(
+                TimewebFeedPage(runtime: widget.runtime),
+                selectedIndex: 0,
+              );
+            }
+          case 1:
+            await _openPeople();
+          case 2:
+            await _openChats();
+          case 3:
+            if (widget.runtime.meetingsEnabled) {
+              await _openNativePage(
+                TimewebMeetingsPageView(runtime: widget.runtime),
+                selectedIndex: 3,
+              );
+            }
+        }
+      },
+    );
+  }
+
+  Widget _wrapRoute(Widget page, {int? selectedIndex}) {
+    final navigation = _navigation();
+    return navigation == null
+        ? page
+        : TimewebNavigationScope(
+            navigation: navigation.forRoute(selectedIndex: selectedIndex),
+            child: page,
+          );
   }
 
   void _invalidate() {
@@ -131,21 +197,24 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     if (!_current || _loading || _opening) return;
     setState(() => _opening = true);
     final lease = widget.runtime.session.captureLease();
+    final page = _wrapRoute(
+      TimewebAccountPage(
+        runtime: widget.runtime,
+        lease: lease,
+        canEditProfile:
+            widget.runtime.profileEditorEnabled &&
+            _profile?.profileExists == true &&
+            _initialChecked &&
+            !_initialPending &&
+            !_initialRequired,
+      ),
+    );
     TimewebAccountAction? action;
     try {
       action = await Navigator.of(context).push<TimewebAccountAction>(
         MaterialPageRoute(
           settings: const RouteSettings(name: timewebAccountRoute),
-          builder: (_) => TimewebAccountPage(
-            runtime: widget.runtime,
-            lease: lease,
-            canEditProfile:
-                widget.runtime.profileEditorEnabled &&
-                _profile?.profileExists == true &&
-                _initialChecked &&
-                !_initialPending &&
-                !_initialRequired,
-          ),
+          builder: (_) => page,
         ),
       );
     } finally {
@@ -453,12 +522,11 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
       return;
     }
     setState(() => _opening = true);
+    final page = _wrapRoute(TimewebGiftsPage(runtime: widget.runtime));
     try {
-      await Navigator.of(context).push<void>(
-        MaterialPageRoute(
-          builder: (_) => TimewebGiftsPage(runtime: widget.runtime),
-        ),
-      );
+      await Navigator.of(
+        context,
+      ).push<void>(MaterialPageRoute(builder: (_) => page));
     } finally {
       if (_current) {
         setState(() => _opening = false);
@@ -487,13 +555,14 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     }
   }
 
-  Future<void> _openNativePage(Widget page) async {
+  Future<void> _openNativePage(Widget page, {int? selectedIndex}) async {
     if (!_current || _loading || _opening) return;
     setState(() => _opening = true);
+    final wrapped = _wrapRoute(page, selectedIndex: selectedIndex);
     try {
       await Navigator.of(
         context,
-      ).push<void>(MaterialPageRoute(builder: (_) => page));
+      ).push<void>(MaterialPageRoute(builder: (_) => wrapped));
     } finally {
       if (_current) setState(() => _opening = false);
     }
@@ -567,11 +636,14 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
       final page = await widget.runtime.readChats();
       if (!mounted || !_current) return;
       page.requireCurrent();
+      final wrapped = _wrapRoute(
+        TimewebChatsPage(runtime: widget.runtime, initialPage: page),
+        selectedIndex: 2,
+      );
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           settings: const RouteSettings(name: timewebChatsRoute),
-          builder: (_) =>
-              TimewebChatsPage(runtime: widget.runtime, initialPage: page),
+          builder: (_) => wrapped,
         ),
       );
     } catch (_) {
@@ -859,7 +931,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
             onReady: _reload,
           )
         : null;
-    return ClrsScaffold(
+    final page = ClrsScaffold(
       key: const ValueKey('timeweb-current-own-profile'),
       extendBodyBehindAppBar: true,
       drawer: _drawer(available),
@@ -913,6 +985,10 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         ],
       ),
     );
+    final navigation = _navigation();
+    return navigation == null
+        ? page
+        : TimewebNavigationScope(navigation: navigation, child: page);
   }
 
   Widget _drawer(bool available) => Drawer(
@@ -948,6 +1024,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
               available
                   ? () => _openNativePage(
                       TimewebMeetingsPageView(runtime: widget.runtime),
+                      selectedIndex: 3,
                     )
                   : null,
             ),

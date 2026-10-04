@@ -10,6 +10,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 Future<void> openTimewebNotification(
   BuildContext context,
@@ -188,6 +189,7 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
   Widget build(BuildContext context) => ClrsScaffold(
     key: const ValueKey('timeweb-notifications-page'),
     backgroundAsset: 'assets/final_design/family_right.png',
+    bottomNavigationBar: const TimewebBottomNavigationBar(),
     appBar: AppBar(
       title: const ClrsLogo(size: 34),
       actions: [
@@ -239,8 +241,11 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
                               selectedColor: const Color(0xB06A4631),
                               side: const BorderSide(color: Color(0x66E7B092)),
                               visualDensity: VisualDensity.compact,
-                              labelPadding: const EdgeInsets.symmetric(horizontal: 2),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              labelPadding: const EdgeInsets.symmetric(
+                                horizontal: 2,
+                              ),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                               onSelected: _busy || _opening
                                   ? null
                                   : (_) => setState(() => _filter = filter),

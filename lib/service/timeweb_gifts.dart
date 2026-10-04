@@ -427,7 +427,7 @@ Future<void> _executeGiftRead(_PeopleFlight f) async {
         'catalog': List<Map<String, dynamic>>.unmodifiable(catalog),
         'inventory': List<Map<String, dynamic>>.unmodifiable(inventory),
       }),
-      f.check,
+      f.checkSession,
     );
     f.check();
     if (!f.result.isCompleted) {

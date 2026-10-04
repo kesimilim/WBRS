@@ -11,6 +11,7 @@ import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 enum _Section { feed, people, chats, meetings, profile }
 
@@ -37,6 +38,7 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
   StreamSubscription<AppSessionState>? _states;
   late final TimewebAppRuntime _runtime;
   late final int _epoch;
+  late final AppSessionLease _lease;
   String? _ownerUid;
   _Section _selected = _Section.people;
   Widget? _page;
@@ -75,6 +77,7 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
     _epoch = widget.runtime.session.state.epoch;
     try {
       widget.initialOwnProfile.requireCurrent();
+      _lease = widget.runtime.session.captureLease();
       _ownerUid = widget.initialOwnProfile.uid;
     } catch (_) {
       _invalidated = true;
@@ -175,6 +178,21 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
       );
     }
     final sections = _sections;
+    final homeRoute = ModalRoute.of(context);
+    final navigation = TimewebNavigationBinding(
+      lease: _lease,
+      selectedIndex: _selected.index,
+      availableIndices: {for (final section in sections) section.index},
+      showBar: false,
+      onSelect: (routeContext, index) async {
+        if (!_current || homeRoute == null || !homeRoute.isActive) return;
+        _lease.requireCurrent();
+        Navigator.of(context).popUntil((route) => route == homeRoute);
+        await WidgetsBinding.instance.endOfFrame;
+        if (!_current) return;
+        await _select(_Section.values[index]);
+      },
+    );
     return Scaffold(
       key: const ValueKey('timeweb-native-home'),
       body: Stack(
@@ -185,7 +203,10 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
               absorbing: _busy,
               child: KeyedSubtree(
                 key: ValueKey('native-home:$_epoch:${_selected.name}'),
-                child: _page!,
+                child: TimewebNavigationScope(
+                  navigation: navigation,
+                  child: _page!,
+                ),
               ),
             ),
           ),

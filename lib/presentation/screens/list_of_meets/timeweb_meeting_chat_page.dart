@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
+import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/content_translation_service.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
@@ -12,6 +13,7 @@ import 'package:wbrs/service/timeweb_meeting_membership_flow.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 /// The caller opens a fresh member-authorized flow before adopting this route.
 class TimewebMeetingChatPageView extends StatefulWidget {
@@ -339,11 +341,17 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
     alignment: Alignment.centerLeft,
     child: FractionallySizedBox(widthFactor: 2 / 3, child: child),
   );
-  void _participants() {
+  Future<void> _participants() async {
     if (!_current || _memberLocked) return;
-    // Never leave cached member text/translation behind a roster route.
-    _deny();
-    widget.onParticipants();
+    final page = TimewebNavigationScope.wrap(
+      context,
+      TimewebMeetingParticipantsPage(
+        runtime: _runtime,
+        meeting: widget.meeting,
+        flow: _flow,
+      ),
+    );
+    await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => page));
   }
 
   Widget _avatar(String name) => Container(
@@ -567,6 +575,9 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
   @override
   Widget build(BuildContext context) => ClrsScaffold(
     backgroundAsset: 'assets/final_design/family_back.png',
+    bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
+        ? const TimewebBottomNavigationBar()
+        : null,
     appBar: AppBar(
       automaticallyImplyLeading: false,
       toolbarHeight: 72 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
@@ -649,4 +660,240 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
             ],
           ),
   );
+}
+
+class _ParticipantDisplay {
+  const _ParticipantDisplay(this.uid, this.name, this.primaryGroup, this.organizer);
+  final String uid;
+  final String? name, primaryGroup;
+  final bool organizer;
+}
+
+/// The read-only roster keeps its own route and never closes the chat flow.
+/// Snapshotting only display fields avoids retaining protected DTOs across builds.
+class TimewebMeetingParticipantsPage extends StatefulWidget {
+  const TimewebMeetingParticipantsPage({
+    super.key,
+    required this.runtime,
+    required this.meeting,
+    this.flow,
+  });
+  final TimewebAppRuntime runtime;
+  final TimewebMeeting meeting;
+  final TimewebMeetingChatFlow? flow;
+
+  @override
+  State<TimewebMeetingParticipantsPage> createState() => _TimewebMeetingParticipantsPageState();
+}
+
+class _TimewebMeetingParticipantsPageState extends State<TimewebMeetingParticipantsPage> {
+  final _search = TextEditingController();
+  final _people = <_ParticipantDisplay>[];
+  AppSessionLease? _lease;
+  StreamSubscription<AppSessionState>? _subscription;
+  TimewebMeetingCursor? _cursor;
+  bool _loading = false, _error = false;
+  int _generation = 0;
+
+  bool get _current {
+    if (!mounted || _lease?.isCurrent != true) return false;
+    try {
+      widget.meeting.requireCurrent();
+      final flow = widget.flow;
+      if (flow == null) return true;
+      flow.requireCurrent();
+      return flow.ownerUid == _lease!.identity.uid && flow.meetingId == widget.meeting.meetingId;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    try {
+      _lease = widget.runtime.session.captureLease();
+      widget.meeting.requireCurrent();
+    } catch (_) {
+      return;
+    }
+    _subscription = widget.runtime.session.states.listen((_) {
+      if (_current) return;
+      _generation++;
+      _people.clear();
+      _cursor = null;
+      if (!mounted) return;
+      setState(() {});
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final route = ModalRoute.of(context);
+        if (route != null && route.isActive && !route.isFirst) Navigator.of(context).removeRoute(route);
+      });
+    });
+    _search.addListener(() { if (mounted && _current) setState(() {}); });
+    unawaited(_load());
+  }
+
+  Future<void> _load({bool next = false}) async {
+    if (!_current || _loading || (next && _cursor == null)) return;
+    final generation = ++_generation;
+    final cursor = next ? _cursor : null;
+    setState(() { _loading = true; _error = false; });
+    try {
+      final page = await widget.runtime.readMeetingParticipants(widget.meeting.meetingId, cursor: cursor);
+      if (!_current || generation != _generation) return;
+      page.requireCurrent();
+      final people = <_ParticipantDisplay>[
+        for (final person in page.items)
+          _ParticipantDisplay(
+            person.uid,
+            person.fullName?.trim(),
+            person.primaryGroup,
+            person.uid == widget.meeting.organizerUid,
+          ),
+      ];
+      final nextCursor = page.nextCursor;
+      if (!_current || generation != _generation) return;
+      setState(() {
+        if (!next) _people.clear();
+        _people.addAll(people);
+        _cursor = nextCursor;
+      });
+    } catch (_) {
+      if (_current && generation == _generation) {
+        setState(() {
+          _error = true;
+          _people.clear();
+          _cursor = null;
+        });
+      }
+    } finally {
+      if (_current && generation == _generation) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _generation++;
+    _people.clear();
+    _cursor = null;
+    unawaited(_subscription?.cancel());
+    _search.dispose();
+    super.dispose();
+  }
+
+  Widget _left(Widget child) => Align(
+    alignment: Alignment.centerLeft,
+    child: FractionallySizedBox(widthFactor: 2 / 3, child: child),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final fromChat = widget.flow != null;
+    final query = _search.text.trim().toLowerCase();
+    final people = _current
+        ? _people.where((person) => query.isEmpty || (person.name ?? '').toLowerCase().contains(query)).toList()
+        : <_ParticipantDisplay>[];
+    return ClrsScaffold(
+      backgroundAsset: 'assets/final_design/family_front.png',
+      bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
+          ? const TimewebBottomNavigationBar()
+          : null,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        toolbarHeight: 80,
+        title: const Align(alignment: Alignment.centerLeft, child: ClrsLogo(size: 34)),
+        actions: [
+          IconButton(
+            key: const ValueKey('native-meeting-participants-back'),
+            tooltip: context.tr(fromChat ? 'Вернуться в чат' : 'О встрече'),
+            onPressed: _current ? () => Navigator.of(context).maybePop() : null,
+            icon: const Icon(Icons.arrow_back),
+          ),
+        ],
+      ),
+      body: !_current
+          ? Center(child: Text(context.tr('Обсуждение недоступно')))
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+              children: [
+                _left(ClrsPanel(child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(context.tr('Участники встречи'), style: Theme.of(context).textTheme.headlineSmall),
+                    if (widget.meeting.title?.trim().isNotEmpty == true)
+                      Text(widget.meeting.title!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                  ],
+                ))),
+                const SizedBox(height: 12),
+                _left(ClrsPanel(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                  child: TextField(
+                    key: const ValueKey('native-meeting-participants-search'),
+                    controller: _search,
+                    decoration: InputDecoration(
+                      hintText: context.tr('Поиск по имени'),
+                      prefixIcon: const Icon(Icons.search),
+                      border: InputBorder.none,
+                    ),
+                  ),
+                )),
+                const SizedBox(height: 12),
+                for (final person in people)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _left(ClrsPanel(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      child: Row(children: [
+                        TimewebChatAvatar(
+                          runtime: widget.runtime,
+                          uid: person.uid,
+                          primaryGroup: person.primaryGroup,
+                          readGroup: false,
+                          size: 42,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (person.name?.isNotEmpty == true)
+                              Text(person.name!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            if (person.organizer)
+                              Text(context.tr('Организатор'), style: Theme.of(context).textTheme.labelSmall),
+                          ],
+                        )),
+                      ]),
+                    )),
+                  ),
+                if (people.isEmpty && !_loading && !_error)
+                  _left(ClrsPanel(child: Text(query.isEmpty
+                      ? context.tr('Участников: {count}').replaceAll('{count}', '0')
+                      : context.tr('По выбранным параметрам пока никого нет')))),
+                if (_error)
+                  _left(ClrsPanel(child: Column(children: [
+                    Text(context.tr('Не удалось загрузить список.')),
+                    TextButton(onPressed: _loading ? null : _load, child: Text(context.tr('Повторить'))),
+                  ]))),
+                if (_loading) const Center(child: CircularProgressIndicator()),
+                if (_cursor != null && !_loading)
+                  _left(TextButton(
+                    key: const ValueKey('native-meeting-participants-next'),
+                    onPressed: () => _load(next: true),
+                    child: Text(context.tr('Следующая страница')),
+                  )),
+                const SizedBox(height: 16),
+                _left(ClrsPanel(
+                  child: TextButton.icon(
+                    key: ValueKey(fromChat
+                        ? 'native-meeting-participants-return-chat'
+                        : 'native-meeting-participants-return-detail'),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    icon: const Icon(Icons.chat_bubble_outline),
+                    label: Text(context.tr(fromChat ? 'Вернуться в чат' : 'О встрече')),
+                  ),
+                )),
+              ],
+            ),
+    );
+  }
 }

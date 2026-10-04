@@ -227,7 +227,7 @@ Future<void> _executePreferencesRead(_PeopleFlight f) async {
     }
     final result = TimewebPreferences._(
       Map<String, dynamic>.unmodifiable(reply.body!),
-      f.check,
+      f.checkSession,
     );
     f.check();
     if (!f.result.isCompleted) f.result.complete(result);

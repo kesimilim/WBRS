@@ -653,8 +653,13 @@ class _MeetingMotto extends StatelessWidget {
 }
 
 class MeetingGuidePage extends StatelessWidget {
-  const MeetingGuidePage({super.key, this.showLegacyNavigation = true});
+  const MeetingGuidePage({
+    super.key,
+    this.showLegacyNavigation = true,
+    this.nativeBottomNavigationBar,
+  });
   final bool showLegacyNavigation;
+  final Widget? nativeBottomNavigationBar;
   static const _steps = [
     'Хотите пригласить кого-то? Укажите, куда идёте и что планируете.',
     'Собираете компанию? Кратко опишите идею и кого ждёте.',
@@ -736,7 +741,9 @@ class MeetingGuidePage extends StatelessWidget {
         ],
       ),
     ),
-    bottomNavigationBar: showLegacyNavigation ? const MyBottomNavigationBar() : null,
+    bottomNavigationBar: showLegacyNavigation
+        ? const MyBottomNavigationBar()
+        : nativeBottomNavigationBar,
     body: SafeArea(
       top: false,
       child: LayoutBuilder(

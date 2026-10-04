@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'lrs_theme.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
+import 'timeweb_bottom_navigation.dart';
 
 /// Live widgets over an unblurred photograph; never a screenshot used as UI.
 class ClrsScaffold extends StatefulWidget {
@@ -95,7 +96,11 @@ class _ClrsScaffoldState extends State<ClrsScaffold> {
             onDrawerChanged: (open) {
               if (_drawerOpen != open) setState(() => _drawerOpen = open);
             },
-            bottomNavigationBar: widget.bottomNavigationBar,
+            bottomNavigationBar:
+                widget.bottomNavigationBar ??
+                (TimewebNavigationScope.maybeOf(context)?.showBar == true
+                    ? const TimewebBottomNavigationBar()
+                    : null),
             floatingActionButton: widget.floatingActionButton,
             body: widget.body,
           ),

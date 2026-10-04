@@ -330,49 +330,75 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                   ),
                   SizedBox(
                     height: 52,
-                    child: ListView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 4,
-                      ),
-                      children: [
-                        for (final label in [
-                          'Все',
-                          'Новые',
-                          'Избранные',
-                          'Архив',
-                        ])
-                          Padding(
-                            padding: const EdgeInsets.only(right: 7),
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                backgroundColor: _filter == label
-                                    ? const Color(0x995D3828)
-                                    : LrsTheme.actionGlass,
-                                foregroundColor: LrsTheme.text,
-                                side: BorderSide(
-                                  color: _filter == label
-                                      ? LrsTheme.peach
-                                      : LrsTheme.actionBorder,
-                                  width: _filter == label ? 1.3 : 1,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                ),
-                                shape: const StadiumBorder(),
-                              ),
-                              onPressed: () => setState(() => _filter = label),
-                              icon: Icon(switch (label) {
-                                'Новые' => Icons.people_outline,
-                                'Избранные' => Icons.favorite_border,
-                                'Архив' => Icons.archive_outlined,
-                                _ => Icons.chat_bubble_outline,
-                              }, size: 18),
-                              label: Text(context.tr(label)),
-                            ),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final compact =
+                            MediaQuery.textScalerOf(context).scale(1) <= 1.2;
+                        final available = constraints.maxWidth - 28 - 21;
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                                      padding: EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 4,
                           ),
-                      ],
+                          child: Row(
+                            children: [
+                              for (final label in [
+                                'Все',
+                                'Новые',
+                                'Избранные',
+                                'Архив',
+                              ])
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 7),
+                                  child: SizedBox(
+                                    width: compact
+                                        ? available *
+                                              (label == 'Все'
+                                                  ? 3
+                                                  : label == 'Избранные'
+                                                  ? 5
+                                                  : 4) /
+                                              16
+                                        : null,
+                                    child: OutlinedButton.icon(
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: _filter == label
+                                            ? const Color(0x995D3828)
+                                            : LrsTheme.actionGlass,
+                                        foregroundColor: LrsTheme.text,
+                                        side: BorderSide(
+                                          color: _filter == label
+                                              ? LrsTheme.peach
+                                              : LrsTheme.actionBorder,
+                                          width: _filter == label ? 1.3 : 1,
+                                        ),
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: compact ? 4 : 12,
+                                        ),
+                                        minimumSize: const Size(0, 44),
+                                        textStyle: TextStyle(
+                                          fontFamily: 'Lato',
+                                          fontSize: compact ? 11 : 14,
+                                        ),
+                                        shape: const StadiumBorder(),
+                                      ),
+                                      onPressed: () =>
+                                          setState(() => _filter = label),
+                                      icon: Icon(switch (label) {
+                                        'Новые' => Icons.people_outline,
+                                        'Избранные' => Icons.favorite_border,
+                                        'Архив' => Icons.archive_outlined,
+                                        _ => Icons.chat_bubble_outline,
+                                      }, size: compact ? 16 : 18),
+                                      label: Text(context.tr(label)),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
                   if (_working) const LinearProgressIndicator(),

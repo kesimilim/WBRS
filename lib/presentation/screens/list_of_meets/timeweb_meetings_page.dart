@@ -17,6 +17,7 @@ import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/geo_catalog.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/meeting_form.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 const timewebMeetingsRoute = '/timeweb/meetings';
 
@@ -496,10 +497,11 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
         final roster = _participants ?? await _runtime.readMeetingParticipants(meeting.meetingId);
         if (!mounted || !_current || !identical(_meeting, meeting)) { flow.close(); return; }
         roster.requireCurrent(); flow.requireCurrent();
-        await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => TimewebMeetingChatPageView(
+        final chat = TimewebNavigationScope.wrap(context, TimewebMeetingChatPageView(
           runtime: _runtime, meeting: meeting, flow: flow, participants: roster.items,
           onParticipants: () => participantsRequested = true,
-          onMembershipChanged: () { if (_actorCurrent) { membershipChanged = true; _purgeMembershipReads(); } })));
+          onMembershipChanged: () { if (_actorCurrent) { membershipChanged = true; _purgeMembershipReads(); } }));
+        await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => chat));
       } finally { flow.close(); }
     } catch (_) {
       if (_current) setState(() => _chatNotice = 'Обсуждение пока недоступно.');
@@ -510,6 +512,17 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
       await _load();
       if (!membershipChanged && _current && !_memberActionsLocked && participantsRequested) await _load(roster: true);
     }
+  }
+
+  Future<void> _openParticipants() async {
+    final meeting = _meeting;
+    if (!_current || _memberActionsLocked || _loading || _joining || meeting == null) return;
+    meeting.requireCurrent();
+    final page = TimewebNavigationScope.wrap(
+      context,
+      TimewebMeetingParticipantsPage(runtime: _runtime, meeting: meeting),
+    );
+    await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => page));
   }
 
   Future<void> _openArchive() async {
@@ -714,9 +727,16 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
             key: const ValueKey('native-meeting-help'),
             icon: const Icon(Icons.help_outline),
             label: Text(context.tr('Как создать встречу')),
-            onPressed: () => Navigator.of(context).push<void>(
-              MaterialPageRoute(builder: (_) => const MeetingGuidePage(showLegacyNavigation: false)),
-            ),
+            onPressed: () {
+              final guide = TimewebNavigationScope.wrap(
+                context,
+                const MeetingGuidePage(
+                  showLegacyNavigation: false,
+                  nativeBottomNavigationBar: TimewebBottomNavigationBar(),
+                ),
+              );
+              Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => guide));
+            },
           ),
         ),
         SizedBox(height: (MediaQuery.sizeOf(context).height * .12).clamp(64, 112)),
@@ -772,7 +792,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
               foregroundColor: LrsTheme.peachLight,
               backgroundColor: Colors.transparent,
             ),
-            onPressed: _memberActionsLocked || _loading || _joining ? null : () => _load(roster: true),
+            onPressed: _memberActionsLocked || _loading || _joining ? null : _openParticipants,
             icon: const Icon(Icons.people_outline, size: 18),
             label: Text(context.tr('Участники встречи')),
           ),

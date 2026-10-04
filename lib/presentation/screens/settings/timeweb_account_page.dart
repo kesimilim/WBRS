@@ -18,6 +18,7 @@ import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/rules_content.dart';
 import 'package:wbrs/shared/timeweb_email_lifecycle_form.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 const timewebAccountRoute = '/timeweb/settings';
 
@@ -325,15 +326,19 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
     if (!_current || _busy || ModalRoute.of(context)?.isCurrent == false) {
       return;
     }
+    final page = TimewebNavigationScope.wrap(
+      context,
+      TimewebAccountPage._(
+        runtime: widget.runtime,
+        lease: _lease,
+        view: view,
+        canEditProfile: widget.canEditProfile,
+      ),
+    );
     await Navigator.of(context).push<void>(
       MaterialPageRoute(
         settings: RouteSettings(name: '$timewebAccountRoute/${view.name}'),
-        builder: (_) => TimewebAccountPage._(
-          runtime: widget.runtime,
-          lease: _lease,
-          view: view,
-          canEditProfile: widget.canEditProfile,
-        ),
+        builder: (_) => page,
       ),
     );
   }
@@ -887,6 +892,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
           ? 'assets/final_design/house.png'
           : 'assets/final_design/family_right.png',
       backgroundScale: about ? 1.42 : 1,
+      bottomNavigationBar: const TimewebBottomNavigationBar(),
       appBar: settings
           ? null
           : AppBar(

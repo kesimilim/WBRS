@@ -141,6 +141,15 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(directoryCalls, 1);
+        expect(
+          find.byKey(const ValueKey('timeweb-people-country')),
+          findsOneWidget,
+        );
+        // The restored CLRS defaults to expanded filters; make room for cards.
+        await _visibleTap(
+          tester,
+          find.byKey(const ValueKey('timeweb-people-filters')),
+        );
         expect(find.byType(TimewebOwnProfilePage), findsNothing);
         expect(
           find.text('По выбранным параметрам пока никого нет'),
@@ -148,7 +157,7 @@ void main() {
         );
         expect(
           tester
-              .widget<ElevatedButton>(
+              .widget<IconButton>(
                 find.byKey(const ValueKey('timeweb-people-next')),
               )
               .onPressed,
@@ -158,12 +167,25 @@ void main() {
           tester,
           find.byKey(const ValueKey('timeweb-people-next')),
         );
+        await _until(tester, () => directoryCalls == 2);
         await _until(
           tester,
-          () => find
-              .byKey(const ValueKey('timeweb-person-card-C'))
-              .evaluate()
-              .isNotEmpty,
+          () => find.textContaining('Страница 2').evaluate().isNotEmpty,
+        );
+        final peopleScrollable = find
+            .descendant(
+              of: find.byKey(const ValueKey('timeweb-people-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        // Pagination preserves the offset; materialize the lazy grid card.
+        tester.state<ScrollableState>(peopleScrollable).position.jumpTo(0);
+        await tester.pump();
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('timeweb-person-card-C')),
+          180,
+          scrollable: peopleScrollable,
+          maxScrolls: 8,
         );
         expect(directoryCalls, 2);
         await _visibleTap(
@@ -179,11 +201,12 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.byType(TimewebPersonPage), findsOneWidget);
-        expect(find.text('Visible person'), findsOneWidget);
+        expect(find.textContaining('Visible person'), findsOneWidget);
         expect(find.text('В сети'), findsNothing);
         expect(find.text('Не в сети'), findsNothing);
         expect(find.text('Нет'), findsNothing);
-        expect(find.textContaining('Не указано'), findsWidgets);
+        // Unknown children stay absent instead of becoming a negative fact.
+        expect(find.text('Дети'), findsNothing);
         expect(
           find.byKey(const ValueKey('timeweb-person-open-chat')),
           findsOneWidget,
@@ -199,14 +222,14 @@ void main() {
         await tester.pumpAndSettle();
         await _visibleTap(
           tester,
-          find.byKey(const ValueKey('timeweb-people-own-profile')),
+          find.byKey(const ValueKey('timeweb-home-tab-profile')),
         );
         await _until(
           tester,
           () => find.byType(TimewebOwnProfilePage).evaluate().isNotEmpty,
         );
         await tester.pumpAndSettle();
-        expect(find.text('Own A'), findsOneWidget);
+        expect(find.textContaining('Own A'), findsOneWidget);
         await _visibleTap(
           tester,
           find.byKey(const ValueKey('timeweb-open-people')),
@@ -215,25 +238,42 @@ void main() {
           tester,
           () => find.byType(TimewebOwnProfilePage).evaluate().isEmpty,
         );
+        await _until(
+          tester,
+          () =>
+              directoryCalls == 3 &&
+              find
+                  .byKey(const ValueKey('timeweb-people-next'))
+                  .evaluate()
+                  .isNotEmpty,
+        );
         await tester.pumpAndSettle();
         await _visibleTap(
           tester,
-          find.byKey(const ValueKey('timeweb-people-chats')),
+          find.byKey(const ValueKey('timeweb-home-tab-chats')),
         );
         await _until(
           tester,
           () => find.byType(TimewebChatsPage).evaluate().isNotEmpty,
         );
         await tester.pumpAndSettle();
-        navigator.currentState!.pop();
+        await _visibleTap(
+          tester,
+          find.byKey(const ValueKey('timeweb-home-tab-people')),
+        );
+        await _until(
+          tester,
+          () =>
+              directoryCalls == 4 &&
+              find
+                  .byKey(const ValueKey('timeweb-people-next'))
+                  .evaluate()
+                  .isNotEmpty,
+        );
         await tester.pumpAndSettle();
         scale = 2;
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
-        await _visibleTap(
-          tester,
-          find.byKey(const ValueKey('timeweb-people-filters')),
-        );
         await _visibleTap(
           tester,
           find.byKey(const ValueKey('timeweb-people-country')),
@@ -266,7 +306,7 @@ void main() {
         await _until(
           tester,
           () =>
-              directoryCalls == 3 &&
+              directoryCalls == 5 &&
               find
                   .text('По выбранным параметрам пока никого нет')
                   .evaluate()
@@ -277,7 +317,20 @@ void main() {
           find.text('По выбранным параметрам пока никого нет'),
           findsOneWidget,
         );
-        expect(find.byKey(const ValueKey('timeweb-people-next')), findsNothing);
+        await tester.scrollUntilVisible(
+          find.byKey(const ValueKey('timeweb-people-next')),
+          180,
+          scrollable: peopleScrollable,
+          maxScrolls: 10,
+        );
+        expect(
+          tester
+              .widget<IconButton>(
+                find.byKey(const ValueKey('timeweb-people-next')),
+              )
+              .onPressed,
+          isNull,
+        );
         expect(tester.takeException(), isNull);
         expect(Firebase.apps, isEmpty);
         expect(wire.calls.every((call) => call.method == 'GET'), isTrue);
@@ -293,7 +346,7 @@ void main() {
     (tester) async {
       final lateDirectory = Completer<http.StreamedResponse>(),
           latePerson = Completer<http.StreamedResponse>();
-      var defer = false;
+      var defer = false, bDirectoryReceived = false;
       final wire = PeopleWire((request) async {
         if (request.url.path == '/v1/auth/login') {
           return peopleReply(peopleTokens('B'));
@@ -306,6 +359,7 @@ void main() {
           return latePerson.future;
         }
         if (request.url.path == '/v1/runtime/people') {
+          if (b) bDirectoryReceived = true;
           if (defer && !b) {
             return lateDirectory.future;
           }
@@ -326,6 +380,17 @@ void main() {
             theme: LrsTheme.theme,
             home: TimewebSessionGate(runtime: runtime),
           ),
+        );
+        await _until(
+          tester,
+          () => find
+              .byKey(const ValueKey('timeweb-people-filters'))
+              .evaluate()
+              .isNotEmpty,
+        );
+        await _visibleTap(
+          tester,
+          find.byKey(const ValueKey('timeweb-people-filters')),
         );
         await _until(
           tester,
@@ -363,13 +428,8 @@ void main() {
             builder: (_) => const Scaffold(body: Text('B destination')),
           ),
         );
-        await _until(
-          tester,
-          () => find
-              .textContaining('B public row', skipOffstage: false)
-              .evaluate()
-              .isNotEmpty,
-        );
+        // B's grid may remain lazy behind its newly opened route.
+        await _until(tester, () => bDirectoryReceived);
         await tester.pumpAndSettle();
         expect(find.text('B destination'), findsOneWidget);
         lateDirectory.complete(
@@ -401,6 +461,10 @@ void main() {
         );
         navigator.currentState!.pop();
         await tester.pumpAndSettle();
+        await _visibleTap(
+          tester,
+          find.byKey(const ValueKey('timeweb-people-filters')),
+        );
         await _until(
           tester,
           () => find.textContaining('B public row').evaluate().isNotEmpty,

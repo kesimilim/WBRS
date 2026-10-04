@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -115,6 +116,42 @@ void main() {
     of: find.byKey(const ValueKey('meeting-guide-scroll')),
     matching: find.byType(Scrollable),
   );
+
+  testWidgets('meeting guide scrolling keeps CLRS header clear and initial cards unchanged', (tester) async {
+    await pumpGuide(tester, 'ru');
+    final page = find.byType(MeetingGuidePage);
+    final element = tester.element(page);
+    await tester.runAsync(() => precacheImage(
+      const AssetImage('assets/final_design/family_right.png'), element,
+    ));
+    final repaint = find.ancestor(of: page, matching: find.byType(RepaintBoundary)).first;
+    final render = tester.renderObject<RenderRepaintBoundary>(repaint);
+    Future<List<int>> headerPixels() async {
+      final image = await render.toImage(pixelRatio: 1);
+      try {
+        final bytes = (await image.toByteData(format: ui.ImageByteFormat.rawRgba))!.buffer.asUint8List();
+        return [
+          for (var y = 24; y < 80; y++) ...bytes.sublist(y * image.width * 4, (y + 1) * image.width * 4),
+        ];
+      } finally { image.dispose(); }
+    }
+    await tester.pumpAndSettle();
+    final initialHeader = await tester.runAsync(headerPixels);
+    final firstCard = find.byKey(const ValueKey('meeting-guide-step-1'));
+    final initialBounds = tester.getRect(firstCard);
+    final position = tester.state<ScrollableState>(guideScroll()).position;
+    expect(position.maxScrollExtent, greaterThan(0));
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    expect(await tester.runAsync(headerPixels), initialHeader,
+      reason: 'Scrolled instructions must never paint over the brand or Back control');
+    expect(find.byKey(const ValueKey('meeting-guide-done')).hitTestable(), findsOneWidget);
+    position.jumpTo(0);
+    await tester.pumpAndSettle();
+    expect(tester.getRect(firstCard), initialBounds);
+    expect(await tester.runAsync(headerPixels), initialHeader);
+    expect(tester.takeException(), isNull);
+  });
 
   for (final code in ClrsLocalizations.codes) {
     testWidgets('meeting guide $code is fully reachable at 360x640', (

@@ -201,20 +201,22 @@ def reviewed_message(meeting_id, message_id, raw, sequence):
     The actual exported document createTime is the importer's explicit fallback.
     """
     from imported_meeting_review import _sql_stamp
-    from runtime_chat import _text, _integer
+    from runtime_chat import _integer
     try:
         _uid(meeting_id); _uid(message_id)
         identifier(meeting_id, uid=True); identifier(message_id, uid=True)
         payload = document(raw); fields = payload["fields"]
-        if set(fields) - {"sender", "sendByID", "message", "type", "time", "isRead", "avatar", "group", "name"}:
+        if set(fields) - {"sender", "sendByID", "message", "type", "time", "isRead", "avatar", "group", "name", "sendBy"}:
             raise RuntimeUnavailable()
-        for name, maximum in (("avatar", 4096), ("group", 191), ("name", 1000)):
+        for name, maximum in (("avatar", 4096), ("group", 191), ("name", 1000), ("sendBy", 1000)):
             _string(fields, name, maximum)  # Private source caches, never public DTO fields.
         first = string_field(fields, "sender"); second = string_field(fields, "sendByID")
         if first and second and first != second:
             raise RuntimeUnavailable()
         sender = identifier(first if first is not None else second, uid=True)
-        text = _text(string_field(fields, "message", 4096, required=True))
+        text = string_field(fields, "message", 4096, required=True)
+        if len(text.encode("utf-8")) > 16384:
+            raise RuntimeUnavailable()
         kind = string_field(fields, "type")
         if kind not in (None, "", "text"):
             raise RuntimeUnavailable()

@@ -44,8 +44,15 @@ def _message(value, *, legacy_id=False):
     if type(value) is not dict or set(value) != MESSAGE_KEYS:
         raise RuntimeUnavailable()
     try:
-        _uid(value["meetingId"]); _uid(value["senderUid"]); _text(value["text"])
-    except RuntimeInvalidRequest:
+        _uid(value["meetingId"]); _uid(value["senderUid"])
+        if legacy_id:
+            from legacy_conversation_payload import text
+            text(value["text"], 4096, required=True)  # Proven historical body, no trim/rewrite.
+            if len(value["text"].encode("utf-8")) > 16384:
+                raise RuntimeUnavailable()
+        else:
+            _text(value["text"])
+    except (RuntimeInvalidRequest, LegacyInvalid):
         raise RuntimeUnavailable() from None
     if legacy_id:
         from legacy_conversation_payload import identifier
@@ -76,7 +83,7 @@ def validate_page(value, meeting_id, limit, previous_cursor=None):
     revision = _integer(value["chatRevision"]); previous = MAX_INTEGER + 1
     for item in value["items"]:
         _message(item, legacy_id=True)
-        if item["meetingId"] != meeting_id or not 0 < item["sequence"] < previous or item["sequence"] > revision:
+        if item["meetingId"] != meeting_id or not 0 < item["sequence"] < previous:
             raise RuntimeUnavailable()
         previous = item["sequence"]
     cursor = value["nextCursor"]

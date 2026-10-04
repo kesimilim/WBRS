@@ -70,6 +70,17 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
         TimewebAuthError.deadline,
       }.contains(error.error);
 
+  void _logRead(String stage, Object error) {
+    final reason = error is TimewebAuthException
+        ? error.error.name
+        : error is TimewebProfilePhotoUnavailable
+        ? 'photo_unavailable'
+        : error is AppSessionException
+        ? error.error.name
+        : 'unexpected';
+    debugPrint('CLRS native gallery stage=$stage error=$reason');
+  }
+
   @override
   void initState() {
     super.initState();
@@ -239,6 +250,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       // from fresh metadata; never extend a reference or replay a write.
       for (var attempt = 0; attempt < 2; attempt++) {
         if (!_current || generation != _generation) return;
+        var stage = 'metadata';
         try {
           final appendPage = more && attempt == 0;
           final reader = appendPage
@@ -251,6 +263,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
           }
           _reader = reader;
           final page = await reader.photos(cursor: appendPage ? _cursor : null);
+          stage = 'original';
           await _append(
             page,
             generation,
@@ -259,6 +272,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
           );
           return;
         } catch (error) {
+          _logRead(stage, error);
           if (!_current || generation != _generation) return;
           final recoverable = _ownCurrent && _transient(error);
           final drained = _clear(keepPortrait: recoverable);
@@ -266,6 +280,9 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
           if (attempt == 0 && retryTransient && recoverable) {
             setState(() => _loading = true);
             await drained;
+            // Draining this reader cannot release other requests' shared slots.
+            await Future<void>.delayed(const Duration(milliseconds: 250));
+            if (!_ownCurrent || generation != _generation) return;
             continue;
           }
           setState(() => _unavailable = true);
@@ -293,6 +310,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       image = null;
       _selected = ref.ordinal;
     } catch (error) {
+      _logRead('selection', error);
       if (_current && generation == _generation) {
         if (error is TimewebAuthException &&
                 error.error == TimewebAuthError.invalidRequest ||

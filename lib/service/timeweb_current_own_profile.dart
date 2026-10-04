@@ -1,5 +1,12 @@
 part of 'timeweb_auth_client.dart';
 
+/// A healthy identity's unavailable own target. Retains the old base error,
+/// while allowing the route to avoid treating a target404 as transient503.
+final class TimewebCurrentOwnProfileUnavailable extends TimewebAuthException {
+  const TimewebCurrentOwnProfileUnavailable()
+    : super(_currentOwnProfileOperation, TimewebAuthError.unavailable);
+}
+
 /// Current canonical account fields only. Every getter revokes after logout,
 /// owner replacement or A/B login; this is never legacy global hydration data.
 final class TimewebCurrentOwnProfile {
@@ -232,6 +239,9 @@ Future<void> _executeCurrentOwnProfile(_CurrentOwnProfileFlight flight) async {
       if (reply.status == 401 &&
           owner._session?.accessToken == session.accessToken) {
         await owner._invalidate(flight.epoch);
+      }
+      if (reply.status == 404) {
+        throw const TimewebCurrentOwnProfileUnavailable();
       }
       throw owner._statusError(_currentOwnProfileOperation, reply.status);
     }

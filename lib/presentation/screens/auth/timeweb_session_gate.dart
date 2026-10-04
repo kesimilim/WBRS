@@ -94,7 +94,7 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
     });
     try {
       if (widget.runtime.ownProfileEnabled) {
-        final profile = await widget.runtime.readCurrentOwnProfile();
+        final profile = await _readOwnProfile(generation, epoch);
         if (!mounted ||
             generation != _generation ||
             widget.runtime.session.state.epoch != epoch) {
@@ -158,6 +158,61 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
     }
   }
 
+  Future<TimewebCurrentOwnProfile> _readOwnProfile(
+    int generation,
+    int epoch,
+  ) async {
+    final runtime = widget.runtime;
+    final lease = runtime.session.captureLease();
+    void requireCurrent() {
+      lease.requireCurrent();
+      if (!mounted ||
+          generation != _generation ||
+          !identical(runtime, widget.runtime) ||
+          runtime.session.state.epoch != epoch) {
+        throw const AppSessionException(AppSessionError.staleSession);
+      }
+    }
+
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        requireCurrent();
+        final profile = await runtime.readCurrentOwnProfile();
+        requireCurrent();
+        profile.requireCurrent();
+        return profile;
+      } catch (error) {
+        // Classification only: no identity, response, URL or protected input.
+        final reason = error is TimewebCurrentOwnProfileUnavailable
+            ? 'target_unavailable'
+            : error is TimewebAuthException
+            ? error.error.name
+            : error is AppSessionException
+            ? error.error.name
+            : error is TimeoutException
+            ? 'timeout'
+            : 'unexpected';
+        debugPrint(
+          'CLRS native profile read stage=${attempt == 0 ? 'initial' : 'retry'} error=$reason',
+        );
+        final transient =
+            error is TimewebAuthException &&
+            error is! TimewebUnknownOutcome &&
+            error is! TimewebCurrentOwnProfileUnavailable &&
+            const {
+              TimewebAuthError.network,
+              TimewebAuthError.unavailable,
+              TimewebAuthError.deadline,
+            }.contains(error.error);
+        if (attempt != 0 || !transient) rethrow;
+        requireCurrent();
+        await Future<void>.delayed(const Duration(milliseconds: 250));
+        requireCurrent();
+      }
+    }
+    throw const AppSessionException(AppSessionError.staleSession);
+  }
+
   @override
   void dispose() {
     _generation++;
@@ -190,7 +245,8 @@ class _TimewebSessionGateState extends State<TimewebSessionGate> {
             runtime: widget.runtime,
             initialOwnProfile: _currentOwnProfile!,
             nativeFeedBuilder: widget.runtime.socialEnabled
-                ? (runtime) => TimewebFeedPage(runtime: runtime) : null,
+                ? (runtime) => TimewebFeedPage(runtime: runtime)
+                : null,
           );
         }
       } catch (_) {

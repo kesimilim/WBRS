@@ -49,6 +49,49 @@ Future<void> _tab(WidgetTester tester, String name) async {
   await tester.pump();
 }
 
+Future<void> _profileReady(WidgetTester tester, String uid) async {
+  final profile = find.byType(TimewebOwnProfilePage);
+  await _until(
+    tester,
+    () => find
+        .descendant(of: profile, matching: find.textContaining('Own $uid'))
+        .evaluate()
+        .isNotEmpty,
+  );
+  final editor = find.descendant(
+    of: profile,
+    matching: find.byKey(const ValueKey('timeweb-open-profile-editor')),
+  );
+  if (editor.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(
+      editor,
+      250,
+      scrollable: find
+          .descendant(
+            of: profile,
+            matching: find.byWidgetPredicate(
+              (widget) =>
+                  widget is Scrollable &&
+                  widget.axisDirection == AxisDirection.down,
+            ),
+          )
+          .first,
+    );
+  }
+  await Scrollable.ensureVisible(tester.element(editor), alignment: .5);
+  await _until(tester, () => tester.widget<InkWell>(editor).onTap != null);
+  await _until(
+    tester,
+    () => find
+        .descendant(
+          of: profile,
+          matching: find.byKey(const ValueKey('timeweb-photo-append-busy')),
+        )
+        .evaluate()
+        .isEmpty,
+  );
+}
+
 void main() {
   testWidgets(
     'native gate owns five reviewed home tabs; late A tab read cannot enter B',
@@ -75,8 +118,14 @@ void main() {
           return peopleReply(peopleOwn(uid));
         }
         if (path == '/v1/runtime/social/feed') {
-          return peopleReply({'kind':'native-feed','ordering':'created_desc_id_desc_null_last',
-            'items':<Object?>[],'nextCursor':null,'canPublish':false,'canModerate':false});
+          return peopleReply({
+            'kind': 'native-feed',
+            'ordering': 'created_desc_id_desc_null_last',
+            'items': <Object?>[],
+            'nextCursor': null,
+            'canPublish': false,
+            'canModerate': false,
+          });
         }
         if (path == '/v1/runtime/people') {
           directoryReads.update(uid, (count) => count + 1, ifAbsent: () => 1);
@@ -161,10 +210,15 @@ void main() {
           home: TimewebSessionGate(runtime: app),
         ),
       );
-      await _until(tester, () => find.byType(TimewebFeedPage).evaluate().isNotEmpty &&
-          find.byKey(const ValueKey('timeweb-social-busy')).evaluate().isEmpty);
-      await _tab(tester, 'people');
-      await _until(tester, () => find.textContaining('Person A').evaluate().isNotEmpty);
+      await _until(
+        tester,
+        () => find.byType(TimewebPeoplePageView).evaluate().isNotEmpty,
+      );
+      expect(find.byType(TimewebFeedPage), findsNothing);
+      await _until(
+        tester,
+        () => find.textContaining('Person A').evaluate().isNotEmpty,
+      );
       expect(find.byType(TimewebHomePage), findsOneWidget);
       final navigation = tester.widget<BottomNavigationBar>(
         find.byKey(const ValueKey('timeweb-home-navigation')),
@@ -197,13 +251,15 @@ void main() {
       );
       expect(find.byType(TimewebChatsPage), findsNothing);
       await _tab(tester, 'profile');
-      await _until(tester, () => find.text('Own A').evaluate().isNotEmpty);
-      await _until(tester, () => find.byKey(const ValueKey('timeweb-open-profile-editor')).evaluate().isNotEmpty);
-      await _until(tester, () => find.byKey(const ValueKey('timeweb-photo-append-busy')).evaluate().isEmpty);
+      expect(app.session.state.identity!.uid, 'A');
+      await _profileReady(tester, 'A');
       expect(find.byType(TimewebOwnProfilePage), findsOneWidget);
       final before = ownReads['A']!;
       await _tab(tester, 'people');
-      await _until(tester, () => find.textContaining('Person A').evaluate().isNotEmpty);
+      await _until(
+        tester,
+        () => find.textContaining('Person A').evaluate().isNotEmpty,
+      );
       expect(ownReads['A'], greaterThan(before));
       expect(directoryReads['A'], 2);
       holdAChats = true;
@@ -218,21 +274,25 @@ void main() {
         ))!.confirmed,
         isTrue,
       );
-      await _until(tester, () => find.byType(TimewebFeedPage).evaluate().isNotEmpty &&
-          find.byKey(const ValueKey('timeweb-social-busy')).evaluate().isEmpty);
-      await _tab(tester, 'people');
-      await _until(tester, () => find.textContaining('Person B').evaluate().isNotEmpty);
+      await _until(
+        tester,
+        () => find.byType(TimewebPeoplePageView).evaluate().isNotEmpty,
+      );
+      expect(find.byType(TimewebFeedPage), findsNothing);
+      await _until(
+        tester,
+        () => find.textContaining('Person B').evaluate().isNotEmpty,
+      );
       late.complete(peopleReply(_emptyChats));
       await tester.pump();
       expect(find.byType(TimewebHomePage), findsOneWidget);
       expect(find.byType(TimewebChatsPage), findsNothing);
       expect(find.textContaining('Person A'), findsNothing);
-      expect(find.text('Own A'), findsNothing);
+      expect(find.textContaining('Own A'), findsNothing);
       expect(app.session.state.identity!.uid, 'B');
       await _tab(tester, 'profile');
-      await _until(tester, () => find.text('Own B').evaluate().isNotEmpty);
-      await _until(tester, () => find.byKey(const ValueKey('timeweb-open-profile-editor')).evaluate().isNotEmpty);
-      await _until(tester, () => find.byKey(const ValueKey('timeweb-photo-append-busy')).evaluate().isEmpty);
+      await _profileReady(tester, 'B');
+      expect(find.textContaining('Own A'), findsNothing);
       expect(Firebase.apps, isEmpty);
       expect(tester.takeException(), isNull);
     },

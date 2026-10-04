@@ -9,7 +9,11 @@ import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
-import 'package:wbrs/presentation/widgets/timeweb_profile_photos_view.dart';
+import 'package:wbrs/presentation/screens/profile/timeweb_own_profile_gallery.dart';
+import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
+import 'package:wbrs/service/content_translation_service.dart';
+import 'package:wbrs/shared/profile_composition.dart';
+import 'package:wbrs/shared/translatable_text.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 const timewebPersonRoute = '/timeweb/person';
@@ -31,6 +35,7 @@ class TimewebPersonPage extends StatefulWidget {
 class _TimewebPersonPageState extends State<TimewebPersonPage> {
   StreamSubscription<AppSessionState>? _subscription;
   late final int _epoch;
+  late final ContentTranslationService _translator;
   TimewebPublicPerson? _person;
   TimewebPersonalChatFlow? _chatAction;
   bool _chatPreparing = false, _chatBusy = false;
@@ -43,6 +48,16 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
     super.initState();
     _epoch = widget.runtime.session.state.epoch;
     _target = widget.uid;
+    _translator = ContentTranslationService(
+      endpoint: null,
+      currentUserId: () => _current
+          ? '${widget.runtime.session.state.identity?.uid}/$_epoch'
+          : null,
+      idToken: () async => null,
+      enableOnDevice: true,
+      enableRemoteFallback: false,
+      maxCacheEntries: 20,
+    );
     _subscription = widget.runtime.session.states.listen((_) {
       if (!_current) _invalidate();
     });
@@ -73,6 +88,7 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
     _invalidated = true;
     _generation++;
     _person = null;
+    _translator.clear();
     _chatAction?.close();
     _chatAction = null;
     _chatNotice = null;
@@ -155,7 +171,7 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
     }
   }
 
-  Future<void> _openChat() async {
+  Future<void> _openChat({bool gift = false}) async {
     if (!_current || _chatBusy || _chatAction == null) return;
     final action = _chatAction!;
     if (!action.needsCheck &&
@@ -188,6 +204,18 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
         return;
       }
       final receipt = action.receipt!;
+      if (gift) {
+        if (!mounted || !_current) return;
+        await Navigator.of(context).push<void>(
+          MaterialPageRoute(
+            builder: (_) => TimewebGiftsPage(
+              runtime: widget.runtime,
+              preferredChatId: receipt.chatId,
+            ),
+          ),
+        );
+        return;
+      }
       final flow = await widget.runtime.openPersonalConversation(receipt);
       if (!mounted || !_current) {
         flow.close();
@@ -198,7 +226,7 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           settings: const RouteSettings(name: '/clrs/native/chat'),
-          builder: (_) => TimewebChatPage(flow: flow),
+          builder: (_) => TimewebChatPage(flow: flow, runtime: widget.runtime),
         ),
       );
     } catch (_) {
@@ -217,32 +245,49 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
   Widget _chatControls() {
     final action = _chatAction;
     final checking = _current && action?.needsCheck == true;
-    return Padding(
-      padding: const EdgeInsets.only(top: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (_chatPreparing || _chatBusy) const LinearProgressIndicator(),
-          if (_chatNotice != null) Text(context.tr(_chatNotice!)),
-          ElevatedButton.icon(
-            key: const ValueKey('timeweb-person-open-chat'),
-            onPressed:
-                !_current ||
-                    _chatBusy ||
-                    _chatPreparing ||
-                    action == null ||
-                    (!checking && (action.rejected || _person == null))
-                ? null
-                : _openChat,
-            icon: Icon(checking ? Icons.refresh : Icons.chat_bubble_outline),
-            label: Text(
-              context.tr(
-                checking ? 'Проверить результат' : 'Отправить сообщение',
+    final available =
+        _current &&
+        !_chatBusy &&
+        !_chatPreparing &&
+        action != null &&
+        (checking || (!action.rejected && _person != null));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (_chatPreparing || _chatBusy) const LinearProgressIndicator(),
+        if (_chatNotice != null) Text(context.tr(_chatNotice!)),
+        Text(
+          context.tr('Хорошие люди находят друг друга ♡'),
+          style: const TextStyle(color: LrsTheme.peachLight),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
+            if (widget.runtime.giftsEnabled)
+              OutlinedButton.icon(
+                key: const ValueKey('timeweb-person-gift'),
+                onPressed: available && !checking
+                    ? () => _openChat(gift: true)
+                    : null,
+                icon: const Icon(Icons.card_giftcard_outlined, size: 18),
+                label: Text(context.tr('Подарить Подарок ❤️')),
+              ),
+            OutlinedButton.icon(
+              key: const ValueKey('timeweb-person-open-chat'),
+              onPressed: available ? () => _openChat() : null,
+              icon: Icon(
+                checking ? Icons.refresh : Icons.chat_bubble_outline,
+                size: 18,
+              ),
+              label: Text(
+                context.tr(checking ? 'Проверить результат' : 'Написать'),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -250,154 +295,121 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
   void dispose() {
     _generation++;
     _person = null;
+    _translator.clear();
     _chatAction?.close();
     _chatAction = null;
     _chatNotice = null;
     _target = null;
+    _translator.dispose();
     unawaited(_subscription?.cancel());
     super.dispose();
   }
 
-  String _text(Object? value) =>
-      value == null || value == '' ? context.tr('Не указано') : '$value';
   @override
   Widget build(BuildContext context) {
     final person = _current ? _person : null;
-    return ClrsScaffold(
-      key: const ValueKey('timeweb-public-profile'),
-      appBar: AppBar(
-        title: const ClrsLogo(size: 34),
-        actions: [
-          IconButton(
-            key: const ValueKey('timeweb-person-refresh'),
-            tooltip: context.tr('Обновить'),
-            onPressed: _current && !_loading && !_chatBusy && !_chatPreparing
-                ? _reload
-                : null,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 8, 14, 24),
-        children: [
-          const Align(
-            alignment: Alignment.centerRight,
-            child: ClrsMotto(size: 18),
-          ),
-          if (_loading) const LinearProgressIndicator(),
-          if (!_current) Text(context.tr('Сеанс завершён')),
-          if (_missing || _error)
-            ClrsPanel(
-              child: Column(
+    final data = person == null
+        ? <String, dynamic>{}
+        : <String, dynamic>{
+            'fullName': person.fullName,
+            'age': person.age,
+            'rost': person.rost,
+            'pol': person.pol,
+            'relationStatus': person.relationStatus,
+            'deti': person.deti,
+            'country': person.country,
+            'region': person.region,
+            'city': person.city,
+            'группа': person.primaryGroup,
+            'about': person.about,
+            'hobbi': person.hobbi,
+          };
+    return ContentTranslationScope(
+      service: _translator,
+      child: ClrsScaffold(
+        key: const ValueKey('timeweb-public-profile'),
+        extendBodyBehindAppBar: true,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          title: const ClrsLogo(size: 34),
+          actions: [
+            IconButton(
+              key: const ValueKey('timeweb-person-refresh'),
+              tooltip: context.tr('Обновить'),
+              onPressed: _current && !_loading && !_chatBusy && !_chatPreparing
+                  ? _reload
+                  : null,
+              icon: const Icon(Icons.refresh),
+            ),
+          ],
+        ),
+        body: person == null
+            ? ListView(
+                padding: EdgeInsets.fromLTRB(
+                  14,
+                  MediaQuery.paddingOf(context).top + 70,
+                  14,
+                  24,
+                ),
                 children: [
-                  Text(
-                    context.tr(
-                      _missing
-                          ? 'Профиль недоступен'
-                          : 'Не удалось загрузить пользователей',
-                    ),
-                  ),
-                  if (_error)
-                    TextButton(
-                      key: const ValueKey('timeweb-person-retry'),
-                      onPressed: _reload,
-                      child: Text(context.tr('Повторить')),
-                    ),
-                ],
-              ),
-            ),
-          if (person == null && widget.runtime.personalChatEnabled && _current)
-            _chatControls(),
-          if (person != null) ...[
-            TimewebProfilePhotosView(
-              runtime: widget.runtime, targetUid: person.uid,
-              primaryGroup: person.primaryGroup,
-              portraitHeight: (MediaQuery.sizeOf(context).width * .62).clamp(190, 300),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              _text(person.fullName),
-              key: const ValueKey('timeweb-public-name'),
-              style: const TextStyle(fontSize: 27, fontWeight: FontWeight.w700),
-            ),
-            if (widget.runtime.personalChatEnabled) _chatControls(),
-            _section(
-              'Обо мне',
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (final fact in <(String, Object?)>[
-                    ('Возраст', person.age),
-                    ('Рост', person.rost),
-                    ('Пол', person.pol),
-                    ('Статус', person.relationStatus),
-                    (
-                      'Дети',
-                      person.deti == null
-                          ? null
-                          : context.tr(person.deti! ? 'Есть' : 'Нет'),
-                    ),
-                    ('Страна', person.country),
-                    ('Регион', person.region),
-                    ('Город', person.city),
-                    ('Группа', person.primaryGroup),
-                    ('Дополнительная группа', person.secondaryGroup),
-                  ])
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
+                  if (_loading) const LinearProgressIndicator(),
+                  if (!_current) Text(context.tr('Сеанс завершён')),
+                  if (_missing || _error)
+                    ClrsPanel(
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            context.tr(fact.$1),
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: LrsTheme.peachLight,
+                            context.tr(
+                              _missing
+                                  ? 'Профиль недоступен'
+                                  : 'Не удалось загрузить пользователей',
                             ),
                           ),
-                          Text(_text(fact.$2)),
+                          if (_error)
+                            TextButton(
+                              key: const ValueKey('timeweb-person-retry'),
+                              onPressed: _reload,
+                              child: Text(context.tr('Повторить')),
+                            ),
                         ],
                       ),
                     ),
-                  Text(
-                    context.tr(
-                      'Последнее посещение: {date}',
-                      args: {'date': _text(person.lastOnlineAt)},
-                    ),
-                  ),
+                  if (widget.runtime.personalChatEnabled && _current)
+                    _chatControls(),
                 ],
+              )
+            : SingleChildScrollView(
+                child: TimewebOwnProfileGallery(
+                  runtime: widget.runtime,
+                  targetUid: person.uid,
+                  portraitBuilder: (photo) => ProfilePortrait(
+                    key: const ValueKey('timeweb-public-name'),
+                    photo: '',
+                    photoContent: photo,
+                    name: person.fullName ?? '',
+                    age: person.age?.toString() ?? '',
+                    group: person.primaryGroup ?? '',
+                    gender: person.pol ?? '',
+                    online: null,
+                    location: profileLocation(data, context: context),
+                    status: relationshipLabel(person.relationStatus),
+                  ),
+                  abovePhotos: Padding(
+                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                    child: widget.runtime.personalChatEnabled
+                        ? _chatControls()
+                        : const SizedBox.shrink(),
+                  ),
+                  belowPhotos: [
+                    ProfileSection(
+                      title: context.tr('Обо мне'),
+                      child: ProfileFacts(data: data),
+                    ),
+                    const ClrsValuesFooter(),
+                  ],
+                ),
               ),
-            ),
-            _section('Интересы и увлечения', Text(_text(person.hobbi))),
-            _section('О себе', Text(_text(person.about))),
-            const ClrsValuesFooter(),
-          ],
-        ],
       ),
     );
   }
-
-  Widget _section(String title, Widget child) => Padding(
-    padding: const EdgeInsets.only(top: 14),
-    child: Container(
-      decoration: BoxDecoration(
-        color: const Color(0xCC302110),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x66E7B092), width: .8),
-      ),
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            context.tr(title),
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 10),
-          child,
-        ],
-      ),
-    ),
-  );
 }

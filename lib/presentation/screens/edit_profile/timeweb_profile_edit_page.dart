@@ -5,6 +5,8 @@ import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_profile_edit_flow.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
+import 'package:wbrs/shared/profile_composition.dart' show ProfileSection;
+import 'package:wbrs/shared/lrs_theme.dart';
 
 /// Existing CLRS form treatment over the real native current-profile API.
 /// This editor cannot finish onboarding or navigate into Firebase destinations.
@@ -13,8 +15,10 @@ class TimewebProfileEditPage extends StatefulWidget {
     super.key,
     required this.flow,
     this.onEditLocation,
+    this.photo,
   });
   final TimewebProfileEditFlow flow;
+  final Widget? photo;
 
   /// True means a separate geography save was confirmed. That changes the
   /// profile revision, so this editor must close and let its caller reread.
@@ -32,6 +36,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
   final _interests = TextEditingController();
   bool? _children;
   String? _gender;
+  String? _status;
   bool _busy = false;
   bool _invalidated = false;
   String? _notice;
@@ -49,6 +54,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
       _interests.text = widget.flow.hobbi;
       _children = widget.flow.deti;
       _gender = widget.flow.pol;
+      _status = widget.flow.relationStatus;
       if (widget.flow.needsCheck) {
         _notice =
             'Результат пока не подтверждён. Нажмите «Проверить результат».';
@@ -85,6 +91,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
       _about.text != widget.flow.about ||
       _interests.text != widget.flow.hobbi ||
       _children != widget.flow.deti ||
+      _status != widget.flow.relationStatus ||
       widget.flow.canSetGender && _gender != widget.flow.pol;
 
   Future<void> _editLocation() async {
@@ -132,6 +139,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
     _interests.clear();
     _children = null;
     _gender = null;
+    _status = null;
     setState(() {});
     // Session invalidation closes this route. It never changes the app owner.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -191,6 +199,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
           rost: int.tryParse(_height.text.trim()),
           deti: _children,
           pol: widget.flow.canSetGender ? _gender : null,
+          relationStatus: _status,
         )) {
       return;
     }
@@ -209,6 +218,7 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
               rost: int.tryParse(_height.text.trim()),
               deti: _children,
               pol: widget.flow.canSetGender ? _gender : null,
+              relationStatus: _status,
             );
       // Observe the same operation within a bounded UI interval. A timeout
       // does not clear/retry a POST; the next tap checks that original handle.
@@ -270,19 +280,40 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
     final current = _current;
     final pending = current && widget.flow.needsCheck;
     final reload = current && widget.flow.requiresReload;
-    final canEditLocation =
-        current && !_busy && !pending && !reload && !_hasUnsavedChanges;
+    final disabled = _busy || pending || reload;
+    final canEditLocation = current && !disabled && !_hasUnsavedChanges;
     return ClrsScaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(context.tr('Редактировать профиль')),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: ClrsPanel(
-            child: current
-                ? Form(
+      body: current
+          ? ListView(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 24),
+              children: [
+                const ClrsBrandHeader(),
+                Center(
+                  child:
+                      widget.photo ??
+                      const SizedBox(
+                        width: 100,
+                        height: 100,
+                        child: Icon(
+                          Icons.person_outline,
+                          size: 90,
+                          color: LrsTheme.peachLight,
+                        ),
+                      ),
+                ),
+                Center(
+                  child: TextButton(
+                    onPressed: null,
+                    child: Text(context.tr('Изменить главное фото')),
+                  ),
+                ),
+                ProfileSection(
+                  title: context.tr('Обо мне'),
+                  child: Form(
                     key: _form,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -389,6 +420,35 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
                           ),
                           const SizedBox(height: 12),
                         ],
+                        DropdownButtonFormField<String>(
+                          key: const ValueKey('timeweb-profile-status'),
+                          value: _status,
+                          isExpanded: true,
+                          decoration: InputDecoration(
+                            labelText: context.tr('Статус'),
+                          ),
+                          items: [
+                            DropdownMenuItem(
+                              value: 'свободен',
+                              child: Text(context.tr('Свободен')),
+                            ),
+                            DropdownMenuItem(
+                              value: 'занят',
+                              child: Text(context.tr('Занят')),
+                            ),
+                            if (_status != null &&
+                                _status != 'свободен' &&
+                                _status != 'занят')
+                              DropdownMenuItem(
+                                value: _status,
+                                child: Text(_status!),
+                              ),
+                          ],
+                          onChanged: disabled
+                              ? null
+                              : (value) => setState(() => _status = value),
+                        ),
+                        const SizedBox(height: 12),
                         TextFormField(
                           key: const ValueKey('timeweb-profile-interests'),
                           controller: _interests,
@@ -414,48 +474,52 @@ class _TimewebProfileEditPageState extends State<TimewebProfileEditPage> {
                           ),
                           validator: (v) => _validate('about', v),
                         ),
-                        if (_notice != null) ...[
-                          const SizedBox(height: 12),
-                          Text(context.tr(_notice!)),
-                        ],
-                        const SizedBox(height: 16),
-                        if (reload)
-                          TextButton(
-                            key: const ValueKey('timeweb-profile-reload'),
-                            onPressed: _busy
-                                ? null
-                                : () => Navigator.of(context).pop(false),
-                            child: Text(context.tr('Обновить')),
-                          )
-                        else
-                          ElevatedButton(
-                            key: const ValueKey('timeweb-profile-save'),
-                            onPressed: _busy ? null : _submit,
-                            child: _busy
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    context.tr(
-                                      pending
-                                          ? 'Проверить результат'
-                                          : 'Сохранить',
-                                    ),
-                                  ),
-                          ),
                       ],
                     ),
-                  )
-                : Text(
-                    context.tr('Сеанс изменился. Откройте этот экран заново.'),
                   ),
-          ),
-        ),
-      ),
+                ),
+                if (_busy) const LinearProgressIndicator(),
+                if (_notice != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(context.tr(_notice!)),
+                  ),
+                const SizedBox(height: 14),
+                Align(
+                  child: reload
+                      ? TextButton(
+                          key: const ValueKey('timeweb-profile-reload'),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).pop(false),
+                          child: Text(context.tr('Обновить')),
+                        )
+                      : ElevatedButton(
+                          key: const ValueKey('timeweb-profile-save'),
+                          onPressed: _busy ? null : _submit,
+                          child: Text(
+                            context.tr(
+                              pending ? 'Проверить результат' : 'Сохранить',
+                            ),
+                          ),
+                        ),
+                ),
+                const SizedBox(height: 14),
+                Center(
+                  child: TextButton(
+                    onPressed: null,
+                    child: Text(context.tr('Удалить профиль')),
+                  ),
+                ),
+              ],
+            )
+          : Center(
+              child: ClrsPanel(
+                child: Text(
+                  context.tr('Сеанс изменился. Откройте этот экран заново.'),
+                ),
+              ),
+            ),
     );
   }
 }

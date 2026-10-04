@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
@@ -10,6 +11,8 @@ import 'package:wbrs/service/timeweb_chat_events.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
+import 'timeweb_chat_avatar.dart';
 
 const timewebChatsRoute = '/clrs/native/chats';
 const _chatRoute = '/clrs/native/chat';
@@ -34,6 +37,8 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
   List<TimewebCurrentChat> _chats = [];
   TimewebCurrentReadCursor? _next;
   bool _invalid = false, _working = false;
+  bool _searchOpen = false, _favoritesLoaded = false, _favoriteSaving = false;
+  Set<String> _favorites = {};
   String? _error;
   String _filter = 'Все', _search = '';
   int _generation = 0;
@@ -52,6 +57,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     _subscription = widget.runtime.session.states.listen((_) {
       if (!_current) _invalidate();
     });
+    unawaited(_loadFavorites());
     _events = TimewebChatEventPump(
       isCurrent: () => _current,
       isVisible: () => ModalRoute.of(context)?.isCurrent == true,
@@ -89,6 +95,8 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     setState(() {
       _invalid = true;
       _chats = [];
+      _favorites = {};
+      _favoritesLoaded = false;
       _next = null;
       _generation++;
     });
@@ -101,6 +109,42 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
         );
       }
     });
+  }
+
+  Future<void> _loadFavorites() async {
+    if (!_current) return;
+    final owner = _lease!.identity.uid;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!_current || _lease!.identity.uid != owner) return;
+      setState(() {
+        _favorites = (prefs.getStringList('chat_favorites_$owner') ?? [])
+            .toSet();
+        _favoritesLoaded = true;
+      });
+    } catch (_) {
+      if (_current) setState(() => _error = 'Не удалось загрузить избранное.');
+    }
+  }
+
+  Future<void> _toggleFavorite(TimewebCurrentChat chat) async {
+    if (!_current || !_favoritesLoaded || _favoriteSaving) return;
+    chat.requireCurrent();
+    final owner = _lease!.identity.uid, id = chat.chatId;
+    final updated = {..._favorites};
+    if (!updated.add(id)) updated.remove(id);
+    setState(() => _favoriteSaving = true);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!_current || _lease!.identity.uid != owner) return;
+      await prefs.setStringList('chat_favorites_$owner', updated.toList());
+      if (!_current || _lease!.identity.uid != owner) return;
+      setState(() => _favorites = updated);
+    } catch (_) {
+      if (_current) setState(() => _error = 'Не удалось сохранить избранное.');
+    } finally {
+      if (mounted) setState(() => _favoriteSaving = false);
+    }
   }
 
   Future<bool> _load({bool more = false}) async {
@@ -156,7 +200,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
       await Navigator.of(context).push<void>(
         MaterialPageRoute(
           settings: const RouteSettings(name: _chatRoute),
-          builder: (_) => TimewebChatPage(flow: flow),
+          builder: (_) => TimewebChatPage(flow: flow, runtime: widget.runtime),
         ),
       );
     } catch (_) {
@@ -184,6 +228,9 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
 
   @override
   Widget build(BuildContext context) {
+    final compact =
+        MediaQuery.textScalerOf(context).scale(1) > 1.5 ||
+        MediaQuery.sizeOf(context).height < 520;
     var chats = <TimewebCurrentChat>[];
     if (_current) {
       try {
@@ -193,6 +240,8 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                   (_filter == 'Архив' ? chat.archived : !chat.archived) &&
                   (_filter != 'Новые' ||
                       chat.lastSequence > chat.readThrough) &&
+                  (_filter != 'Избранные' ||
+                      _favorites.contains(chat.chatId)) &&
                   (chat.name ?? '').toLowerCase().contains(
                     _search.toLowerCase(),
                   ),
@@ -205,7 +254,16 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     return ClrsScaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
+        title: const ClrsLogo(size: 33),
         actions: [
+          IconButton(
+            tooltip: context.tr('Поиск'),
+            onPressed: () => setState(() {
+              _searchOpen = !_searchOpen;
+              if (!_searchOpen) _search = '';
+            }),
+            icon: Icon(_searchOpen ? Icons.close : Icons.search),
+          ),
           IconButton(
             tooltip: context.tr('Обновить'),
             onPressed: _current && !_working ? _load : null,
@@ -220,11 +278,10 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 18),
+                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 4),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const ClrsBrandHeader(),
                         Row(
                           children: [
                             Expanded(
@@ -236,33 +293,48 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                                 ),
                               ),
                             ),
-                            const SizedBox(
-                              width: 120,
-                              child: FittedBox(child: ClrsMotto(size: 17)),
-                            ),
+                            if (!compact)
+                              const SizedBox(
+                                width: 130,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: ClrsMotto(size: 16),
+                                ),
+                              ),
                           ],
                         ),
-                        Text(
-                          context.tr('Значимые разговоры с настоящими людьми'),
-                        ),
-                        const SizedBox(height: 8),
-                        TextField(
-                          onChanged: (text) => setState(() => _search = text),
-                          decoration: InputDecoration(
-                            hintText: context.tr('Поиск по имени'),
-                            prefixIcon: const Icon(Icons.search),
+                        const SizedBox(height: 2),
+                        if (!compact)
+                          Text(
+                            context.tr(
+                              'Значимые разговоры с настоящими людьми',
+                            ),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: LrsTheme.text,
+                            ),
                           ),
-                        ),
+                        if (_searchOpen) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            autofocus: true,
+                            onChanged: (text) => setState(() => _search = text),
+                            decoration: InputDecoration(
+                              hintText: context.tr('Поиск по имени'),
+                              prefixIcon: const Icon(Icons.search),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
                   SizedBox(
-                    height: 54,
+                    height: 52,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 14,
-                        vertical: 6,
+                        vertical: 4,
                       ),
                       children: [
                         for (final label in [
@@ -272,21 +344,32 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                           'Архив',
                         ])
                           Padding(
-                            padding: const EdgeInsets.only(right: 6),
-                            child: OutlinedButton(
+                            padding: const EdgeInsets.only(right: 7),
+                            child: OutlinedButton.icon(
                               style: OutlinedButton.styleFrom(
                                 backgroundColor: _filter == label
-                                    ? LrsTheme.actionGlass
-                                    : Colors.transparent,
+                                    ? const Color(0x995D3828)
+                                    : LrsTheme.actionGlass,
                                 foregroundColor: LrsTheme.text,
-                                side: const BorderSide(
-                                  color: LrsTheme.actionBorder,
+                                side: BorderSide(
+                                  color: _filter == label
+                                      ? LrsTheme.peach
+                                      : LrsTheme.actionBorder,
+                                  width: _filter == label ? 1.3 : 1,
                                 ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                shape: const StadiumBorder(),
                               ),
-                              onPressed: label == 'Избранные'
-                                  ? null
-                                  : () => setState(() => _filter = label),
-                              child: Text(context.tr(label)),
+                              onPressed: () => setState(() => _filter = label),
+                              icon: Icon(switch (label) {
+                                'Новые' => Icons.people_outline,
+                                'Избранные' => Icons.favorite_border,
+                                'Архив' => Icons.archive_outlined,
+                                _ => Icons.chat_bubble_outline,
+                              }, size: 18),
+                              label: Text(context.tr(label)),
                             ),
                           ),
                       ],
@@ -307,36 +390,73 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                           )
                         : ListView.builder(
                             key: const ValueKey('timeweb-chat-list'),
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
+                            padding: const EdgeInsets.fromLTRB(14, 10, 14, 24),
                             itemCount: chats.length,
                             itemBuilder: (context, index) {
                               final chat = chats[index];
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 8),
+                                padding: const EdgeInsets.only(bottom: 10),
                                 child: ClrsPanel(
                                   padding: EdgeInsets.zero,
                                   child: ListTile(
                                     key: ValueKey(
                                       'timeweb-chat-${chat.chatId}',
                                     ),
-                                    leading: Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: LrsTheme.peach,
-                                          width: .8,
-                                        ),
+                                    leading: TimewebChatAvatar(
+                                      key: ValueKey(
+                                        '${chat.chatId}/$_generation',
                                       ),
-                                      child: const Icon(Icons.person_outline),
+                                      runtime: widget.runtime,
+                                      uid: chat.counterpartUid,
                                     ),
                                     title: Text(
                                       chat.name ?? context.tr('Чаты'),
+                                      style: const TextStyle(
+                                        fontFamily: 'Lato',
+                                      ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    trailing: const Icon(Icons.chevron_right),
+                                    trailing: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        if (_favorites.contains(chat.chatId))
+                                          const Icon(
+                                            Icons.star,
+                                            size: 18,
+                                            color: LrsTheme.peach,
+                                          ),
+                                        PopupMenuButton<String>(
+                                          key: ValueKey(
+                                            'timeweb-chat-menu-${chat.chatId}',
+                                          ),
+                                          enabled:
+                                              _current &&
+                                              _favoritesLoaded &&
+                                              !_favoriteSaving,
+                                          onSelected: (_) =>
+                                              unawaited(_toggleFavorite(chat)),
+                                          itemBuilder: (_) => [
+                                            PopupMenuItem(
+                                              value: 'favorite',
+                                              child: Text(
+                                                context.tr(
+                                                  _favorites.contains(
+                                                        chat.chatId,
+                                                      )
+                                                      ? 'Убрать из избранного'
+                                                      : 'В избранное',
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                    onLongPress:
+                                        _favoritesLoaded && !_favoriteSaving
+                                        ? () => unawaited(_toggleFavorite(chat))
+                                        : null,
                                     onTap: _working ? null : () => _open(chat),
                                   ),
                                 ),
@@ -358,8 +478,9 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
 }
 
 class TimewebChatPage extends StatefulWidget {
-  const TimewebChatPage({super.key, required this.flow});
+  const TimewebChatPage({super.key, required this.flow, this.runtime});
   final TimewebChatFlow flow;
+  final TimewebAppRuntime? runtime;
   @override
   State<TimewebChatPage> createState() => _TimewebChatPageState();
 }
@@ -616,27 +737,52 @@ class _TimewebChatPageState extends State<TimewebChatPage>
                   final compact = constraints.maxHeight < 320;
                   return Column(
                     children: [
-                      if (!compact)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14),
-                          child: ClrsBrandHeader(),
-                        ),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: SizedBox(
-                          height: 36,
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: TextButton.icon(
-                              key: const ValueKey('timeweb-chat-gift'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: Colors.white,
-                                disabledForegroundColor: Colors.white,
-                              ),
-                              onPressed: null,
-                              icon: const Icon(Icons.card_giftcard),
-                              label: Text(
-                                '${context.tr('Подарить подарок')} ❤️',
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: SizedBox(
+                            height: 36,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: TextButton.icon(
+                                key: const ValueKey('timeweb-chat-gift'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: Colors.white,
+                                  disabledForegroundColor: Colors.white,
+                                ),
+                                onPressed:
+                                    current &&
+                                        !_sending &&
+                                        widget.runtime?.giftsEnabled == true
+                                    ? () async {
+                                        final runtime = widget.runtime!;
+                                        final lease = runtime.session
+                                            .captureLease();
+                                        widget.flow.requireCurrent();
+                                        lease.requireCurrent();
+                                        if (lease.identity.uid !=
+                                            widget.flow.ownerUid) {
+                                          return;
+                                        }
+                                        await Navigator.of(context).push<void>(
+                                          MaterialPageRoute(
+                                            builder: (_) => TimewebGiftsPage(
+                                              runtime: runtime,
+                                              tabIndex: 1,
+                                              preferredChatId:
+                                                  widget.flow.chatId,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    : null,
+                                icon: const Icon(Icons.card_giftcard),
+                                label: Text(
+                                  context.l10n.locale.languageCode == 'ru'
+                                      ? 'Подарить Подарок ❤️'
+                                      : '${context.tr('Подарить подарок')} ❤️',
+                                ),
                               ),
                             ),
                           ),

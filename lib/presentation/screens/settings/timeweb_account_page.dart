@@ -587,36 +587,42 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
     builder: (context, box) {
       final available = (box.maxWidth - 28).clamp(0.0, double.infinity);
       final large = MediaQuery.textScalerOf(context).scale(12) > 20;
+      final panelWidth = large ? available : available * .68;
       return ListView(
         key: const ValueKey('timeweb-about-scroll'),
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
         children: [
-          const ClrsLogo(size: 48),
-          const SizedBox(height: 4),
-          SizedBox(
-            width: 205,
-            child: Text(
-              context.tr(ClrsBrand.ruTagline),
-              style: const TextStyle(fontSize: 10, height: 1.4),
-            ),
-          ),
-          const SizedBox(height: 12),
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: SizedBox(
-              width: 125,
-              child: Column(
-                children: [
-                  ClrsMotto(size: 19),
-                  SizedBox(height: 8),
-                  Icon(
-                    Icons.favorite_border,
-                    color: LrsTheme.peachLight,
-                    size: 19,
-                  ),
-                ],
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: ClrsLogo(size: 48),
+                    ),
+                    Text(
+                      context.tr(ClrsBrand.ruTagline),
+                      style: const TextStyle(fontSize: 10, height: 1.4),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              const SizedBox(
+                width: 105,
+                child: Column(
+                  children: [
+                    ClrsMotto(size: 17),
+                    SizedBox(height: 5),
+                    Icon(Icons.favorite_border, color: LrsTheme.peachLight, size: 17),
+                  ],
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 14),
           Text(
@@ -632,7 +638,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: large ? available : available * .64,
+              width: panelWidth,
               child: Column(
                 children: [
                   _legalRow(
@@ -666,7 +672,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: large ? available : available * .86,
+              width: panelWidth,
               child: Column(
                 children: [
                   ClrsPanel(
@@ -703,16 +709,19 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  context.tr('Язык'),
-                  style: const TextStyle(fontSize: 12),
+          SizedBox(
+            width: panelWidth,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    context.tr('Язык'),
+                    style: const TextStyle(fontSize: 12),
+                  ),
                 ),
-              ),
-              const LanguagePickerButton(showIcon: false),
-            ],
+                const LanguagePickerButton(showIcon: false),
+              ],
+            ),
           ),
           const ClrsValuesFooter(compact: true),
         ],
@@ -846,10 +855,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
     }
     final settings = widget._view == _View.settings;
     return ClrsScaffold(
-      backgroundAsset: settings
-          ? 'assets/final_design/house.png'
-          : 'assets/family_main.jpg',
-      backgroundScale: widget._view == _View.about ? 1.42 : 1,
+      backgroundAsset: 'assets/final_design/family_right.png',
       appBar: settings
           ? null
           : AppBar(

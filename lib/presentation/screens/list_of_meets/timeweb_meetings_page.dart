@@ -131,32 +131,115 @@ Widget _locations(
   ],
 );
 
-Widget _meetingCard(BuildContext context, TimewebMeeting meeting, {VoidCallback? tap, bool full = false}) => Padding(
-  padding: const EdgeInsets.only(bottom: 12),
-  child: _left(
-    ClrsPanel(
-      child: InkWell(
-        key: ValueKey('native-meeting-${meeting.meetingId}'),
-        onTap: tap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              (meeting.title?.trim().isNotEmpty ?? false) ? meeting.title! : context.tr('Встреча'),
-              style: full ? Theme.of(context).textTheme.titleLarge : Theme.of(context).textTheme.titleMedium,
-            ),
-            Text(meeting.scheduleLabel),
-            Text(meeting.geographyLabel),
-            if (meeting.description.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(meeting.description, maxLines: full ? null : 3, overflow: full ? null : TextOverflow.ellipsis),
-            ],
-          ],
-        ),
+// These are decorative topic illustrations, never a participant-uploaded image.
+// The native meeting read contract does not expose meeting media yet.
+String? _meetingIllustration(TimewebMeeting meeting) {
+  final topic = '${meeting.title ?? ''} ${meeting.description}'.toLowerCase();
+  if (RegExp(r'бар|пив|крылыш|\bbar\b|\bpub\b|beer|wings').hasMatch(topic)) {
+    return 'assets/final_design/meeting_bar.jpg';
+  }
+  if (RegExp(r'кофе|кофейн|кафе|coffee|cafe').hasMatch(topic)) {
+    return 'assets/final_design/meeting_coffee.jpg';
+  }
+  if (RegExp(r'пикник|picnic').hasMatch(topic)) {
+    return 'assets/final_design/meeting_picnic.jpg';
+  }
+  if (RegExp(r'парк|прогулк|\bpark\b|\bwalk').hasMatch(topic)) {
+    return 'assets/final_design/meeting_park.jpg';
+  }
+  return null;
+}
+
+String _participantInitial(String? name) {
+  final value = name?.trim() ?? '';
+  return value.isEmpty ? '?' : value.characters.first.toUpperCase();
+}
+
+Widget _meetingCard(BuildContext context, TimewebMeeting meeting, {VoidCallback? tap, bool full = false}) {
+  final title = (meeting.title?.trim().isNotEmpty ?? false) ? meeting.title! : context.tr('Встреча');
+  final illustration = full ? null : _meetingIllustration(meeting);
+  final facts = Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        maxLines: full ? null : 2,
+        overflow: full ? null : TextOverflow.ellipsis,
+        style: full ? Theme.of(context).textTheme.titleLarge : Theme.of(context).textTheme.titleMedium,
       ),
+      if (!full && meeting.description.isNotEmpty) ...[
+        const SizedBox(height: 4),
+        Text(meeting.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+      ],
+      const SizedBox(height: 8),
+      Row(children: [
+        const Icon(Icons.calendar_today_outlined, size: 16),
+        const SizedBox(width: 6),
+        Expanded(child: Text(meeting.scheduleLabel, maxLines: 2, overflow: TextOverflow.ellipsis)),
+      ]),
+      const SizedBox(height: 5),
+      Row(children: [
+        const Icon(Icons.location_on_outlined, size: 17),
+        const SizedBox(width: 5),
+        Expanded(child: Text(meeting.geographyLabel, maxLines: 2, overflow: TextOverflow.ellipsis)),
+      ]),
+      if (full && meeting.description.isNotEmpty) ...[
+        const Divider(color: Color(0x66E7B092)),
+        Text(context.tr('О встрече'), style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: 5),
+        Text(meeting.description),
+      ],
+    ],
+  );
+  final panel = ClrsPanel(
+    padding: const EdgeInsets.all(10),
+    child: InkWell(
+      key: ValueKey('native-meeting-${meeting.meetingId}'),
+      onTap: tap,
+      child: full
+          ? facts
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: illustration == null
+                      ? Container(
+                          width: 96,
+                          height: 132,
+                          color: const Color(0xAD493526),
+                          alignment: Alignment.center,
+                          child: const Icon(Icons.event_outlined, size: 36, color: LrsTheme.peachLight),
+                        )
+                      : Stack(
+                          children: [
+                            Image.asset(
+                              illustration,
+                              width: 96,
+                              height: 132,
+                              fit: BoxFit.cover,
+                              excludeFromSemantics: true,
+                            ),
+                            const Positioned(
+                              right: 5,
+                              bottom: 5,
+                              child: Icon(Icons.auto_awesome_outlined, size: 15, color: LrsTheme.peachLight),
+                            ),
+                          ],
+                        ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(child: facts),
+                const Icon(Icons.chevron_right, size: 20),
+              ],
+            ),
     ),
-  ),
-);
+  );
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: full ? _left(panel) : panel,
+  );
+}
 
 /// One current page, then an explicit next page. No imported meeting/media fallback.
 class TimewebMeetingsPageView extends StatefulWidget {
@@ -638,20 +721,23 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
         ),
         SizedBox(height: (MediaQuery.sizeOf(context).height * .12).clamp(64, 112)),
         if (_countries != null)
-          _locations(
-            context,
-            _countries!,
-            _country,
-            _region,
-            (country, region) {
-              setState(() {
-                _country = country;
-                _region = region;
-              });
-              unawaited(_load());
-            },
-            filter: true,
-            enabled: !_loading,
+          ClrsPanel(
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
+            child: _locations(
+              context,
+              _countries!,
+              _country,
+              _region,
+              (country, region) {
+                setState(() {
+                  _country = country;
+                  _region = region;
+                });
+                unawaited(_load());
+              },
+              filter: true,
+              enabled: !_loading,
+            ),
           ),
         const SizedBox(height: 16),
         for (final meeting in _page?.items ?? <TimewebMeeting>[])
@@ -678,6 +764,19 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
             child: Text(context.tr('Следующая страница')),
           ),
       ] else if (_meeting != null) ...[
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: const ValueKey('native-meeting-participants'),
+            style: TextButton.styleFrom(
+              foregroundColor: LrsTheme.peachLight,
+              backgroundColor: Colors.transparent,
+            ),
+            onPressed: _memberActionsLocked || _loading || _joining ? null : () => _load(roster: true),
+            icon: const Icon(Icons.people_outline, size: 18),
+            label: Text(context.tr('Участники встречи')),
+          ),
+        ),
         _meetingCard(context, _meeting!, full: true),
         if (!_pendingLeave) _left(
           TextButton(
@@ -708,16 +807,24 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
           onPressed: _memberActionsLocked || _loading || _joining ? null : _openArchive,
           child: Text(context.tr('Сохранённая история')),
         )),
-        TextButton(
-          key: const ValueKey('native-meeting-participants'),
-          onPressed: _memberActionsLocked || _loading || _joining ? null : () => _load(roster: true),
-          child: Text(context.tr('Участники встречи')),
-        ),
         for (final person in _participants?.items ?? <TimewebMeetingParticipant>[])
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
             child: _left(ClrsPanel(child: Row(children: [
-              Expanded(child: Text(person.fullName ?? context.tr('Имя не указано'))),
+              CircleAvatar(
+                radius: 18,
+                backgroundColor: const Color(0x856A4631),
+                child: Text(_participantInitial(person.fullName)),
+              ),
+              const SizedBox(width: 9),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(person.fullName ?? context.tr('Имя не указано'), maxLines: 2, overflow: TextOverflow.ellipsis),
+                  if (person.uid == _owner)
+                    Text(context.tr('Организатор'), style: Theme.of(context).textTheme.labelSmall),
+                ],
+              )),
               if (_organizer) IconButton(
                 key: ValueKey('native-meeting-kick-${person.uid}'),
                 tooltip: context.tr('Исключить участника'),

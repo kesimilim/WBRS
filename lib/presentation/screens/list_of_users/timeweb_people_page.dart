@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:wbrs/core/utils/compatibility.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chats_page.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.dart';
@@ -8,10 +9,9 @@ import 'package:wbrs/presentation/screens/profile/timeweb_own_profile_page.dart'
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
-import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/geo_catalog.dart';
-import 'package:wbrs/shared/group_avatar.dart';
+import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'show/timeweb_person_page.dart';
@@ -46,9 +46,10 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
   List<GeoCountry>? _countries;
   String? _countryCode, _region, _pol;
   RangeValues _ages = const RangeValues(18, 100);
-  bool _compatible = false, _showFilters = false;
+  bool _compatible = false, _showFilters = true;
   bool _loading = false, _opening = false, _error = false, _invalidated = false;
   int _generation = 0, _pageNumber = 1;
+  final _pageCursors = <TimewebPeopleCursor?>[null];
 
   @override
   void initState() {
@@ -94,6 +95,7 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
     _generation++;
     _ownProfile = null;
     _page = null;
+    _pageCursors.clear();
     _filters = null;
     _countries = null;
     _countryCode = _region = _pol = null;
@@ -129,23 +131,31 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
     }
   }
 
-  Future<void> _load({bool next = false}) async {
+  Future<void> _load({bool next = false, bool previous = false}) async {
     if (!_current || _busy) return;
-    final continuation = next ? _page?.nextCursor : null;
+    if (previous && _pageNumber <= 1) return;
+    final continuation = next
+        ? _page?.nextCursor
+        : previous
+        ? _pageCursors[_pageNumber - 2]
+        : null;
     if (next && continuation == null) return;
     final generation = ++_generation;
     final previousFilters = _filters;
     setState(() {
       _loading = true;
       _error = false;
-      if (!next) {
+      if (!next && !previous) {
         _page = null;
         _filters = null;
         _pageNumber = 1;
+        _pageCursors
+          ..clear()
+          ..add(null);
       }
     });
     try {
-      final filters = next
+      final filters = next || previous
           ? previousFilters!
           : await TimewebPeopleFilters.fromCatalog(
               minAge: _ages.start.round(),
@@ -166,7 +176,11 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
         _filters = filters;
         _page = page;
         if (next) {
+          _pageCursors.removeRange(_pageNumber, _pageCursors.length);
+          _pageCursors.add(continuation);
           _pageNumber++;
+        } else if (previous) {
+          _pageNumber--;
         }
       });
     } catch (_) {
@@ -186,7 +200,9 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
     }
     person.requireCurrent();
     if (widget.onSelected != null) {
-      if (person.uid != widget.runtime.session.state.identity?.uid) widget.onSelected!(person);
+      if (person.uid != widget.runtime.session.state.identity?.uid) {
+        widget.onSelected!(person);
+      }
       return;
     }
     final uid = person.uid;
@@ -270,6 +286,7 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
     _generation++;
     _page = null;
     _ownProfile = null;
+    _pageCursors.clear();
     _filters = null;
     _countries = null;
     _countryCode = _region = _pol = null;
@@ -281,23 +298,13 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
   Widget build(BuildContext context) => ClrsScaffold(
     key: const ValueKey('timeweb-people-directory'),
     appBar: AppBar(
-      title: const ClrsLogo(size: 33),
+      title: Text(context.tr('Люди')),
       actions: [
         IconButton(
           key: const ValueKey('timeweb-people-refresh'),
           tooltip: context.tr('Обновить'),
           onPressed: _current && !_busy ? () => _load() : null,
           icon: const Icon(Icons.refresh),
-        ),
-        IconButton(
-          key: const ValueKey('timeweb-people-logout'),
-          tooltip: context.tr('Выйти'),
-          onPressed: _current
-              ? () async {
-                  await widget.runtime.session.logout();
-                }
-              : null,
-          icon: const Icon(Icons.logout),
         ),
       ],
     ),
@@ -327,39 +334,61 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    context.tr(widget.onSelected == null ? 'Люди' : 'Выберите получателя'),
-                    style: const TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
+                  const ClrsBrandHeader(),
+                  if (widget.onSelected != null)
+                    Text(
+                      context.tr('Выберите получателя'),
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    )
+                  else
+                    Text(
+                      context.tr('Хорошие люди находят друг друга ♡'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: LrsTheme.peachLight),
                     ),
-                  ),
-                  const Align(
-                    alignment: Alignment.centerRight,
-                    child: ClrsMotto(size: 16),
-                  ),
+                  const SizedBox(height: 10),
                   Wrap(
                     spacing: 8,
                     children: [
-                      if (widget.onSelected == null && widget.showSectionLinks) ElevatedButton.icon(
-                        key: const ValueKey('timeweb-people-own-profile'),
-                        onPressed: _busy ? null : _openOwnProfile,
-                        icon: const Icon(Icons.person_outline),
-                        label: Text(context.tr('Профиль')),
-                      ),
-                      if (widget.onSelected == null && widget.showSectionLinks && widget.runtime.chatsEnabled)
+                      if (widget.onSelected == null && widget.showSectionLinks)
+                        ElevatedButton.icon(
+                          key: const ValueKey('timeweb-people-own-profile'),
+                          onPressed: _busy ? null : _openOwnProfile,
+                          icon: const Icon(Icons.person_outline),
+                          label: Text(context.tr('Профиль')),
+                        ),
+                      if (widget.onSelected == null &&
+                          widget.showSectionLinks &&
+                          widget.runtime.chatsEnabled)
                         ElevatedButton.icon(
                           key: const ValueKey('timeweb-people-chats'),
                           onPressed: _busy ? null : _openChats,
                           icon: const Icon(Icons.chat_bubble_outline),
                           label: Text(context.tr('Чаты')),
                         ),
-                      if (widget.onSelected == null && widget.showSectionLinks && widget.runtime.meetingsEnabled)
-                        ElevatedButton.icon(key: const ValueKey('timeweb-people-meetings'),
-                          onPressed: _busy ? null : () => Navigator.of(context).push<void>(
-                            MaterialPageRoute(settings: const RouteSettings(name: timewebMeetingsRoute),
-                              builder: (_) => TimewebMeetingsPageView(runtime: widget.runtime))),
-                          icon: const Icon(Icons.groups_outlined), label: Text(context.tr('Встречи'))),
+                      if (widget.onSelected == null &&
+                          widget.showSectionLinks &&
+                          widget.runtime.meetingsEnabled)
+                        ElevatedButton.icon(
+                          key: const ValueKey('timeweb-people-meetings'),
+                          onPressed: _busy
+                              ? null
+                              : () => Navigator.of(context).push<void>(
+                                  MaterialPageRoute(
+                                    settings: const RouteSettings(
+                                      name: timewebMeetingsRoute,
+                                    ),
+                                    builder: (_) => TimewebMeetingsPageView(
+                                      runtime: widget.runtime,
+                                    ),
+                                  ),
+                                ),
+                          icon: const Icon(Icons.groups_outlined),
+                          label: Text(context.tr('Встречи')),
+                        ),
                       TextButton.icon(
                         key: const ValueKey('timeweb-people-filters'),
                         onPressed: _busy
@@ -427,23 +456,39 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
           if (_page != null)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(14),
-                child: Column(
-                  children: [
-                    Text(
-                      context.tr(
-                        'Страница {number} · до 30 профилей',
-                        args: {'number': _pageNumber},
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 4),
+                child: ClrsPanel(
+                  padding: const EdgeInsets.all(4),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        key: const ValueKey('timeweb-people-previous'),
+                        tooltip: context.tr('Предыдущая страница'),
+                        onPressed: _busy || _pageNumber <= 1
+                            ? null
+                            : () => _load(previous: true),
+                        icon: const Icon(Icons.chevron_left),
                       ),
-                    ),
-                    if (_page?.nextCursor != null)
-                      ElevatedButton.icon(
+                      Expanded(
+                        child: Text(
+                          context.tr(
+                            'Страница {number} · до 30 профилей',
+                            args: {'number': _pageNumber},
+                          ),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                      IconButton(
                         key: const ValueKey('timeweb-people-next'),
-                        onPressed: _busy ? null : () => _load(next: true),
+                        tooltip: context.tr('Следующая страница'),
+                        onPressed: _busy || _page?.nextCursor == null
+                            ? null
+                            : () => _load(next: true),
                         icon: const Icon(Icons.chevron_right),
-                        label: Text(context.tr('Загрузить ещё')),
                       ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -564,13 +609,9 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
     );
   }
 
-  Widget _card(TimewebPublicPerson person) => Container(
+  Widget _card(TimewebPublicPerson person) => ClrsPanel(
     key: ValueKey('timeweb-person-card-${person.uid}'),
-    decoration: BoxDecoration(
-      color: const Color(0xCC302110),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: const Color(0x66E7B092), width: .8),
-    ),
+    padding: EdgeInsets.zero,
     child: InkWell(
       borderRadius: BorderRadius.circular(14),
       onTap: _busy ? null : () => _openPerson(person),
@@ -578,7 +619,13 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
         padding: const EdgeInsets.all(8),
         child: Column(
           children: [
-            GroupAvatar(url: '', group: person.primaryGroup ?? '', size: 66),
+            TimewebChatAvatar(
+              runtime: widget.runtime,
+              uid: person.uid,
+              primaryGroup: person.primaryGroup,
+              readGroup: false,
+              size: 66,
+            ),
             const SizedBox(height: 8),
             Text(
               [
@@ -605,10 +652,16 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
               style: const TextStyle(fontSize: 11, color: LrsTheme.peachLight),
             ),
             const Spacer(),
-            Text(
-              context.tr('Фото профиля'),
-              style: const TextStyle(fontSize: 10, color: LrsTheme.muted),
-            ),
+            if (_group != null &&
+                getListOfGroup(_group!).contains(person.primaryGroup))
+              Tooltip(
+                message: context.tr('Тип личности подходит вам'),
+                child: const Icon(
+                  Icons.favorite_outline,
+                  size: 18,
+                  color: LrsTheme.peach,
+                ),
+              ),
           ],
         ),
       ),

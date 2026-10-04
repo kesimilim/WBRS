@@ -7,6 +7,7 @@ import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.da
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
+import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
@@ -36,7 +37,7 @@ Future<void> openTimewebNotification(
             builder: (_) => _NotificationTarget(
               runtime: runtime,
               lease: lease,
-              builder: () => TimewebChatPage(flow: flow),
+              builder: () => TimewebChatPage(flow: flow, runtime: runtime),
             ),
           ),
         );
@@ -186,8 +187,9 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
   @override
   Widget build(BuildContext context) => ClrsScaffold(
     key: const ValueKey('timeweb-notifications-page'),
+    backgroundAsset: 'assets/final_design/family_right.png',
     appBar: AppBar(
-      title: Text(context.tr('Уведомления')),
+      title: const ClrsLogo(size: 34),
       actions: [
         IconButton(
           key: const ValueKey('timeweb-notifications-refresh'),
@@ -212,7 +214,13 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(12, 6, 12, 24),
                     children: [
-                      const ClrsBrandHeader(),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          context.tr('Уведомления'),
+                          style: Theme.of(context).textTheme.headlineSmall,
+                        ),
+                      ),
                       Wrap(
                         spacing: 6,
                         runSpacing: 6,
@@ -227,6 +235,12 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
                             ChoiceChip(
                               label: Text(context.tr(filter)),
                               selected: _filter == filter,
+                              backgroundColor: const Color(0x66302110),
+                              selectedColor: const Color(0xB06A4631),
+                              side: const BorderSide(color: Color(0x66E7B092)),
+                              visualDensity: VisualDensity.compact,
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 2),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               onSelected: _busy || _opening
                                   ? null
                                   : (_) => setState(() => _filter = filter),

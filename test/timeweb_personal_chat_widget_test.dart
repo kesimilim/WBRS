@@ -176,7 +176,7 @@ void main() {
           tester,
           () =>
               button.evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
         await _tap(tester, button);
         await _until(
@@ -270,14 +270,14 @@ void main() {
           tester,
           () =>
               button.evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
         await _tap(tester, button);
         await _until(
           tester,
           () =>
               find.text('Проверить результат').evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
         expect(
           find.text(
@@ -294,7 +294,7 @@ void main() {
             tester,
             () =>
                 find.text('Проверить результат').evaluate().isNotEmpty &&
-                tester.widget<ElevatedButton>(button).onPressed != null,
+                tester.widget<OutlinedButton>(button).onPressed != null,
           );
           await _tap(tester, button);
           await _until(
@@ -386,7 +386,7 @@ void main() {
           () =>
               find.byType(TimewebChatPage).evaluate().isEmpty &&
               button.evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
       }
 
@@ -403,7 +403,7 @@ void main() {
           tester,
           () =>
               button.evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
         await openAndBack();
         expect(personalFiles(root), isEmpty);
@@ -417,7 +417,7 @@ void main() {
           tester,
           () =>
               find.text('Проверить результат').evaluate().isNotEmpty &&
-              tester.widget<ElevatedButton>(button).onPressed != null,
+              tester.widget<OutlinedButton>(button).onPressed != null,
         );
         expect(find.byType(TimewebChatPage), findsNothing);
         expect(messages, 2);
@@ -445,7 +445,7 @@ void main() {
         );
         expect(find.byType(TimewebChatPage), findsNothing);
         expect(find.text('Профиль недоступен'), findsWidgets);
-        expect(tester.widget<ElevatedButton>(button).onPressed, isNotNull);
+        expect(tester.widget<OutlinedButton>(button).onPressed, isNotNull);
         expect(find.text('Проверить результат'), findsOneWidget);
         expect(messages, 3);
         expect(

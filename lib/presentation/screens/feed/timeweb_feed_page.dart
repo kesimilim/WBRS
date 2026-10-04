@@ -9,7 +9,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_social_flow.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
-import 'package:wbrs/shared/group_avatar.dart';
+import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
 
@@ -152,7 +152,9 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
       });
     } catch (_) {
       if (_current && generation == _translationGeneration) {
-        setState(() => _notice = 'Перевод временно недоступен. Попробуйте позже.');
+        setState(
+          () => _notice = 'Перевод временно недоступен. Попробуйте позже.',
+        );
       }
     } finally {
       if (_current) setState(() => _translating = false);
@@ -325,10 +327,17 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
     }
     final pending = _flow?.needsCheck ?? false;
     return ClrsScaffold(
-      backgroundAsset: 'assets/final_design/feed_family.png',
+      backgroundAsset: _comments || widget.wallUid != null
+          ? 'assets/final_design/family_right.png'
+          : 'assets/final_design/feed_family.png',
       appBar: AppBar(
         backgroundColor: Colors.transparent,
-        title: const ClrsLogo(size: 34),
+        title: _comments || widget.wallUid != null
+            ? Text(
+                context.tr(_comments ? 'Комментарии' : 'Стена'),
+                style: const TextStyle(fontFamily: 'Lato'),
+              )
+            : const ClrsLogo(size: 34),
         actions: [
           IconButton(
             tooltip: context.tr('Обновить'),
@@ -354,25 +363,33 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
               children: [
-                const Align(
-                  alignment: Alignment.centerRight,
-                  child: SizedBox(width: 150, child: ClrsMotto()),
-                ),
-                Text(
-                  context.tr(
-                    _comments
-                        ? 'Комментарии'
-                        : widget.wallUid != null
-                        ? 'Стена'
-                        : 'Лента',
+                if (_comments) ...[
+                  const ClrsBrandHeader(),
+                  Text(
+                    context.tr('Обсуждение'),
+                    style: const TextStyle(
+                      color: LrsTheme.text,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                  style: const TextStyle(
-                    fontFamily: 'CormorantGaramond',
-                    fontSize: 42,
-                    height: 1.1,
-                    fontWeight: FontWeight.w600,
+                  const SizedBox(height: 8),
+                ] else if (widget.wallUid == null) ...[
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(width: 150, child: ClrsMotto()),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    context.tr('Лента'),
+                    style: const TextStyle(
+                      fontFamily: 'CormorantGaramond',
+                      fontSize: 42,
+                      height: 1.1,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 if (_notice != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -428,6 +445,8 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
                       context.tr(
                         _comments
                             ? 'Пока нет комментариев. Начните обсуждение.'
+                            : widget.wallUid != null
+                            ? 'Здесь появятся публикации, которыми вы поделились.'
                             : 'Здесь будут публикации о семье, отношениях, вере, психологии, домах, детях и совместимости.',
                       ),
                     ),
@@ -460,7 +479,7 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
   Widget _panel(Widget child) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xCC302110),
+      color: const Color(0xD0302110),
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: const Color(0x77E7B092), width: .8),
     ),
@@ -576,14 +595,19 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: TimewebPostImage(
-                key:ValueKey('$_generation/${item.id}/${item.mediaId}'),
-                runtime:widget.runtime,postId:item.id,mediaId:item.mediaId!),
+                key: ValueKey('$_generation/${item.id}/${item.mediaId}'),
+                runtime: widget.runtime,
+                postId: item.id,
+                mediaId: item.mediaId!,
+              ),
             ),
           if (item.createdAt != null)
             Padding(
               padding: const EdgeInsets.only(top: 8),
               child: Text(
-                '${item.createdAt!.substring(0, 16).replaceFirst('T', ' ')} UTC',
+                context.l10n.dateTime(
+                  DateTime.parse(item.createdAt!).toLocal(),
+                ),
                 style: const TextStyle(color: LrsTheme.muted, fontSize: 11),
               ),
             ),
@@ -718,7 +742,13 @@ class _SocialAuthorState extends State<_SocialAuthor> {
         onTap: widget.onTap,
         child: Row(
           children: [
-            GroupAvatar(size: 34, url: '', group: group ?? ''),
+            TimewebChatAvatar(
+              runtime: widget.runtime,
+              uid: widget.uid,
+              primaryGroup: group,
+              readGroup: false,
+              size: 44,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

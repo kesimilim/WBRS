@@ -390,7 +390,15 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ClrsPanel(padding: const EdgeInsets.all(12), child: Text(translated?.text ?? message.text)),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: mine ? const Color(0xCC68452F) : const Color(0xC72D1F16),
+                            border: Border.all(color: const Color(0x66E7B092), width: .8),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(translated?.text ?? message.text),
+                        ),
                         LayoutBuilder(
                           builder: (context, constraints) => Row(
                             children: [
@@ -467,7 +475,7 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Flexible(child: Text(context.tr('Обо встрече'))),
+                      Flexible(child: Text(context.tr('О встрече'))),
                       Icon(_descriptionOpen ? Icons.expand_less : Icons.expand_more, size: 18),
                     ],
                   ),
@@ -605,6 +613,16 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
                           ),
                         ),
                       ],
+                    ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        key: const ValueKey('native-meeting-chat-participants-link'),
+                        style: TextButton.styleFrom(foregroundColor: LrsTheme.peachLight),
+                        onPressed: _current && !_memberLocked ? _participants : null,
+                        icon: const Icon(Icons.people_outline, size: 18),
+                        label: Text(context.tr('Участники встречи')),
+                      ),
                     ),
                     _metadata(),
                     const SizedBox(height: 28),

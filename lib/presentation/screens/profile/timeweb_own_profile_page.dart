@@ -981,17 +981,19 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
   );
 
   Widget _menu(String label, IconData icon, VoidCallback? action, {Key? key}) =>
-      ListTile(
-        key: key,
-        leading: Icon(icon),
-        title: Text(context.tr(label)),
-        onTap: action == null
-            ? null
-            : () {
-                if (!_current) return;
-                Navigator.of(context).pop();
-                action();
-              },
+      Builder(
+        builder: (drawerContext) => ListTile(
+          key: key,
+          leading: Icon(icon),
+          title: Text(context.tr(label)),
+          onTap: action == null
+              ? null
+              : () {
+                  if (!_current) return;
+                  Scaffold.of(drawerContext).closeDrawer();
+                  action();
+                },
+        ),
       );
 
   Widget _quickAction(

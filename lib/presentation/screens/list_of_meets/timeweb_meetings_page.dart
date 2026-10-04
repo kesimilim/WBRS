@@ -714,7 +714,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
             key: const ValueKey('native-meeting-help'),
             icon: const Icon(Icons.help_outline),
             label: Text(context.tr('Как создать встречу')),
-            onPressed: () => _fieldsNavigator.currentState?.push<void>(
+            onPressed: () => Navigator.of(context).push<void>(
               MaterialPageRoute(builder: (_) => const MeetingGuidePage(showLegacyNavigation: false)),
             ),
           ),

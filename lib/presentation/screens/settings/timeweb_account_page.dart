@@ -247,6 +247,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
   ) => SwitchListTile.adaptive(
     key: ValueKey('timeweb-preferences-$key'),
     dense: true,
+    visualDensity: const VisualDensity(vertical: -2),
     contentPadding: const EdgeInsets.symmetric(horizontal: 12),
     secondary: Icon(icon, color: LrsTheme.peachLight, size: 21),
     title: Text(
@@ -254,6 +255,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
       style: const TextStyle(fontFamily: 'Lato', fontSize: 14),
     ),
     value: value,
+    activeTrackColor: LrsTheme.peach,
     onChanged:
         _preferencesBusy ||
             _preferencesLoading ||
@@ -382,6 +384,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
       ListTile(
         key: ValueKey(key),
         dense: true,
+        visualDensity: const VisualDensity(vertical: -2),
         contentPadding: const EdgeInsets.symmetric(horizontal: 12),
         leading: Icon(icon, color: LrsTheme.peachLight, size: 21),
         title: Text(
@@ -516,12 +519,6 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                           () => _open(_View.about),
                         ),
                         _row(
-                          'timeweb-settings-help',
-                          Icons.help_outline,
-                          'Помощь',
-                          () => _open(_View.help),
-                        ),
-                        _row(
                           'timeweb-settings-rules',
                           Icons.description_outlined,
                           'Правила сообщества',
@@ -539,6 +536,10 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                         padding: EdgeInsets.zero,
                         child: TextButton.icon(
                           key: const ValueKey('timeweb-settings-logout'),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 42),
+                            foregroundColor: LrsTheme.peachLight,
+                          ),
                           onPressed: _busy ? null : _logout,
                           icon: const Icon(Icons.logout, size: 20),
                           label: Text(context.tr('Выйти из аккаунта')),
@@ -557,7 +558,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
   );
   Widget _legalRow(String key, IconData icon, String label, _View view) =>
       Padding(
-        padding: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(bottom: 5),
         child: ClrsPanel(
           padding: EdgeInsets.zero,
           child: InkWell(
@@ -568,7 +569,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               child: Row(
                 children: [
-                  Icon(icon, color: LrsTheme.peachLight, size: 20),
+                  Icon(icon, color: LrsTheme.peach, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -576,6 +577,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                       style: const TextStyle(fontSize: 12, height: 1.15),
                     ),
                   ),
+                  const SizedBox(width: 6),
                   const Icon(Icons.chevron_right, size: 20),
                 ],
               ),
@@ -586,84 +588,77 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
   Widget _about() => LayoutBuilder(
     builder: (context, box) {
       final available = (box.maxWidth - 28).clamp(0.0, double.infinity);
-      final large = MediaQuery.textScalerOf(context).scale(12) > 20;
-      final panelWidth = large ? available : available * .68;
+      final panelWidth = available * .64;
+      final detailWidth = available * .76;
       return ListView(
         key: const ValueKey('timeweb-about-scroll'),
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerLeft,
-                      child: ClrsLogo(size: 48),
-                    ),
-                    Text(
-                      context.tr(ClrsBrand.ruTagline),
-                      style: const TextStyle(fontSize: 10, height: 1.4),
-                    ),
-                  ],
-                ),
+          const ClrsLogo(size: 48),
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 205,
+              child: Text(
+                context.tr(ClrsBrand.ruTagline),
+                style: const TextStyle(fontSize: 10, height: 1.4),
               ),
-              const SizedBox(width: 8),
-              const SizedBox(
-                width: 105,
-                child: Column(
-                  children: [
-                    ClrsMotto(size: 17),
-                    SizedBox(height: 5),
-                    Icon(Icons.favorite_border, color: LrsTheme.peachLight, size: 17),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: 125,
+              child: Column(
+                children: [
+                  ClrsMotto(size: 19),
+                  Icon(Icons.favorite_border, color: LrsTheme.peach, size: 19),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
           Text(
             context.tr('О приложении'),
             style: const TextStyle(
               fontFamily: 'CormorantGaramond',
-              fontSize: 28,
               fontWeight: FontWeight.w600,
-              height: 1,
+              fontSize: 28,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
               width: panelWidth,
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _legalRow(
                     'timeweb-about-privacy',
-                    Icons.privacy_tip_outlined,
+                    Icons.shield_outlined,
                     'Политика конфиденциальности',
                     _View.privacy,
                   ),
                   _legalRow(
-                    'timeweb-about-rules',
-                    Icons.rule_outlined,
-                    'Правила использования',
-                    _View.rules,
-                  ),
-                  _legalRow(
                     'timeweb-about-agreement',
-                    Icons.assignment_outlined,
+                    Icons.description_outlined,
                     'Пользовательское соглашение',
                     _View.agreement,
                   ),
                   _legalRow(
                     'timeweb-about-offer',
-                    Icons.article_outlined,
+                    Icons.handshake_outlined,
                     'Публичная оферта',
                     _View.offer,
+                  ),
+                  _legalRow(
+                    'timeweb-about-rules',
+                    Icons.menu_book_outlined,
+                    'Правила использования',
+                    _View.rules,
                   ),
                 ],
               ),
@@ -672,7 +667,7 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
           Align(
             alignment: Alignment.centerLeft,
             child: SizedBox(
-              width: panelWidth,
+              width: detailWidth,
               child: Column(
                 children: [
                   ClrsPanel(
@@ -682,7 +677,11 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.phone_android_outlined, size: 20),
+                        const Icon(
+                          Icons.info_outline,
+                          size: 20,
+                          color: LrsTheme.peach,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -691,36 +690,62 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                           ),
                         ),
                         const Text('1.0.25', style: TextStyle(fontSize: 12)),
+                        const SizedBox(width: 5),
+                        const Icon(Icons.chevron_right, size: 20),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 5),
                   ClrsPanel(
                     padding: EdgeInsets.zero,
-                    child: _row(
-                      'timeweb-about-support',
-                      Icons.mail_outline,
-                      'Обратная связь',
-                      _support,
+                    child: ListTile(
+                      key: const ValueKey('timeweb-about-support'),
+                      dense: true,
+                      minTileHeight: 40,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      leading: const Icon(Icons.chat_bubble_outline, size: 20),
+                      horizontalTitleGap: 8,
+                      title: Text(
+                        context.tr('Обратная связь'),
+                        style: const TextStyle(
+                          fontFamily: 'Lato',
+                          fontSize: 12,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right, size: 20),
+                      onTap: _support,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: panelWidth,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    context.tr('Язык'),
-                    style: const TextStyle(fontSize: 12),
-                  ),
+          const SizedBox(height: 14),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SizedBox(
+              width: detailWidth,
+              child: ClrsPanel(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
                 ),
-                const LanguagePickerButton(showIcon: false),
-              ],
+                child: Row(
+                  children: [
+                    const Icon(Icons.language, size: 20, color: LrsTheme.peach),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        context.tr('Язык'),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const LanguagePickerButton(showIcon: false),
+                  ],
+                ),
+              ),
             ),
           ),
           const ClrsValuesFooter(compact: true),
@@ -854,15 +879,31 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
         break;
     }
     final settings = widget._view == _View.settings;
+    final about = widget._view == _View.about;
     return ClrsScaffold(
-      backgroundAsset: 'assets/final_design/family_right.png',
+      backgroundAsset: about
+          ? 'assets/family_main.jpg'
+          : settings
+          ? 'assets/final_design/house.png'
+          : 'assets/final_design/family_right.png',
+      backgroundScale: about ? 1.42 : 1,
       appBar: settings
           ? null
           : AppBar(
-              actions: const [
-                Icon(Icons.favorite_border, color: LrsTheme.peachLight),
-                SizedBox(width: 14),
-              ],
+              actions: about
+                  ? const [
+                      Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: Icon(
+                          Icons.favorite_border,
+                          color: LrsTheme.peach,
+                        ),
+                      ),
+                    ]
+                  : const [
+                      Icon(Icons.favorite_border, color: LrsTheme.peachLight),
+                      SizedBox(width: 14),
+                    ],
             ),
       body: switch (widget._view) {
         _View.settings => _settings(),

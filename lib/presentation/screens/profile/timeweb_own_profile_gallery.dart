@@ -60,6 +60,16 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       widget.runtime.session.state.authenticated &&
       widget.runtime.session.state.epoch == _epoch;
 
+  bool get _ownCurrent => _current && _runtime.session.currentUid == _targetUid;
+
+  bool _transient(Object error) =>
+      error is TimewebAuthException &&
+      const {
+        TimewebAuthError.network,
+        TimewebAuthError.unavailable,
+        TimewebAuthError.deadline,
+      }.contains(error.error);
+
   @override
   void initState() {
     super.initState();
@@ -98,13 +108,15 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     }
   }
 
-  void _clear() {
+  Future<void>? _clear({bool keepPortrait = false}) {
     _generation++;
     final reader = _reader;
     _reader = null;
-    if (reader != null) unawaited(reader.close());
-    _portrait?.dispose();
-    _portrait = null;
+    final draining = reader?.close();
+    if (!keepPortrait || !_ownCurrent) {
+      _portrait?.dispose();
+      _portrait = null;
+    }
     for (final image in _thumbnails.values) {
       image.dispose();
     }
@@ -113,6 +125,7 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     _cursor = null;
     _loading = false;
     _selecting = false;
+    return draining;
   }
 
   void _check(int generation, TimewebProfilePhotoReader reader) {
@@ -139,18 +152,31 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
   Future<void> _append(
     TimewebProfilePhotosPage page,
     int generation,
-    TimewebProfilePhotoReader reader,
-  ) async {
+    TimewebProfilePhotoReader reader, {
+    int? selectedOrdinal,
+  }) async {
     _check(generation, reader);
     if (_references.length + page.items.length > 20) {
       throw const TimewebProfilePhotoUnavailable();
     }
     _references.addAll(page.items);
     _cursor = page.nextCursor;
+    if (selectedOrdinal != null &&
+        !page.items.any((ref) => ref.ordinal == _selected)) {
+      // Fresh metadata no longer associates the displayed photo with owner.
+      _portrait?.dispose();
+      _portrait = null;
+    }
+    final portraitOrdinal = selectedOrdinal != null && page.items.isNotEmpty
+        ? page.items.any((ref) => ref.ordinal == selectedOrdinal)
+              ? selectedOrdinal
+              : page.items.first.ordinal
+        : null;
     if (!widget.showGallery && _references.isNotEmpty) {
       final decoded = await _image(_references.first, generation, reader);
       try {
         _check(generation, reader);
+        _portrait?.dispose();
         _portrait = decoded;
       } catch (_) {
         decoded.dispose();
@@ -179,8 +205,9 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
         _check(generation, reader);
         _thumbnails[ref.ordinal] = thumbnail;
         thumbnail = null;
-        if (_portrait == null) {
+        if (_portrait == null || ref.ordinal == portraitOrdinal) {
           _selected = ref.ordinal;
+          _portrait?.dispose();
           _portrait = decoded;
           decoded = null;
         }
@@ -193,32 +220,57 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
     }
   }
 
-  Future<void> _load({bool more = false}) async {
+  Future<void> _load({
+    bool more = false,
+    int? selectedOrdinal,
+    bool retryTransient = true,
+  }) async {
     if (_loading || !_current) return;
-    if (!more) _clear();
-    final generation = _generation;
+    final wantedOrdinal = selectedOrdinal ?? _selected;
+    final draining = more ? null : _clear(keepPortrait: _ownCurrent);
+    var generation = _generation;
     setState(() {
       _loading = true;
       _unavailable = false;
     });
     try {
-      final reader = more
-          ? _reader
-          : await widget.runtime.openProfilePhotos(widget.targetUid);
-      if (reader == null) return;
-      if (!_current || generation != _generation) {
-        await reader.close();
-        return;
-      }
-      _reader = reader;
-      final page = await reader.photos(cursor: more ? _cursor : null);
-      await _append(page, generation, reader);
-    } catch (_) {
-      if (_current && generation == _generation) {
-        setState(() {
-          _clear();
-          _unavailable = true;
-        });
+      await draining;
+      // A transient read can lose the first or a later image. Recover once
+      // from fresh metadata; never extend a reference or replay a write.
+      for (var attempt = 0; attempt < 2; attempt++) {
+        if (!_current || generation != _generation) return;
+        try {
+          final appendPage = more && attempt == 0;
+          final reader = appendPage
+              ? _reader
+              : await widget.runtime.openProfilePhotos(widget.targetUid);
+          if (reader == null) return;
+          if (!_current || generation != _generation) {
+            await reader.close();
+            return;
+          }
+          _reader = reader;
+          final page = await reader.photos(cursor: appendPage ? _cursor : null);
+          await _append(
+            page,
+            generation,
+            reader,
+            selectedOrdinal: appendPage ? null : wantedOrdinal,
+          );
+          return;
+        } catch (error) {
+          if (!_current || generation != _generation) return;
+          final recoverable = _ownCurrent && _transient(error);
+          final drained = _clear(keepPortrait: recoverable);
+          generation = _generation;
+          if (attempt == 0 && retryTransient && recoverable) {
+            setState(() => _loading = true);
+            await drained;
+            continue;
+          }
+          setState(() => _unavailable = true);
+          return;
+        }
       }
     } finally {
       if (mounted && _current && generation == _generation) {
@@ -240,8 +292,16 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
       _portrait = image;
       image = null;
       _selected = ref.ordinal;
-    } catch (_) {
+    } catch (error) {
       if (_current && generation == _generation) {
+        if (error is TimewebAuthException &&
+                error.error == TimewebAuthError.invalidRequest ||
+            _ownCurrent && _transient(error)) {
+          // Selecting an expired reference requires a new metadata page and
+          // its matching ordinal. Only one recovery read is attempted here.
+          await _load(selectedOrdinal: ref.ordinal, retryTransient: false);
+          return;
+        }
         setState(() {
           _clear();
           _unavailable = true;
@@ -324,8 +384,12 @@ class _GalleryState extends State<TimewebOwnProfileGallery> {
                                     ),
                                   ),
                                   child: image == null
-                                      ? const Center(
-                                          child: CircularProgressIndicator(),
+                                      ? Center(
+                                          child: _loading
+                                              ? const CircularProgressIndicator()
+                                              : const Icon(
+                                                  Icons.photo_outlined,
+                                                ),
                                         )
                                       : RawImage(
                                           image: image,

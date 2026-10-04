@@ -37,7 +37,12 @@ class ProfilePortrait extends StatelessWidget {
     children: [
       Positioned.fill(
         child:
-            photoContent ??
+            (photoContent == null
+                ? null
+                : ColoredBox(
+                    color: const Color(0xFF211911),
+                    child: photoContent!,
+                  )) ??
             (photo.isEmpty
                 ? const ColoredBox(
                     color: Color(0x4431241D),

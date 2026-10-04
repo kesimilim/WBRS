@@ -20,17 +20,19 @@ from imported_meeting_review import (_ROOT_FIELDS, _uids, _string, _schedule,
 from runtime_mutations import RuntimeUnavailable, canonical_json
 from runtime_meetings import MEETING_FIELDS, _meeting_row, _meeting_dto
 from meeting_schedule import read_schedule
+from imported_meeting_projection import source_members
 from runtime_people import _uid
 
 POLICY = "reviewed-imported-meetings-read-schedules-v2"
 DOMAIN = b"clrs-imported-meeting-final-authority-v1\0"
 OPERATIONS_DOMAIN = b"clrs-imported-meeting-final-authority-v2\0"
+COMPAT_DOMAIN = b"clrs-imported-meeting-final-authority-v3\0"
 MAX_BYTES = 8 * 1024 * 1024
 MAX_ROOTS = 4096
 MAX_MEMBERS = 65536
 MAX_MESSAGES = 65536
 _CAPS = weakref.WeakSet()
-_SOURCE_FILES = ("imported_meeting_authority.py", "runtime_imported_meetings.py",
+_SOURCE_FILES = ("imported_meeting_authority.py", "imported_meeting_projection.py", "runtime_imported_meetings.py",
     "runtime_meetings.py", "imported_meeting_review.py", "runtime_mutations.py",
     "runtime_people.py", "profile_visibility.py", "runtime_meeting_create.py",
     "runtime_geography.py", "geo_catalog.json", "legacy_conversation_payload.py",
@@ -138,10 +140,17 @@ class ImportedMeetingAuthority:
             return {**row, "trusted": 0} if row["meetingId"] in self._tombstones else row
         try:
             payload = document(raw); fields = payload["fields"]; wanted = entry["canonical"]
+            original_users, deny_set = source_members(fields) if "sourceUserOrder" in entry else (None, None)
+            if original_users is not None:
+                effective_kicked = tuple(deny_set) if deny_set is not None else (
+                    () if entry["missingKickedReviewed"] and "kicked" not in fields else None)
+            else:
+                effective_kicked = _uids(fields, "kicked") if "kicked" in fields else (
+                    () if entry["missingKickedReviewed"] else None)
             if (payload_digest(payload) != entry["payloadSha256"] or set(fields) - _ROOT_FIELDS
                     or _uids(fields, "users", required=True) != tuple(entry["users"])
-                    or (_uids(fields, "kicked") if "kicked" in fields else (
-                        () if entry["missingKickedReviewed"] else None)) != tuple(entry["kicked"])
+                    or (original_users is not None and original_users != entry["sourceUserOrder"])
+                    or effective_kicked != tuple(entry["kicked"])
                     or _string(fields, "admin", required=True) != wanted["organizerUid"]
                     or _string(fields, "type", required=True) != ("групповая" if wanted["kind"] == "group" else "индивидуальная")
                     or _string(fields, "invitedUid") != wanted["invitedUid"]
@@ -162,7 +171,8 @@ class ImportedMeetingAuthority:
         try:
             if type(raw) in (str, bytes):
                 raw = unique_json(raw.decode() if type(raw) is bytes else raw)
-            if row["uid"] in entry["kicked"]:
+            if (row["uid"] in entry["kicked"] or any(
+                    item["uid"] == row["uid"] for item in entry.get("memberExclusions", []))):
                 raise RuntimeUnavailable()
             # New native joins retain their genuine writer marker; no empty-raw
             # or fabricated historical joined_at fallback is accepted.
@@ -177,7 +187,7 @@ class ImportedMeetingAuthority:
                     or row["joinedAt"] is not None or raw["source_path"] != entry["firebasePath"]
                     or raw["source_field"] != "users" or raw["source_payload_hash"] != entry["payloadSha256"]
                     or type(raw["source_index"]) is not int
-                    or raw["source_index"] != entry["users"].index(row["uid"])):
+                    or raw["source_index"] != entry.get("sourceUserOrder", entry["users"]).index(row["uid"])):
                 raise RuntimeUnavailable()
             return {**row, "trusted": 1}
         except Exception:
@@ -196,8 +206,10 @@ def reviewed_message(meeting_id, message_id, raw, sequence):
         _uid(meeting_id); _uid(message_id)
         identifier(meeting_id, uid=True); identifier(message_id, uid=True)
         payload = document(raw); fields = payload["fields"]
-        if set(fields) - {"sender", "sendByID", "message", "type", "time", "isRead"}:
+        if set(fields) - {"sender", "sendByID", "message", "type", "time", "isRead", "avatar", "group", "name"}:
             raise RuntimeUnavailable()
+        for name, maximum in (("avatar", 4096), ("group", 191), ("name", 1000)):
+            _string(fields, name, maximum)  # Private source caches, never public DTO fields.
         first = string_field(fields, "sender"); second = string_field(fields, "sendByID")
         if first and second and first != second:
             raise RuntimeUnavailable()
@@ -243,8 +255,8 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
             raise RuntimeUnavailable()
         body = unique_json(raw.decode("utf-8"))
         version = body.get("v")
-        if type(version) is not int or version not in (1, 2) or not hmac.compare_digest(
-                hmac.digest(key, (DOMAIN if version == 1 else OPERATIONS_DOMAIN) + raw, "sha256"), signature):
+        if type(version) is not int or version not in (1, 2, 3) or not hmac.compare_digest(
+                hmac.digest(key, (DOMAIN if version == 1 else OPERATIONS_DOMAIN if version == 2 else COMPAT_DOMAIN) + raw, "sha256"), signature):
             raise RuntimeUnavailable()
         _shape(body, {"v", "kind", "namespace", "binding", "barrier", "finalDelta", "issuedAt", "finalRoots", "tombstones", "meetings"})
         binding = body["binding"]; _shape(binding, _BINDING_KEYS); _shape(reviewed_binding, _BINDING_KEYS)
@@ -257,7 +269,8 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
         barrier = body["barrier"]; delta = body["finalDelta"]
         _shape(barrier, {"enforced", "allWritersStopped", "verified", "receiptSha256", "writerSetSha256", "enforcementSha256", "verifiedAt", "generation"})
         _shape(delta, {"consistent", "final", "complete", "readbackVerified", "receiptSha256", "barrierSha256", "rootSetSha256", "tombstonesSha256", "completedAt"}
-            | ({"messageSetSha256"} if version == 2 else set()))
+            | ({"messageSetSha256"} if version >= 2 else set())
+            | ({"accountSetSha256", "sourceExclusionsSha256"} if version == 3 else set()))
         if (any(barrier[key] is not True for key in ("enforced", "allWritersStopped", "verified"))
                 or any(delta[key] is not True for key in ("consistent", "final", "complete", "readbackVerified"))
                 or barrier["receiptSha256"] != binding["barrierSha256"] or barrier["generation"] != binding["generation"]
@@ -280,11 +293,12 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
                 or delta["tombstonesSha256"] != digest(tombstones)
                 or binding["cohortSha256"] != digest({"meetings": body["meetings"], "tombstones": tombstones})):
             raise RuntimeUnavailable()
-        entries = body["meetings"]; roots = {}; member_count = 0; message_count = 0; message_set = []
+        entries = body["meetings"]; roots = {}; member_count = 0; message_count = 0; message_set = []; exclusion_set = []
         if type(entries) is not list or not 1 <= len(entries) <= MAX_ROOTS: raise RuntimeUnavailable()
         for entry in entries:
             _shape(entry, {"meetingId", "firebasePath", "payloadSha256", "metadataReviewSha256", "sourceContract", "canonical", "users", "kicked", "missingKickedReviewed"}
-                | ({"messages"} if version == 2 else set()))
+                | ({"messages"} if version >= 2 else set())
+                | ({"sourceUserOrder", "memberExclusions", "childExclusions"} if version == 3 else set()))
             uid = _uid(entry["meetingId"]); _sha(entry["metadataReviewSha256"])
             if (uid in roots or entry["firebasePath"] != "meets/" + uid or final_map.get(uid) != entry["payloadSha256"]
                     or entry["sourceContract"] != SOURCE_CONTRACT or type(entry["missingKickedReviewed"]) is not bool):
@@ -298,7 +312,34 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
                     or (wanted["kind"] == "individual" and (set(users) | set(kicked)) - {wanted["organizerUid"], wanted["invitedUid"]})
                     or member_count > MAX_MEMBERS):
                 raise RuntimeUnavailable()
-            if version == 2:
+            if version == 3:
+                order = _ids(entry["sourceUserOrder"], 1000)
+                if sorted(order, key=lambda value: value.encode()) != users: raise RuntimeUnavailable()
+                exclusions = entry["memberExclusions"]; excluded_uids = set()
+                if type(exclusions) is not list or len(exclusions) > len(users): raise RuntimeUnavailable()
+                for exclusion in exclusions:
+                    _shape(exclusion, {"uid", "sourceIndex", "reason"})
+                    person = _uid(exclusion["uid"])
+                    if (person in excluded_uids or person not in users or person in kicked
+                            or type(exclusion["sourceIndex"]) is not int
+                            or exclusion["sourceIndex"] != order.index(person)
+                            or exclusion["reason"] != "meeting_member_account_missing"): raise RuntimeUnavailable()
+                    excluded_uids.add(person)
+                child_exclusions = entry["childExclusions"]; excluded_ids = set()
+                if type(child_exclusions) is not list or len(child_exclusions) > MAX_MESSAGES: raise RuntimeUnavailable()
+                for exclusion in child_exclusions:
+                    _shape(exclusion, {"messageId", "firebasePath", "payloadSha256", "senderUid", "reason"})
+                    child = _uid(exclusion["messageId"]); identifier(child, uid=True); sender = _uid(exclusion["senderUid"])
+                    _sha(exclusion["payloadSha256"])
+                    if (child in excluded_ids or exclusion["firebasePath"] != "meets/" + uid + "/messages/" + child
+                            or exclusion["reason"] not in {"message_sender_account_missing", "message_sender_not_explicit_member", "message_invalid"}
+                            or (exclusion["reason"] == "message_sender_not_explicit_member" and sender in users and sender not in kicked and sender not in excluded_uids)
+                            or (exclusion["reason"] == "message_invalid" and (sender not in users or sender in kicked or sender in excluded_uids))):
+                        raise RuntimeUnavailable()
+                    excluded_ids.add(child)
+                if [item["messageId"] for item in child_exclusions] != sorted(excluded_ids, key=lambda value: value.encode()): raise RuntimeUnavailable()
+                exclusion_set.append([uid, {"memberExclusions": exclusions, "childExclusions": child_exclusions}])
+            if version >= 2:
                 pins = entry["messages"]
                 if type(pins) is not list: raise RuntimeUnavailable()
                 ids = set()
@@ -307,14 +348,19 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
                     _uid(pin["messageId"]); identifier(pin["messageId"], uid=True); _sha(pin["payloadSha256"]); _sha(pin["textSha256"])
                     _stamp(pin["createdAt"])
                     if (pin["messageId"] in ids or type(pin["sequence"]) is not int or pin["sequence"] != sequence
-                            or pin["senderUid"] not in users or pin["createdAt"][:4] < "1000"
+                            or pin["senderUid"] not in users or pin["senderUid"] in kicked
+                            or (version == 3 and (pin["messageId"] in excluded_ids or pin["senderUid"] in excluded_uids))
+                            or pin["createdAt"][:4] < "1000"
                             or pin["firebasePath"] != "meets/" + uid + "/messages/" + pin["messageId"]):
                         raise RuntimeUnavailable()
                     ids.add(pin["messageId"]); message_set.append([uid, pin]); message_count += 1
                     if message_count > MAX_MESSAGES: raise RuntimeUnavailable()
             roots[uid] = canonical_json(entry, max_bytes=MAX_BYTES)
         if list(roots) != sorted(roots, key=lambda uid: uid.encode()): raise RuntimeUnavailable()
-        if version == 2 and delta["messageSetSha256"] != digest(message_set): raise RuntimeUnavailable()
+        if version >= 2 and delta["messageSetSha256"] != digest(message_set): raise RuntimeUnavailable()
+        if version == 3:
+            _sha(delta["accountSetSha256"])
+            if delta["sourceExclusionsSha256"] != digest(exclusion_set): raise RuntimeUnavailable()
         cap = ImportedMeetingAuthority(canonical_json(binding), MappingProxyType(roots), frozenset(tombstones), hashlib.sha256(raw).hexdigest())
         _CAPS.add(cap); return cap
     except Exception:

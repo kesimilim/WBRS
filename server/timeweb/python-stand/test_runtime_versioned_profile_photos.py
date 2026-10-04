@@ -102,6 +102,49 @@ class VersionedTests(unittest.TestCase):
         with self.assertRaises(RuntimeProfilePhotoNotFound):self.page()
         self.assertTrue(all(not sql.startswith(('INSERT','UPDATE','DELETE')) for sql,_ in self.db.calls))
 
+    def test_first_byte_uses_fresh_complete_private_proof_for_exact_object(self):
+        states=[]
+        def state(bucket,deadline,cancel):
+            states.append(bucket)
+            return {'bucket':bucket,'type':'private','checked_at':0}
+        self.s3._state=state
+        reference=self.page()['items'][0]['reference']
+        lease=self.reader.open_photo(self.db.identity,'peer',reference,access_token=self.db.access)
+        before=len(self.port.calls)
+        expected_key=self.db.state['versions']['peer']['photos'][0]['record']['key']
+        status=[]
+        body=RuntimeProfilePhotoMediaReply(lease,lambda:None).respond(lambda s,h:status.append(s))
+        self.assertEqual(['200 OK'],status)
+        self.assertEqual(BODY,b''.join(body))
+        controls=self.port.calls[before:]
+        self.assertCountEqual(['GetBucketAcl','GetBucketPolicy','GetObjectAcl'],[call[0] for call in controls])
+        self.assertEqual([expected_key],[key for operation,_,key in controls if operation=='GetObjectAcl'])
+        self.assertEqual([BUCKET]*3,states)  # Before/after download, then before first byte.
+        self.assertTrue(lease._closed);self.assertFalse(self.reader._leases)
+
+    def test_first_byte_refuses_public_state_and_actor_revoked_during_private_proof(self):
+        baseline=copy.deepcopy(self.db.state)
+        for change in ('public','revoked'):
+            with self.subTest(change=change):
+                self.db.state=copy.deepcopy(baseline)
+                self.s3._state=lambda bucket,deadline,cancel:{'bucket':bucket,'type':'private','checked_at':0}
+                self.port.override=None
+                reference=self.page()['items'][0]['reference']
+                lease=self.reader.open_photo(self.db.identity,'peer',reference,access_token=self.db.access)
+                before_objects=sum(operation=='GetObject' for operation,_,_ in self.port.calls)
+                if change=='public':
+                    self.s3._state=lambda bucket,deadline,cancel:{'bucket':bucket,'type':'public','checked_at':0}
+                else:
+                    def revoke(operation):
+                        if operation=='GetBucketPolicy':self.db.state['accounts']['actor'][0]=1
+                    self.port.override=revoke
+                status=[]
+                reply=RuntimeProfilePhotoMediaReply(lease,lambda:None).respond(lambda s,h:status.append(s))
+                self.assertEqual('503 Service Unavailable' if change=='public' else '401 Unauthorized',reply.status)
+                self.assertEqual([],status)
+                self.assertEqual(before_objects,sum(operation=='GetObject' for operation,_,_ in self.port.calls))
+                self.assertTrue(lease._file.closed);self.assertTrue(lease._closed);self.assertFalse(self.reader._leases)
+
     def test_real_committed_native_replacement_current_branch_no_imported_fallback(self):
         from test_runtime_native_profile_photos import NativeGalleryTests, GalleryCursor
         import test_runtime_native_profile_photos as native_fixture
@@ -111,7 +154,7 @@ class VersionedTests(unittest.TestCase):
             def execute(inner,statement,params=()):
                 result=super().execute(statement,params)
                 if statement.startswith('SELECT profile_details_saved'):
-                    inner.rows=[(*inner.rows[0],1)]
+                    if len(inner.rows[0])==2:inner.rows=[(*inner.rows[0],1)]
                 return result
         with patch.object(native_fixture,'GalleryCursor',InitialCursor):
             db,store,_,_,port,stub,_,_=helper.setup_gallery()

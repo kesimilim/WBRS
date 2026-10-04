@@ -155,7 +155,7 @@ class DeltaTests(unittest.TestCase):
         class InitialCursor(GalleryCursor):
             def execute(inner,statement,params=()):
                 result=super().execute(statement,params)
-                if statement.startswith('SELECT profile_details_saved'): inner.rows=[(*inner.rows[0],1)]
+                if statement.startswith('SELECT profile_details_saved') and len(inner.rows[0])==2: inner.rows=[(*inner.rows[0],1)]
                 return result
         with patch.object(native_fixture,'GalleryCursor',InitialCursor): db,store,_,reader,_,stub,_,_=helper.setup_gallery()
         class NativeComposite:

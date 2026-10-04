@@ -184,11 +184,19 @@ class PrivateMediaS3:
         finally:
             response.close()
 
-    def _privacy(self, key, deadline, cancel):
+    def _privacy(self, deadline, cancel):
+        # A new object has no ACL yet. Preserve the writer's bucket-only proof;
+        # existing-object readers must explicitly require _object_privacy.
+        return self._privacy_controls(None, deadline, cancel)
+
+    def _object_privacy(self, key, deadline, cancel):
+        return self._privacy_controls(_key(key), deadline, cancel)
+
+    def _privacy_controls(self, key, deadline, cancel):
         self._check(deadline, cancel)
         # Two admitted auxiliary jobs, no growing executor queue. Each photo
-        # keeps one synchronous lane and one auxiliary lane; all four controls
-        # must complete before the object GET or before accepting its bytes.
+        # keeps one synchronous lane and one auxiliary lane; all requested
+        # controls must complete before returning either private proof.
         if not _PRIVACY_WORKERS.acquire(blocking=False):
             raise PrivateMediaUnavailable()
         local_cancel = _PrivacyCancel(cancel)
@@ -221,7 +229,8 @@ class PrivateMediaS3:
                     or type(state["checked_at"]) not in {int, float} or not math.isfinite(state["checked_at"])
                     or not 0 <= now - state["checked_at"] <= PRIVACY_MAX_AGE):
                 raise PrivateMediaUnavailable()
-            _owner_acl(self._control("GetObjectAcl", key, deadline, local_cancel), self._owner)
+            if key is not None:
+                _owner_acl(self._control("GetObjectAcl", key, deadline, local_cancel), self._owner)
             self._check(deadline, local_cancel)
             pending.result(timeout=max(0, deadline - self._clock()))
             self._check(deadline, local_cancel)
@@ -254,7 +263,7 @@ class PrivateMediaS3:
                 raise PrivateMediaUnavailable()
             sink.seek(0); sink_accepted = True
             deadline = min(deadline, self._clock() + MAX_REQUEST_SECONDS)
-            checked_at = self._privacy(key, deadline, cancel)
+            checked_at = self._object_privacy(key, deadline, cancel)
             if self._clock() - checked_at > PRIVACY_MAX_AGE:
                 raise PrivateMediaUnavailable()
             response = self._transport.open("GetObject", self._bucket, key, deadline, cancel)
@@ -283,7 +292,7 @@ class PrivateMediaS3:
             if total != record["size"] or not hmac.compare_digest(digest.hexdigest(), record["sha256"]):
                 raise PrivateMediaUnavailable()
             # Privacy may have changed while a larger full object was downloaded.
-            checked_at = self._privacy(key, deadline, cancel)
+            checked_at = self._object_privacy(key, deadline, cancel)
             if self._clock() - checked_at > PRIVACY_MAX_AGE:
                 raise PrivateMediaUnavailable()
             self._check(deadline, cancel)

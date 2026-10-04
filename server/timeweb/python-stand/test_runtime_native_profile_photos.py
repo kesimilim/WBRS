@@ -38,7 +38,7 @@ class GalleryCursor(PhotoCursor):
         assert self.c.held; db.calls.append((sql, params)); self.rows = []; self.rowcount = 0
         uid = params[0]
         if sql.startswith('SELECT profile_details_saved'):
-            self.rows = [tuple(state['flags'][uid])]
+            self.rows = [(*state['flags'][uid], state.get('native_origin', {}).get(uid, 1))]
         elif sql.startswith('SELECT a.uid'):
             account = state['accounts'][uid]
             self.rows = [(uid, *account[:2], uid, *state['flags'][uid], state.get('invisible', {}).get(uid), {}, state['profiles'][uid])]

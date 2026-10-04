@@ -259,10 +259,9 @@ class RuntimeVersionedProfilePhotosService(RuntimeProfilePhotosService):
             resource=self._resource(identity,kwargs['access_token'],target_uid,reference)
             original=lease._before_first_byte
             def before():
-                from private_media_s3 import _owner_acl, PRIVACY_MAX_AGE
+                from private_media_s3 import PRIVACY_MAX_AGE
                 original()
-                checked=self._s3._privacy(lease._deadline,lease._cancel)
-                _owner_acl(self._s3._control('GetObjectAcl',resource['record']['key'],lease._deadline,lease._cancel),self._s3._owner)
+                checked=self._s3._object_privacy(resource['record']['key'],lease._deadline,lease._cancel)
                 if self._monotonic()-checked>PRIVACY_MAX_AGE: raise RuntimeUnavailable()
                 original()  # Actor/target may be revoked during the final private lookup.
             lease._before_first_byte=before

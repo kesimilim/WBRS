@@ -88,6 +88,13 @@ class PrivatePortTests(unittest.TestCase):
     def fetch(self, value=None):
         return self.media.get_verified_to_file(value or record(self.port.body), self.sink, 100, self.cancel)
 
+    def test_bucket_only_privacy_preserves_new_object_prepare_contract(self):
+        checked=self.media._privacy(100,self.cancel)
+        self.assertEqual(self.now,checked)
+        self.assertEqual([BUCKET],self.probes)
+        self.assertCountEqual(['GetBucketAcl','GetBucketPolicy'],[call[0] for call in self.port.calls])
+        self.assertTrue(all(key is None for _,_,key in self.port.calls))
+
     def test_full_stream_then_rechecks_rewinds_and_only_safe_headers(self):
         self.port.body = b"x" * (CHUNK_BYTES * 2 + 13)
         result = self.fetch()

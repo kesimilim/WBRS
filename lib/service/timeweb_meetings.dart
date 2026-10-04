@@ -242,10 +242,14 @@ final class TimewebMeeting {
   String get organizerUid => _read('organizerUid');
   String? get invitedUid => _read('invitedUid');
   String get kind => _read('kind');
-  String get title => _read('title');
+  String? get title => _read('title');
   String get description => _read('description');
-  String get countryCode => _read('countryCode');
-  String get region => _read('region');
+  String? get countryCode => _read('countryCode');
+  String? get region => _read('region');
+  String get geographyLabel {
+    _check();
+    return [_data['countryCode'], _data['region']].whereType<String>().where((value) => value.isNotEmpty).join(' · ');
+  }
   String? get startsAt => _read('startsAt');
   String? get createdAt => _read('createdAt');
   String? get updatedAt => _read('updatedAt');
@@ -587,9 +591,9 @@ TimewebMeeting _decodeMeeting(_PeopleFlight f, Object? value, Map<String, dynami
       !((value['kind'] == 'group' && value['invitedUid'] == null) || (value['kind'] == 'individual' && _currentIdentifier(value['invitedUid']) && value['invitedUid'] != value['organizerUid'] && [value['organizerUid'], value['invitedUid']].contains(f.uid))) ||
       !_meetingReadSchedule(value['localDatetime'], value['startsAt']) || value['media'] != null || value['mediaReady'] != false ||
       !_mutationInteger(value['revision']) || !_currentNullableStamp(value['createdAt']) || !_currentNullableStamp(value['updatedAt'])) _peopleInvalid();
-  if (value['title'] is! String || (value['title'] as String).trim().isEmpty || value['description'] is! String ||
-      !_currentNullableText(value['title'], 1000) || !_currentNullableText(value['description'], 4096) ||
-      !(catalog['countries'] as List).any((row) => row['code'] == value['countryCode'] && (row['regions'] as List).contains(value['region']))) _peopleInvalid();
+  if (!_currentNullableText(value['title'], 1000) || value['description'] is! String ||
+      !_currentNullableText(value['description'], 4096) || !_currentNullableText(value['region'], 191) ||
+      value['countryCode'] != null && !(catalog['countries'] as List).any((row) => row['code'] == value['countryCode'] && (row['regions'] as List).contains(value['region']))) _peopleInvalid();
   return TimewebMeeting._(Map.unmodifiable(value), _meetingReadCheck(f));
 }
 

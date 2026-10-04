@@ -142,11 +142,11 @@ Widget _meetingCard(BuildContext context, TimewebMeeting meeting, {VoidCallback?
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              meeting.title,
+              (meeting.title?.trim().isNotEmpty ?? false) ? meeting.title! : context.tr('Встреча'),
               style: full ? Theme.of(context).textTheme.titleLarge : Theme.of(context).textTheme.titleMedium,
             ),
             Text(meeting.scheduleLabel),
-            Text('${meeting.countryCode} · ${meeting.region}'),
+            Text(meeting.geographyLabel),
             if (meeting.description.isNotEmpty) ...[
               const SizedBox(height: 8),
               Text(meeting.description, maxLines: full ? null : 3, overflow: full ? null : TextOverflow.ellipsis),

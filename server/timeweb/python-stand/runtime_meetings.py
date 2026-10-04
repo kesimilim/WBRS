@@ -150,7 +150,27 @@ def _meeting_row(source):
     return row
 
 
-def _meeting_dto(row):
+def _meeting_dto(row, *, _validated_imported_projection=False):
+    # The keyword is reserved for the authenticated loader's pure schema check.
+    # Runtime callers receive a registered, raw-bound RAM capability instead.
+    proof = row.get("_importedReadAuthority")
+    if proof is not None:
+        # This RAM-only capability is attached only after current raw/row proof;
+        # strings, booleans and source markers never opt into imported reads.
+        from imported_meeting_authority import ImportedMeetingAuthority
+        try:
+            if type(proof) is not ImportedMeetingAuthority:
+                raise RuntimeUnavailable()
+            proof.require(); wanted = proof.entry(row["meetingId"])["canonical"]
+            if (any(row[key] != wanted[key] for key in MEETING_FIELDS[:12]
+                    if key not in {"revision", "updatedAt"})
+                    or row["localDatetime"] != wanted["localDatetime"]
+                    or row["revision"] < wanted["revision"] or row["updatedAt"] is None
+                    or row["updatedAt"] < wanted["updatedAt"]):
+                raise RuntimeUnavailable()
+            _validated_imported_projection = True
+        except (RuntimeUnavailable, KeyError, TypeError):
+            return None
     if row["deletedAt"] is not None or row["trusted"] != 1 or row["valid"] != 1:
         return None
     result = {field: row[field] for field in MEETING_FIELDS[:12]}
@@ -161,9 +181,11 @@ def _meeting_dto(row):
     except RuntimeUnavailable:
         return None
     try:
-        if not isinstance(result["title"], str) or not result["title"].strip() or type(result["description"]) is not str:
+        if ((_validated_imported_projection is not True and (not isinstance(result["title"], str) or not result["title"].strip()))
+                or type(result["description"]) is not str):
             return None
-        resolve_geography({key: result[key] for key in ("countryCode", "region")})
+        if _validated_imported_projection is not True or result["countryCode"] is not None:
+            resolve_geography({key: result[key] for key in ("countryCode", "region")})
     except RuntimeInvalidRequest:
         return None
     result.update(localDatetime=row["localDatetime"], media=None, mediaReady=False)

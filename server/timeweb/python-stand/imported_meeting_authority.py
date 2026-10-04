@@ -160,7 +160,8 @@ class ImportedMeetingAuthority:
                     or any(row[key] != wanted[key] for key in MEETING_FIELDS[:12]
                            if key not in {"revision", "updatedAt"})):
                 raise RuntimeUnavailable()
-            return {**row, "trusted": 1, "localDatetime": wanted["localDatetime"]}
+            return {**row, "trusted": 1, "localDatetime": wanted["localDatetime"],
+                "_importedReadAuthority": self}
         except Exception:
             return {**row, "trusted": 0}
 
@@ -309,7 +310,7 @@ def load_imported_authority(raw, signature, key, *, reviewed_binding, clock=None
             wanted = entry["canonical"]; _shape(wanted, set(MEETING_FIELDS[:12]) | {"localDatetime"})
             row = _meeting_row(tuple({**wanted, "trusted": 0, "valid": 1, "deletedAt": None}[key] for key in MEETING_FIELDS))
             read_schedule(wanted["localDatetime"], wanted["startsAt"])
-            if (wanted["meetingId"] != uid or _meeting_dto({**row, "trusted": 1}) is None
+            if (wanted["meetingId"] != uid or _meeting_dto({**row, "trusted": 1}, _validated_imported_projection=True) is None
                     or wanted["createdAt"] is None or wanted["updatedAt"] is None or set(users) & set(kicked)
                     or (wanted["kind"] == "individual" and (set(users) | set(kicked)) - {wanted["organizerUid"], wanted["invitedUid"]})
                     or member_count > MAX_MEMBERS):

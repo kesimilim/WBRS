@@ -450,7 +450,7 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
             children: [
               const Icon(Icons.location_on_outlined, size: 18),
               const SizedBox(width: 4),
-              Expanded(child: Text('${widget.meeting.countryCode} · ${widget.meeting.region}')),
+              Expanded(child: Text(widget.meeting.geographyLabel)),
             ],
           ),
           Row(
@@ -598,7 +598,10 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
                         Expanded(
                           child: Padding(
                             padding: const EdgeInsets.only(top: 10, bottom: 10),
-                            child: Text(widget.meeting.title, style: Theme.of(context).textTheme.titleLarge),
+                            child: Text(
+                              (widget.meeting.title?.trim().isNotEmpty ?? false) ? widget.meeting.title! : context.tr('Встреча'),
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
                           ),
                         ),
                       ],

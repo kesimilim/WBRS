@@ -55,6 +55,37 @@ Future<void> attachMeetingCatalog() async {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test('retained meeting read keeps nullable and blank titles plus uncoded source region; native creation stays strict', () async {
+    await attachMeetingCatalog();
+    var reads = 0;
+    final wire = PeopleWire((call) async {
+      expect(call.method, 'GET');
+      reads++;
+      if (reads == 1) return peopleReply(list([
+        meeting('A', edits: {'title': null, 'countryCode': null, 'region': '  Старый город  '}),
+        meeting('B', edits: {'title': ' \t ', 'countryCode': null, 'region': null}),
+      ]));
+      if (reads == 2) return peopleReply(detail(meeting('A', edits: {'title': '', 'countryCode': null, 'region': 'Старый регион'})));
+      return peopleReply(detail(meeting('A', edits: {'title': null, 'countryCode': 'RU', 'region': 'unknown'})));
+    });
+    final owner = client(wire); await owner.restore();
+    final page = await owner.readMeetings(await TimewebMeetingFilters.fromCatalog());
+    final retained = page.items[0], blank = page.items[1];
+    expect(retained.title, isNull); expect(retained.countryCode, isNull);
+    expect(retained.region, '  Старый город  '); expect(retained.geographyLabel, '  Старый город  ');
+    expect(blank.title, ' \t '); expect(blank.region, isNull); expect(blank.geographyLabel, '');
+    expect(retained.description, ''); expect(retained.localDatetime, local); expect(retained.scheduleLabel, local);
+    final item = await owner.readMeeting('A');
+    expect(item.title, ''); expect(item.countryCode, isNull); expect(item.region, 'Старый регион');
+    await expectLater(owner.readMeeting('A'), throwsA(error(TimewebAuthError.invalidResponse)));
+    expect(() => TimewebMeetingCreateRequest.fromCatalog(name: null as dynamic, description: '', countryCode: 'RU', region: 'Республика Адыгея', datetime: local, type: 'групповая'), throwsA(isA<TypeError>()));
+    await expectLater(TimewebMeetingCreateRequest.fromCatalog(name: ' \t ', description: '', countryCode: 'RU', region: 'Республика Адыгея', datetime: local, type: 'групповая'), throwsArgumentError);
+    expect(wire.calls, hasLength(3));
+    await owner.stop();
+    expect(() => retained.title, throwsA(error(TimewebAuthError.staleSession)));
+    expect(() => retained.geographyLabel, throwsA(error(TimewebAuthError.staleSession)));
+  });
+
   test('exact native request and derived receipt; empty description, original bytes, catalog and calendar; default off', () async {
     final input = await draft(description: ' \r\n\t');
     final request = TimewebMutationRequest.createMeeting(operationId: op, request: input);

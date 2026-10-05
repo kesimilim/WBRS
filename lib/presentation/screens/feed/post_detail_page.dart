@@ -15,6 +15,7 @@ import 'package:wbrs/service/comment_submission.dart';
 import 'package:wbrs/service/pending_write.dart';
 import 'package:wbrs/presentation/screens/feed/share_to_chat_sheet.dart';
 import 'package:wbrs/presentation/screens/feed/post_author_wall.dart';
+import 'package:wbrs/app/widgets/fullscreen_image_slider.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 class PostDetailPage extends StatefulWidget {
@@ -180,7 +181,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
         widget.submissions ?? CommentSubmissionService(social: _social);
     _replyTo = widget.threadRootId;
     if (widget.threadRootId != null) _expandedThreads.add(widget.threadRootId!);
-    _submission = _submissions.pending(widget.postId);
+    _submission = _submissions.pending(widget.postId, parentId: _replyTo);
     _restoreSubmission();
     if (_submission?.write.failed == true) _submission = null;
     if (_submission != null) {
@@ -205,7 +206,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
 
   Future<void> _restoreSubmission() async {
     try {
-      final restored = await _submissions.restore(widget.postId);
+      final restored = await _submissions.restore(widget.postId, parentId: _replyTo);
       if (!mounted || !_submissions.isCurrentSession) return;
       if (restored != null)
         setState(() {
@@ -402,16 +403,25 @@ class _PostDetailPageState extends State<PostDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          InkWell(
-            onTap: authorUid.isEmpty
-                ? null
-                : () => openPostAuthorWall(context, widget.post),
-            child: Text(
-              widget.post['authorName']?.toString() ?? 'CLRS',
-              style: TextStyle(
-                  color: LrsTheme.peachLight, fontWeight: FontWeight.w800),
+          Row(children: [
+            Expanded(
+              child: InkWell(
+                onTap: authorUid.isEmpty
+                    ? null
+                    : () => openPostAuthorWall(context, widget.post),
+                child: Text(
+                  widget.post['authorName']?.toString() ?? 'CLRS',
+                  style: TextStyle(
+                      color: LrsTheme.peachLight, fontWeight: FontWeight.w800),
+                ),
+              ),
             ),
-          ),
+            if (widget.post['createdAt'] is Timestamp)
+              Text(
+                context.l10n.dateTime((widget.post['createdAt'] as Timestamp).toDate()),
+                style: TextStyle(color: LrsTheme.muted, fontSize: 12),
+              ),
+          ]),
           if (text.isNotEmpty) ...[
             SizedBox(height: 8),
             TranslatableText(text,
@@ -419,12 +429,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
           ],
           if (images.isNotEmpty) ...[
             SizedBox(height: 10),
-            for (final url in images)
+            for (var i = 0; i < images.length; i++)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(16),
-                  child: CachedNetworkImage(imageUrl: url, fit: BoxFit.cover),
+                child: GestureDetector(
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => FullscreenSliderDemo(
+                          initialPage: i, imgList: images))),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: CachedNetworkImage(imageUrl: images[i], fit: BoxFit.cover),
+                  ),
                 ),
               ),
           ],
@@ -460,11 +475,20 @@ class _PostDetailPageState extends State<PostDetailPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  data['authorName']?.toString() ?? context.tr('Пользователь'),
-                  style: TextStyle(
-                      color: LrsTheme.peachLight, fontWeight: FontWeight.w700),
-                ),
+                Row(children: [
+                  Expanded(
+                    child: Text(
+                      data['authorName']?.toString() ?? context.tr('Пользователь'),
+                      style: TextStyle(
+                          color: LrsTheme.peachLight, fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                  if (data['createdAt'] is Timestamp)
+                    Text(
+                      context.l10n.dateTime((data['createdAt'] as Timestamp).toDate()),
+                      style: TextStyle(color: LrsTheme.muted, fontSize: 11),
+                    ),
+                ]),
                 if ((data['text']?.toString() ?? '').isNotEmpty)
                   TranslatableText(data['text'].toString(),
                       style: TextStyle(color: LrsTheme.text)),
@@ -475,14 +499,19 @@ class _PostDetailPageState extends State<PostDetailPage> {
                       spacing: 6,
                       runSpacing: 6,
                       children: [
-                        for (final url in images)
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: CachedNetworkImage(
-                              imageUrl: url,
-                              height: 150,
-                              width: 190,
-                              fit: BoxFit.cover,
+                        for (var i = 0; i < images.length; i++)
+                          GestureDetector(
+                            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                                builder: (_) => FullscreenSliderDemo(
+                                    initialPage: i, imgList: images))),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(12),
+                              child: CachedNetworkImage(
+                                imageUrl: images[i],
+                                height: 150,
+                                width: 190,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                       ],
@@ -630,11 +659,17 @@ class _PostDetailPageState extends State<PostDetailPage> {
                   ],
                 ),
               ),
+            if (_restoring) LinearProgressIndicator(),
+            if (_sendNotice != null)
+              Padding(
+                  padding: EdgeInsets.only(top: 8),
+                  child: Text(context.tr(_sendNotice!),
+                      style: TextStyle(color: LrsTheme.peachLight))),
             Row(
               children: [
                 IconButton(
                   tooltip: context.tr('Добавить изображение'),
-                  onPressed: _locked
+                  onPressed: _locked || _images.length >= 2
                       ? null
                       : () async {
                           try {
@@ -644,7 +679,7 @@ class _PostDetailPageState extends State<PostDetailPage> {
                               maxHeight: 1400,
                             );
                             if (picked.isEmpty || !mounted) return;
-                            final room = 10 - _images.length;
+                            final room = 2 - _images.length;
                             setState(() {
                               _images.addAll(picked.take(room));
                             });
@@ -666,9 +701,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
                     readOnly: _locked,
                     maxLines: 4,
                     minLines: 1,
+                    maxLength: 4000,
                     style: TextStyle(color: LrsTheme.text),
-                    decoration:
-                        InputDecoration(hintText: context.tr('Комментарий')),
+                    decoration: InputDecoration(
+                        hintText: context.tr('Комментарий'), counterText: ''),
                   ),
                 ),
                 IconButton(
@@ -686,12 +722,6 @@ class _PostDetailPageState extends State<PostDetailPage> {
                 ),
               ],
             ),
-            if (_restoring) LinearProgressIndicator(),
-            if (_sendNotice != null)
-              Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(context.tr(_sendNotice!),
-                      style: TextStyle(color: LrsTheme.peachLight))),
           ],
         ),
       ),
@@ -737,12 +767,10 @@ class _PostDetailPageState extends State<PostDetailPage> {
           _replyTo = widget.threadRootId;
           _replyName = null;
         });
-        showSnackbar(
-            context,
-            LrsTheme.surface,
-            context.tr(parentId == null
-                ? 'Комментарий отправлен'
-                : 'Ответ отправлен. Ветка ответов раскрыта.'));
+        setState(() => _sendNotice =
+        parentId == null
+            ? 'Комментарий отправлен'
+            : 'Ответ отправлен. Ветка ответов раскрыта.');
       }
     } catch (e) {
       if (mounted) {

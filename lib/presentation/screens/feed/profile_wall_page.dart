@@ -10,19 +10,35 @@ import 'package:wbrs/shared/group_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'post_detail_page.dart';
 
-class ProfileWallPage extends StatefulWidget {
+class ProfileWallPage extends StatelessWidget {
   const ProfileWallPage({super.key, required this.userUid, this.userName});
   final String userUid;
   final String? userName;
+
   @override
-  State<ProfileWallPage> createState() => _ProfileWallPageState();
+  Widget build(BuildContext context) => ClrsScaffold(
+    appBar: AppBar(title: Text(context.tr('Стена'))),
+    body: ProfileWallSection(userUid: userUid),
+  );
 }
 
-class _ProfileWallPageState extends State<ProfileWallPage> {
+enum _WallTab { all, authored, shared }
+
+class ProfileWallSection extends StatefulWidget {
+  const ProfileWallSection({super.key, required this.userUid, this.embedded = false});
+  final String userUid;
+  final bool embedded;
+  @override
+  State<ProfileWallSection> createState() => _ProfileWallSectionState();
+}
+
+class _ProfileWallSectionState extends State<ProfileWallSection> {
   late Stream<QuerySnapshot<Map<String, dynamic>>> _wall = _load();
   late Stream<QuerySnapshot<Map<String, dynamic>>> _authored = _loadAuthored();
   late Stream<QuerySnapshot<Map<String, dynamic>>> _legacyAuthored =
-      _loadLegacyAuthored();
+  _loadLegacyAuthored();
+  _WallTab _tab = _WallTab.all;
+
   Stream<QuerySnapshot<Map<String, dynamic>>> _load() => firebaseFirestore
       .collection('users')
       .doc(widget.userUid)
@@ -44,7 +60,7 @@ class _ProfileWallPageState extends State<ProfileWallPage> {
           .where('authorId', isEqualTo: widget.userUid).snapshots();
 
   @override
-  void didUpdateWidget(covariant ProfileWallPage oldWidget) {
+  void didUpdateWidget(covariant ProfileWallSection oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.userUid != widget.userUid) {
       _wall = _load();
@@ -60,86 +76,145 @@ class _ProfileWallPageState extends State<ProfileWallPage> {
     return 0;
   }
 
+  Widget _tabBar() => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Row(children: [
+      _tabButton(_WallTab.all, context.tr('Все')),
+      const SizedBox(width: 8),
+      _tabButton(_WallTab.authored, context.tr('Мои публикации')),
+      const SizedBox(width: 8),
+      _tabButton(_WallTab.shared, context.tr('Репосты')),
+    ]),
+  );
+
+  Widget _tabButton(_WallTab tab, String label) {
+    final selected = _tab == tab;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _tab = tab),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: selected ? LrsTheme.actionGlass : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+                color: selected ? LrsTheme.peach : const Color(0x33E7B092)),
+          ),
+          child: Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontSize: 13,
+                  color: selected ? LrsTheme.text : LrsTheme.muted,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400)),
+        ),
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) => ClrsScaffold(
-        appBar: AppBar(title: Text(context.tr('Стена'))),
-        body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _wall,
-          builder: (context, wallSnapshot) =>
-              StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+  Widget build(BuildContext context) => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+    stream: _wall,
+    builder: (context, wallSnapshot) =>
+        StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
           stream: _authored,
           builder: (context, authoredSnapshot) =>
               StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-          stream: _legacyAuthored,
-          builder: (context, legacySnapshot) {
-            if (wallSnapshot.hasError || authoredSnapshot.hasError) {
-              return Center(
-                  child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: ClrsPanel(
-                          child:
-                              Column(mainAxisSize: MainAxisSize.min, children: [
-                        Text(context.tr('Не удалось загрузить публикации.')),
-                        TextButton(
-                            onPressed: () => setState(() {
-                              _wall = _load();
-                              _authored = _loadAuthored();
-                              _legacyAuthored = _loadLegacyAuthored();
-                            }),
-                            child: Text(context.tr('Повторить'))),
-                      ]))));
-            }
-            if (!wallSnapshot.hasData || !authoredSnapshot.hasData)
-              return const Center(child: CircularProgressIndicator());
-            final authored = authoredSnapshot.data!.docs.where((doc) =>
-                doc.data()['status'] == 'published' &&
-                doc.data()['authorUid'] == widget.userUid).toList();
-            final legacy = (legacySnapshot.data?.docs ?? []).where((doc) =>
-                !doc.data().containsKey('status') &&
-                doc.data()['authorId'] == widget.userUid).toList();
-            final authoredIds = authored.map((doc) => doc.id).toSet();
-            authoredIds.addAll(legacy.map((doc) => doc.id));
-            final entries = <({String id, String postId, String? commentId,
-                bool authored, bool legacy, int time})>[
-              for (final doc in authored)
-                (id: 'post_${doc.id}', postId: doc.id, commentId: null,
-                    authored: true, legacy: false, time: _time(doc.data())),
-              for (final doc in legacy)
-                (id: 'legacy_${doc.id}', postId: doc.id, commentId: null,
-                    authored: true, legacy: true, time: _time(doc.data())),
-              for (final doc in wallSnapshot.data!.docs)
-                if (doc.data()['sharedCommentId'] != null ||
-                    !authoredIds.contains(doc.data()['sharedPostId']?.toString() ?? doc.id))
-                  (id: 'share_${doc.id}',
-                    postId: doc.data()['sharedPostId']?.toString() ?? doc.id,
-                    commentId: doc.data()['sharedCommentId']?.toString(),
-                    authored: false, legacy: false, time: _time(doc.data())),
-            ]..sort((a, b) => b.time.compareTo(a.time));
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: entries.isEmpty ? 1 : entries.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                if (entries.isEmpty)
-                  return ClrsPanel(
-                      child: Text(context.tr(
-                          'Здесь появятся публикации, которыми вы поделились.')));
-                final entry = entries[index];
-                return _WallPost(
-                    key: ValueKey(entry.id),
-                    postId: entry.postId,
-                    commentId: entry.commentId,
-                    owner: !entry.authored &&
-                        widget.userUid == firebaseAuth.currentUser?.uid,
-                    authored: entry.authored,
-                    legacy: entry.legacy);
-              },
-            );
-          },
-          ),
-          ),
+                stream: _legacyAuthored,
+                builder: (context, legacySnapshot) {
+                  if (wallSnapshot.hasError || authoredSnapshot.hasError) {
+                    return SingleChildScrollView(
+                        padding: const EdgeInsets.all(20),
+                        child: ClrsPanel(
+                            child: Column(mainAxisSize: MainAxisSize.min, children: [
+                              Text(context.tr('Не удалось загрузить публикации.')),
+                              TextButton(
+                                  onPressed: () => setState(() {
+                                    _wall = _load();
+                                    _authored = _loadAuthored();
+                                    _legacyAuthored = _loadLegacyAuthored();
+                                  }),
+                                  child: Text(context.tr('Повторить'))),
+                            ])));
+                  }
+                  if (!wallSnapshot.hasData || !authoredSnapshot.hasData) {
+                    return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: Center(child: CircularProgressIndicator()));
+                  }
+                  final authored = authoredSnapshot.data!.docs.where((doc) =>
+                  doc.data()['status'] == 'published' &&
+                      doc.data()['authorUid'] == widget.userUid).toList();
+                  final legacy = (legacySnapshot.data?.docs ?? []).where((doc) =>
+                  !doc.data().containsKey('status') &&
+                      doc.data()['authorId'] == widget.userUid).toList();
+                  final authoredIds = authored.map((doc) => doc.id).toSet();
+                  authoredIds.addAll(legacy.map((doc) => doc.id));
+                  var entries = <({String id, String postId, String? commentId,
+                  bool authored, bool legacy, int time})>[
+                    for (final doc in authored)
+                      (id: 'post_${doc.id}', postId: doc.id, commentId: null,
+                      authored: true, legacy: false, time: _time(doc.data())),
+                    for (final doc in legacy)
+                      (id: 'legacy_${doc.id}', postId: doc.id, commentId: null,
+                      authored: true, legacy: true, time: _time(doc.data())),
+                    for (final doc in wallSnapshot.data!.docs)
+                      if (doc.data()['sharedCommentId'] != null ||
+                          !authoredIds.contains(doc.data()['sharedPostId']?.toString() ?? doc.id))
+                        (id: 'share_${doc.id}',
+                        postId: doc.data()['sharedPostId']?.toString() ?? doc.id,
+                        commentId: doc.data()['sharedCommentId']?.toString(),
+                        authored: false, legacy: false, time: _time(doc.data())),
+                  ]..sort((a, b) => b.time.compareTo(a.time));
+                  if (_tab == _WallTab.authored) {
+                    entries = entries.where((e) => e.authored).toList();
+                  } else if (_tab == _WallTab.shared) {
+                    entries = entries.where((e) => !e.authored).toList();
+                  }
+                  final list = ListView.separated(
+                    shrinkWrap: widget.embedded,
+                    physics: widget.embedded
+                        ? const NeverScrollableScrollPhysics()
+                        : null,
+                    padding: const EdgeInsets.all(16),
+                    itemCount: entries.isEmpty ? 1 : entries.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      if (entries.isEmpty) {
+                        return ClrsPanel(
+                            child: Text(context.tr(_tab == _WallTab.authored
+                                ? 'Здесь появятся ваши публикации.'
+                                : _tab == _WallTab.shared
+                                ? 'Здесь появятся публикации, которыми вы поделились.'
+                                : 'Здесь появятся публикации, которыми вы поделились.')));
+                      }
+                      final entry = entries[index];
+                      return _WallPost(
+                          key: ValueKey(entry.id),
+                          postId: entry.postId,
+                          commentId: entry.commentId,
+                          owner: !entry.authored &&
+                              widget.userUid == firebaseAuth.currentUser?.uid,
+                          authored: entry.authored,
+                          legacy: entry.legacy);
+                    },
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(children: [
+                      _tabBar(),
+                      widget.embedded
+                          ? list
+                          : Expanded(child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 0),
+                          child: list)),
+                    ]),
+                  );
+                },
+              ),
         ),
-      );
+  );
 }
 
 class _WallPost extends StatefulWidget {

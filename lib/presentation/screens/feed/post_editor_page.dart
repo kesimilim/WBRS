@@ -196,7 +196,7 @@ class _PostEditorPageState extends State<PostEditorPage> {
                 readOnly: _locked,
                 minLines: 5,
                 maxLines: 12,
-                maxLength: 10000,
+                maxLength: 4000,
                 textCapitalization: TextCapitalization.sentences,
                 style: const TextStyle(color: LrsTheme.text),
                 decoration: InputDecoration(

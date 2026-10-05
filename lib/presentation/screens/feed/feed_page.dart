@@ -15,6 +15,7 @@ import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/app/widgets/bottom_nav_bar.dart';
 import 'package:wbrs/app/widgets/drawer.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
+import 'package:wbrs/presentation/screens/list_of_users/show/somebody_profile.dart';
 import 'package:wbrs/presentation/screens/feed/post_detail_page.dart';
 import 'package:wbrs/presentation/screens/feed/post_author_wall.dart';
 import 'package:wbrs/presentation/screens/feed/post_editor_page.dart';
@@ -350,6 +351,7 @@ class _PostCard extends StatefulWidget {
 }
 
 class _PostCardState extends State<_PostCard> {
+  bool _openingProfile = false;
   bool _liked = false;
   bool _liking = false;
   PendingWrite? _likeWrite;
@@ -559,6 +561,38 @@ class _PostCardState extends State<_PostCard> {
         firebaseAuth.currentUser?.uid;
   }
 
+  Future<void> _openProfile(Map<String, dynamic> data) async {
+    if (_openingProfile) return;
+    final uid = postAuthorUid(data);
+    if (uid.isEmpty) return;
+    setState(() => _openingProfile = true);
+    try {
+      final doc = await firebaseFirestore
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 15));
+      if (!mounted) return;
+      if (!doc.exists || doc.data()?['status'] == 'deleted') {
+        throw StateError('Профиль недоступен');
+      }
+      final profile = doc.data()!;
+      await Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => SomebodyProfile(
+              uid: uid,
+              photoUrl: '${profile['profilePic'] ?? data['authorPhoto'] ?? ''}',
+              name: '${profile['fullName'] ?? data['authorName'] ?? ''}',
+              userInfo: profile)));
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(context.tr('Не удалось открыть профиль. Попробуйте ещё раз.'))));
+      }
+    } finally {
+      if (mounted) setState(() => _openingProfile = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final data = widget.data;
@@ -585,9 +619,9 @@ class _PostCardState extends State<_PostCard> {
               children: [
                 Expanded(
                   child: InkWell(
-                    onTap: authorUid.isEmpty
+                    onTap: authorUid.isEmpty || _openingProfile
                         ? null
-                        : () => openPostAuthorWall(context, data),
+                        : () => _openProfile(data),
                     child: Row(children: [
                       GroupAvatar(
                           url: authorPhoto,
@@ -626,6 +660,7 @@ class _PostCardState extends State<_PostCard> {
               ],
             ),
           ),
+          if (_openingProfile) const LinearProgressIndicator(),
           if ((data['title']?.toString() ?? '').isNotEmpty)
             Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
@@ -758,14 +793,17 @@ class _PostImages extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (images.length == 1) {
-      return AspectRatio(
-        aspectRatio: 1.85,
-        child: CachedNetworkImage(
-          imageUrl: images.first,
-          fit: BoxFit.cover,
-          errorWidget: (_, __, ___) => const Center(
-              child:
-              Icon(Icons.broken_image_outlined, color: LrsTheme.muted)),
+      return ConstrainedBox(
+        constraints: const BoxConstraints(maxHeight: 420),
+        child: ClipRRect(
+          borderRadius: BorderRadius.zero,
+          child: CachedNetworkImage(
+            imageUrl: images.first,
+            fit: BoxFit.contain,
+            errorWidget: (_, __, ___) => const Center(
+                child:
+                Icon(Icons.broken_image_outlined, color: LrsTheme.muted)),
+          ),
         ),
       );
     }

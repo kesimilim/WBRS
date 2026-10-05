@@ -154,6 +154,9 @@ class SocialService {
     if (text.trim().isEmpty && images.isEmpty) {
       throw ArgumentError('Публикация не может быть пустой');
     }
+    if (text.length > 4000) {
+      throw ArgumentError('Не больше 4000 символов');
+    }
     if (images.length > 10) {
       throw ArgumentError('Не больше 10 фотографий');
     }
@@ -208,6 +211,9 @@ class SocialService {
     }
     if (text.trim().isEmpty && keepImageUrls.isEmpty && newImages.isEmpty) {
       throw ArgumentError('Публикация не может быть пустой');
+    }
+    if (text.length > 4000) {
+      throw ArgumentError('Не больше 4000 символов');
     }
     if (keepImageUrls.length + newImages.length > 10) {
       throw ArgumentError('Не больше 10 фотографий');
@@ -430,6 +436,12 @@ class SocialService {
     String? requestId,
   }) async {
     if (text.trim().isEmpty && images.isEmpty) return;
+    if (text.length > 4000) {
+      throw ArgumentError('Не больше 4000 символов');
+    }
+    if (images.length > 2) {
+      throw ArgumentError('Не больше 2 фотографий');
+    }
     final user = await _db.collection('users').doc(_uid).get();
     final userData = user.data() ?? const <String, dynamic>{};
     final postRef = posts.doc(postId);

@@ -33,14 +33,15 @@ class CommentSubmissionService {
   late final String? _ownerUid;
   static final Map<String, CommentSubmission> _pending = {};
   bool get isCurrentSession => _ownerUid != null && _currentUid() == _ownerUid;
-  String _key(String postId) => '$_ownerUid/$postId';
-  String _scope(String postId) => 'comment/$postId';
-  CommentSubmission? pending(String postId) => _pending[_key(postId)];
+  String _key(String postId, String? parentId) => '$_ownerUid/$postId/${parentId ?? 'root'}';
+  String _scope(String postId, String? parentId) => 'comment/$postId/${parentId ?? 'root'}';
+  CommentSubmission? pending(String postId, {String? parentId}) => _pending[_key(postId, parentId)];
 
-  Future<CommentSubmission?> restore(String postId) async {
+  Future<CommentSubmission?> restore(String postId, {String? parentId}) async {
     if (!isCurrentSession) return null;
-    if (pending(postId) != null) return pending(postId);
-    final saved = await _journal.load(_ownerUid!, _scope(postId));
+    final existing = pending(postId, parentId: parentId);
+    if (existing != null) return existing;
+    final saved = await _journal.load(_ownerUid!, _scope(postId, parentId));
     if (!isCurrentSession || saved == null) return null;
     final fields = Map<String, dynamic>.from(saved['fields'] as Map);
     final paths = (saved['imagePaths'] as List?)?.cast<String>() ?? const [];
@@ -60,7 +61,7 @@ class CommentSubmissionService {
       List<XFile> images = const []}) {
     if (!isCurrentSession) throw StateError('Сеанс завершён. Войдите снова.');
     final uid = _ownerUid!;
-    final key = _key(postId);
+    final key = _key(postId, parentId);
     final previous = _pending[key];
     if (previous != null && !previous.write.failed) return previous;
     return _pending[key] = CommentSubmission(
@@ -69,7 +70,7 @@ class CommentSubmissionService {
         replyName: replyName,
         images: images,
         write: PendingWrite(() async {
-          final scope = _scope(postId);
+          final scope = _scope(postId, parentId);
           final prior = await _journal.load(uid, scope);
           // A completed SDK failure is definitive; a UI timeout is not. Only the
           // former permits editing a rejected request and replacing its journal.
@@ -107,7 +108,7 @@ class CommentSubmissionService {
   void acknowledge(String postId, CommentSubmission request) {
     if (!isCurrentSession || !request.write.completed || request.write.failed)
       return;
-    final key = _key(postId);
+    final key = _key(postId, request.parentId);
     if (identical(_pending[key], request)) _pending.remove(key);
   }
 }

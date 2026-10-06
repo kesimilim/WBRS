@@ -14,7 +14,7 @@ from native_sessions import NativeIdentity
 from legacy_conversation_payload import identifier, LegacyInvalid
 from legacy_conversation_read import (LegacyReadRejected, LegacyReadUnavailable,
     LegacyReadRateLimited, MAX_RESPONSE_BYTES)
-from legacy_conversation_discovery import LegacyConversationDiscoveryService
+from legacy_own_profile import LegacyReadApiService
 
 
 class LegacyHttpReply(NamedTuple):
@@ -32,7 +32,7 @@ def create_legacy_read_service(env):
     key = decode_base64(env.get("CLRS_LEGACY_CURSOR_KEY_B64"), max_bytes=32)
     if len(key) != 32:
         raise LegacyReadUnavailable()
-    return LegacyConversationDiscoveryService(env, key)
+    return LegacyReadApiService(env, key)
 
 
 def _route(path):
@@ -43,6 +43,8 @@ def _route(path):
         path = path.encode("latin-1", "strict").decode("utf-8", "strict")
     except UnicodeError:
         return None
+    if path == "/v1/me/full-profile":
+        return "own_profile", None
     if path == "/v1/chats":
         return "personal_chats", None
     if path == "/v1/meetings":
@@ -64,10 +66,12 @@ def _route(path):
 
 
 def _parameters(query, operation):
+    if operation == "own_profile" and query != "":
+        raise InvalidReadRequest()
     if (not isinstance(query, str) or len(query) > 8192 or not query.isascii()
             or re.search(r"%(?![0-9A-Fa-f]{2})", query)):
         raise InvalidReadRequest()
-    allowed = set() if operation == "meeting_details" else {"limit", "cursor"}
+    allowed = set() if operation in {"meeting_details", "own_profile"} else {"limit", "cursor"}
     if operation == "meeting_messages":
         allowed.add("own_removed")
     try:
@@ -81,7 +85,7 @@ def _parameters(query, operation):
             raise InvalidReadRequest()
         result[key] = value
     kwargs = {}
-    if operation != "meeting_details":
+    if operation not in {"meeting_details", "own_profile"}:
         limit = result.get("limit", "50")
         if not re.fullmatch(r"[1-9][0-9]?", limit) or not 1 <= int(limit) <= 50:
             raise InvalidReadRequest()

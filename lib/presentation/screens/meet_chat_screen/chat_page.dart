@@ -15,6 +15,7 @@ import 'package:wbrs/service/pending_write.dart';
 import 'package:wbrs/service/meeting_membership_service.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
+import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/group_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/paged_firestore_history.dart';
@@ -24,8 +25,15 @@ import '../edit_meet/edit_meet.dart';
 class UserInfo {
   final String name, age, city, imageUrl, group, uid;
   final Map userInfo;
-  UserInfo(this.name, this.age, this.city, this.imageUrl, this.group, this.uid,
-      this.userInfo);
+  UserInfo(
+    this.name,
+    this.age,
+    this.city,
+    this.imageUrl,
+    this.group,
+    this.uid,
+    this.userInfo,
+  );
 }
 
 class ChatPage extends StatefulWidget {
@@ -34,21 +42,22 @@ class ChatPage extends StatefulWidget {
   final bool isUserJoin;
   final MeetingMembershipService? membershipService;
   final ChatSubmissionService? submissions;
-  const ChatPage(
-      {super.key,
-      required this.groupId,
-      required this.groupName,
-      required this.users,
-      required this.isUserJoin,
-      this.membershipService,
-      this.submissions});
+  const ChatPage({
+    super.key,
+    required this.groupId,
+    required this.groupName,
+    required this.users,
+    required this.isUserJoin,
+    this.membershipService,
+    this.submissions,
+  });
   @override
   State<ChatPage> createState() => _ChatPageState();
 }
 
 class _ChatPageState extends State<ChatPage> {
   static double _leftColumnWidth(double availableWidth) =>
-      math.min(availableWidth, math.max(availableWidth * .68, 248));
+      availableWidth * 2 / 3;
 
   final _messageController = TextEditingController();
   final _messageScrollController = ScrollController();
@@ -93,7 +102,8 @@ class _ChatPageState extends State<ChatPage> {
     super.initState();
     _ownerUid = firebaseAuth.currentUser?.uid;
     _joined = widget.isUserJoin;
-    _membership = widget.membershipService ??
+    _membership =
+        widget.membershipService ??
         MeetingMembershipService(meetingId: widget.groupId);
     _restoreMembership();
     _submissions = widget.submissions ?? ChatSubmissionService();
@@ -128,8 +138,10 @@ class _ChatPageState extends State<ChatPage> {
       if (_active) setState(() => _membershipRequest = request);
     } catch (_) {
       if (_active) {
-        setState(() => _membershipNotice =
-            'Не удалось восстановить изменение участия. Повторите проверку.');
+        setState(
+          () => _membershipNotice =
+              'Не удалось восстановить изменение участия. Повторите проверку.',
+        );
       }
     } finally {
       if (_active) setState(() => _restoringMembership = false);
@@ -150,11 +162,11 @@ class _ChatPageState extends State<ChatPage> {
     final source = _joined || _ownerUid == null
         ? _meetRef.collection('messages')
         : firebaseFirestore
-            .collection('users')
-            .doc(_ownerUid)
-            .collection('removed_meets')
-            .doc(widget.groupId)
-            .collection('messages');
+              .collection('users')
+              .doc(_ownerUid)
+              .collection('removed_meets')
+              .doc(widget.groupId)
+              .collection('messages');
     return source.orderBy('time', descending: true);
   }
 
@@ -170,10 +182,9 @@ class _ChatPageState extends State<ChatPage> {
       if (_active) setState(() => _messageWaitExpired = true);
     });
     _messageWaitTimer = timer;
-    _chats = _messageQuery()
-        .limit(_history.pageSize + 1)
-        .snapshots()
-        .map((snapshot) {
+    _chats = _messageQuery().limit(_history.pageSize + 1).snapshots().map((
+      snapshot,
+    ) {
       timer.cancel();
       if (generation == _messageGeneration) _history.receiveLive(snapshot);
       return snapshot;
@@ -227,24 +238,28 @@ class _ChatPageState extends State<ChatPage> {
       if (!_active) return;
       final data = meet.data();
       if (!meet.exists || data == null) throw StateError('Встреча недоступна');
-      final ids =
-          (data['users'] as List? ?? const []).whereType<String>().toSet();
-      final profiles = await Future.wait(ids.map(
-              (uid) => firebaseFirestore.collection('users').doc(uid).get()))
-          .timeout(const Duration(seconds: 15));
+      final ids = (data['users'] as List? ?? const [])
+          .whereType<String>()
+          .toSet();
+      final profiles = await Future.wait(
+        ids.map((uid) => firebaseFirestore.collection('users').doc(uid).get()),
+      ).timeout(const Duration(seconds: 15));
       if (!_active) return;
       final users = <UserInfo>[];
       for (final profile in profiles) {
         final user = profile.data();
         if (!profile.exists || user == null) continue;
-        users.add(UserInfo(
+        users.add(
+          UserInfo(
             '${user['fullName'] ?? ''}',
             '${user['age'] ?? ''}',
             '${user['city'] ?? ''}',
             '${user['profilePicThumb'] ?? user['profilePic'] ?? ''}',
             '${user['группа'] ?? ''}',
             '${user['uid'] ?? profile.id}',
-            user));
+            user,
+          ),
+        );
       }
       users.sort((a, b) {
         if (a.uid == data['admin']) return -1;
@@ -278,92 +293,131 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _descriptionPanel({bool full = false}) => Container(
-        padding: const EdgeInsets.all(12),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-            color: const Color(0x6631241D),
-            border: Border.all(color: const Color(0x77E7B092)),
-            borderRadius: BorderRadius.circular(14)),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
+    padding: const EdgeInsets.all(12),
+    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    decoration: BoxDecoration(
+      color: const Color(0x6631241D),
+      border: Border.all(color: const Color(0x77E7B092)),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
             Icon(Icons.info_outline, color: Colors.orangeAccent, size: 20),
             SizedBox(width: 8),
             Expanded(
-                child: Text(context.tr('Описание встречи'),
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16)))
-          ]),
-          const SizedBox(height: 8),
-          _description.isEmpty
-              ? Text(context.tr('Описание отсутствует'),
-                  style: const TextStyle(color: LrsTheme.text, fontSize: 14))
-              : TranslatableText(_description,
-                  maxLines: full ? null : 3,
-                  overflow: full ? null : TextOverflow.ellipsis,
-                  style: const TextStyle(color: LrsTheme.text, fontSize: 14)),
-        ]),
-      );
+              child: Text(
+                context.tr('Описание встречи'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        _description.isEmpty
+            ? Text(
+                context.tr('Описание отсутствует'),
+                style: const TextStyle(color: LrsTheme.text, fontSize: 14),
+              )
+            : TranslatableText(
+                _description,
+                maxLines: full ? null : 3,
+                overflow: full ? null : TextOverflow.ellipsis,
+                style: const TextStyle(color: LrsTheme.text, fontSize: 14),
+              ),
+      ],
+    ),
+  );
 
-  Widget _meetingSummary({required bool compact}) {
-    final data = _meet?.data() ?? const <String, dynamic>{};
-    final raw = data['datetime'];
-    final date = raw is Timestamp
+  DateTime? get _meetingDate {
+    final raw = _meet?.data()?['datetime'];
+    return raw is Timestamp
         ? raw.toDate()
         : raw is DateTime
-            ? raw
-            : parseMeetingDateTime('$raw');
+        ? raw
+        : parseMeetingDateTime('$raw');
+  }
+
+  Widget _meetingSummary() {
+    final data = _meet?.data() ?? const <String, dynamic>{};
     final location = [
       if (data['country'] != null) context.tr('${data['country']}'),
-      data['region']
-    ].where((e) => e != null && '$e'.isNotEmpty).join(' · ');
+      data['region'],
+    ].where((value) => value != null && '$value'.isNotEmpty).join(' · ');
     return Padding(
-        padding: EdgeInsets.symmetric(horizontal: compact ? 12 : 16),
-        child:
-            Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          if (!compact) const ClrsBrandHeader(),
-          ClrsPanel(
-              padding: EdgeInsets.all(compact ? 12 : 16),
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        context.tr('{count} участников', count: _users.length)),
-                    if (date != null)
-                      Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(context.l10n.dateTime(date))),
-                    if (location.isNotEmpty)
-                      Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(location)),
-                    const Divider(),
-                    InkWell(
-                        onTap: _showDescription,
-                        child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(children: [
-                              const Icon(Icons.article_outlined),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(context.tr('О встрече'))),
-                              const Icon(Icons.chevron_right)
-                            ]))),
-                    const SizedBox(height: 4),
-                    Align(
-                        alignment: Alignment.centerLeft,
-                        child: TextButton(
-                            key: const ValueKey('meeting-participants-action'),
-                            style: TextButton.styleFrom(
-                                foregroundColor: LrsTheme.peachLight,
-                                backgroundColor: Colors.transparent,
-                                minimumSize: const Size(0, 40),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8, vertical: 8)),
-                            onPressed: _showUsers,
-                            child: Text(context.tr('Список участников')))),
-                  ])),
-        ]));
+      padding: const EdgeInsets.fromLTRB(12, 0, 8, 8),
+      child: ClrsPanel(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 20,
+                  color: LrsTheme.peachLight,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (_meetingDate != null)
+                        Text(
+                          context.l10n.dateTime(_meetingDate!),
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      if (location.isNotEmpty)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Icon(Icons.location_on_outlined, size: 12),
+                            const SizedBox(width: 3),
+                            Expanded(
+                              child: Text(
+                                location,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  color: LrsTheme.muted,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 14),
+            InkWell(
+              onTap: _showDescription,
+              child: Row(
+                children: [
+                  const Icon(Icons.article_outlined, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      context.tr('О встрече'),
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                  ),
+                  const Icon(Icons.chevron_right, size: 18),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _showDescription() async {
@@ -397,246 +451,303 @@ class _ChatPageState extends State<ChatPage> {
   Future<void> _showUsers() async {
     if (!_active) return;
     final actionStyle = OutlinedButton.styleFrom(
-        foregroundColor: LrsTheme.text,
-        backgroundColor: LrsTheme.actionGlass,
-        minimumSize: const Size(48, 44),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        side: const BorderSide(color: LrsTheme.actionBorder),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)));
+      foregroundColor: LrsTheme.text,
+      backgroundColor: LrsTheme.actionGlass,
+      minimumSize: const Size(48, 44),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+      side: const BorderSide(color: LrsTheme.actionBorder),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    );
     await Navigator.push<void>(
-        context,
-        MaterialPageRoute(
-          builder: (sheetContext) => StatefulBuilder(
-              builder: (sheetContext, updateSheet) => Stack(children: [
-                    Positioned.fill(
-                        child: Image.asset(
-                            'assets/final_design/family_right.png',
-                            fit: BoxFit.cover)),
-                    Scaffold(
-                      backgroundColor: Colors.transparent,
-                      appBar: AppBar(
-                          backgroundColor: const Color(0xB331241D),
-                          title: Text(context.tr('Участники встречи'),
-                              maxLines: 2),
-                          toolbarHeight: math.max(64,
-                              MediaQuery.textScalerOf(sheetContext).scale(36))),
-                      bottomNavigationBar:
-                          MediaQuery.viewInsetsOf(sheetContext).bottom == 0
-                              ? const MyBottomNavigationBar()
-                              : null,
-                      body: SafeArea(
-                          top: false,
-                          child: LayoutBuilder(
-                              builder: (context, constraints) => Align(
-                                  alignment: Alignment.topLeft,
-                                  child: SizedBox(
-                                      key: const ValueKey(
-                                          'meeting-participants-column'),
-                                      width: _leftColumnWidth(
-                                          constraints.maxWidth),
-                                      height: constraints.maxHeight,
-                                      child: CustomScrollView(
-                              key: const ValueKey('meeting-participants'),
-                              slivers: [
-                                const SliverToBoxAdapter(
-                                    child: Padding(
-                                        padding: EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                        child: ClrsBrandHeader())),
-                                SliverToBoxAdapter(
-                                    child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: ClrsPanel(
-                                            child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                              TranslatableText(widget.groupName,
-                                                  showAction: false,
-                                                  style: Theme.of(context)
-                                                      .textTheme
-                                                      .titleLarge),
-                                              Text(context.tr(
-                                                  '{count} участников',
-                                                  count: _users.length)),
-                                            ])))),
-                                SliverToBoxAdapter(
-                                    child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 16),
-                                        child: TextField(
-                                            onChanged: (value) => updateSheet(
-                                                () => _participantQuery =
-                                                    value.trim().toLowerCase()),
-                                            decoration: InputDecoration(
-                                                prefixIcon:
-                                                    const Icon(Icons.search),
-                                                hintText: context
-                                                    .tr('Поиск по имени'))))),
-                                SliverPadding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 12),
-                                    sliver: SliverList(
-                                        delegate: SliverChildBuilderDelegate(
-                                            (context, index) {
-                                      final filtered = _users
-                                          .where((u) => u.name
-                                              .toLowerCase()
-                                              .contains(_participantQuery))
-                                          .toList();
-                                      final user = filtered[index];
-                                      return Padding(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 10),
-                                          child: ClrsPanel(
-                                              padding: EdgeInsets.zero,
-                                              child: InkWell(
-                                                onTap: () => nextScreen(
-                                                    context,
-                                                    SomebodyProfile(
-                                                        uid: user.uid,
-                                                        photoUrl: user.imageUrl,
-                                                        name: user.name,
-                                                        userInfo:
-                                                            user.userInfo)),
-                                                child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                            12),
-                                                    child: Row(
-                                                        crossAxisAlignment:
-                                                            CrossAxisAlignment
-                                                                .start,
-                                                        children: [
-                                                          GroupAvatar(
-                                                              url:
-                                                                  user.imageUrl,
-                                                              group:
-                                                                  user.group),
-                                                          const SizedBox(
-                                                              width: 10),
-                                                          Expanded(
-                                                              child: Column(
-                                                                  crossAxisAlignment:
-                                                                      CrossAxisAlignment
-                                                                          .start,
-                                                                  children: [
-                                                                Text(user.name),
-                                                                if (user.uid ==
-                                                                    _meet?.data()?[
-                                                                        'admin'])
-                                                                  Text(
-                                                                      context.tr(
-                                                                          'Организатор'),
-                                                                      style: const TextStyle(
-                                                                          color:
-                                                                              LrsTheme.peachLight)),
-                                                                const SizedBox(
-                                                                    height: 4),
-                                                                Text([
-                                                                  user.age,
-                                                                  context.tr(
-                                                                      '${user.userInfo['country'] ?? ''}'),
-                                                                  '${user.userInfo['region'] ?? ''}'
-                                                                ]
-                                                                    .where((value) =>
-                                                                        value
-                                                                            .isNotEmpty)
-                                                                    .join(
-                                                                        ' · ')),
-                                                              ])),
-                                                          if (_admin &&
-                                                              user.uid !=
-                                                                  _ownerUid)
-                                                            IconButton(
-                                                                tooltip: context.tr(
-                                                                    'Исключить участника'),
-                                                                icon: const Icon(
-                                                                    Icons
-                                                                        .delete,
-                                                                    color: Colors
-                                                                        .redAccent),
-                                                                onPressed:
-                                                                    _changingMembership
-                                                                        ? null
-                                                                        : () async {
-                                                                            await _kickUser(user.uid);
-                                                                            if (sheetContext.mounted) {
-                                                                              updateSheet(() {});
-                                                                            }
-                                                                          }),
-                                                        ])),
-                                              )));
-                                    },
-                                            childCount: _users
-                                                .where((u) => u.name
-                                                    .toLowerCase()
-                                                    .contains(
-                                                        _participantQuery))
-                                                .length))),
-                                SliverToBoxAdapter(
-                                    child: Padding(
-                                        padding: const EdgeInsets.all(16),
-                                        child: OutlinedButton.icon(
-                                            style: actionStyle,
-                                            onPressed: () =>
-                                                Navigator.pop(sheetContext),
-                                            icon: const Icon(
-                                                Icons.chat_bubble_outline),
-                                            label: Text(context
-                                                .tr('Вернуться в чат'))))),
-                                if (_joined)
-                                  SliverToBoxAdapter(
-                                      child: Padding(
-                                          padding: const EdgeInsets.fromLTRB(
-                                              16, 0, 16, 16),
-                                          child: OutlinedButton.icon(
-                                              style: actionStyle,
-                                              icon: const Icon(
-                                                  Icons.output_sharp),
-                                              onPressed: _changingMembership
-                                                  ? null
-                                                  : () async {
-                                                      final left =
-                                                          await _changeMembership(
-                                                              join: false);
-                                                      if (left &&
-                                                          sheetContext
-                                                              .mounted) {
-                                                        Navigator.pop(
-                                                            sheetContext);
-                                                      }
-                                                    },
-                                              label: Text(context
-                                                  .tr('Выйти из встречи'))))),
-                              ]))))),
+      context,
+      MaterialPageRoute(
+        builder: (sheetContext) => StatefulBuilder(
+          builder: (sheetContext, updateSheet) => Stack(
+            children: [
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/final_design/family_right.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Scaffold(
+                backgroundColor: Colors.transparent,
+                appBar: AppBar(
+                  backgroundColor: const Color(0xB331241D),
+                  title: Text(context.tr('Участники встречи'), maxLines: 2),
+                  toolbarHeight: math.max(
+                    64,
+                    MediaQuery.textScalerOf(sheetContext).scale(36),
+                  ),
+                ),
+                bottomNavigationBar:
+                    MediaQuery.viewInsetsOf(sheetContext).bottom == 0
+                    ? const MyBottomNavigationBar()
+                    : null,
+                body: SafeArea(
+                  top: false,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                        key: const ValueKey('meeting-participants-column'),
+                        width: _leftColumnWidth(constraints.maxWidth),
+                        height: constraints.maxHeight,
+                        child: CustomScrollView(
+                          key: const ValueKey('meeting-participants'),
+                          slivers: [
+                            const SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 16),
+                                child: ClrsBrandHeader(),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: ClrsPanel(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      TranslatableText(
+                                        widget.groupName,
+                                        showAction: false,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.titleLarge,
+                                      ),
+                                      Text(
+                                        context.tr(
+                                          '{count} участников',
+                                          count: _users.length,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                ),
+                                child: TextField(
+                                  onChanged: (value) => updateSheet(
+                                    () => _participantQuery = value
+                                        .trim()
+                                        .toLowerCase(),
+                                  ),
+                                  decoration: InputDecoration(
+                                    prefixIcon: const Icon(Icons.search),
+                                    hintText: context.tr('Поиск по имени'),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SliverPadding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              sliver: SliverList(
+                                delegate: SliverChildBuilderDelegate(
+                                  (context, index) {
+                                    final filtered = _users
+                                        .where(
+                                          (u) => u.name.toLowerCase().contains(
+                                            _participantQuery,
+                                          ),
+                                        )
+                                        .toList();
+                                    final user = filtered[index];
+                                    return Padding(
+                                      padding: const EdgeInsets.only(
+                                        bottom: 10,
+                                      ),
+                                      child: ClrsPanel(
+                                        padding: EdgeInsets.zero,
+                                        child: InkWell(
+                                          onTap: () => nextScreen(
+                                            context,
+                                            SomebodyProfile(
+                                              uid: user.uid,
+                                              photoUrl: user.imageUrl,
+                                              name: user.name,
+                                              userInfo: user.userInfo,
+                                            ),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(12),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                GroupAvatar(
+                                                  url: user.imageUrl,
+                                                  group: user.group,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(user.name),
+                                                      if (user.uid ==
+                                                          _meet
+                                                              ?.data()?['admin'])
+                                                        Text(
+                                                          context.tr(
+                                                            'Организатор',
+                                                          ),
+                                                          style:
+                                                              const TextStyle(
+                                                                color: LrsTheme
+                                                                    .peachLight,
+                                                              ),
+                                                        ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        [
+                                                              user.age,
+                                                              context.tr(
+                                                                '${user.userInfo['country'] ?? ''}',
+                                                              ),
+                                                              '${user.userInfo['region'] ?? ''}',
+                                                            ]
+                                                            .where(
+                                                              (value) => value
+                                                                  .isNotEmpty,
+                                                            )
+                                                            .join(' · '),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                if (_admin &&
+                                                    user.uid != _ownerUid)
+                                                  IconButton(
+                                                    tooltip: context.tr(
+                                                      'Исключить участника',
+                                                    ),
+                                                    icon: const Icon(
+                                                      Icons.delete,
+                                                      color: Colors.redAccent,
+                                                    ),
+                                                    onPressed:
+                                                        _changingMembership
+                                                        ? null
+                                                        : () async {
+                                                            await _kickUser(
+                                                              user.uid,
+                                                            );
+                                                            if (sheetContext
+                                                                .mounted) {
+                                                              updateSheet(
+                                                                () {},
+                                                              );
+                                                            }
+                                                          },
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  childCount: _users
+                                      .where(
+                                        (u) => u.name.toLowerCase().contains(
+                                          _participantQuery,
+                                        ),
+                                      )
+                                      .length,
+                                ),
+                              ),
+                            ),
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: OutlinedButton.icon(
+                                  style: actionStyle,
+                                  onPressed: () => Navigator.pop(sheetContext),
+                                  icon: const Icon(Icons.chat_bubble_outline),
+                                  label: Text(context.tr('Вернуться в чат')),
+                                ),
+                              ),
+                            ),
+                            if (_joined)
+                              SliverToBoxAdapter(
+                                child: Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    0,
+                                    16,
+                                    16,
+                                  ),
+                                  child: OutlinedButton.icon(
+                                    style: actionStyle,
+                                    icon: const Icon(Icons.output_sharp),
+                                    onPressed: _changingMembership
+                                        ? null
+                                        : () async {
+                                            final left =
+                                                await _changeMembership(
+                                                  join: false,
+                                                );
+                                            if (left && sheetContext.mounted) {
+                                              Navigator.pop(sheetContext);
+                                            }
+                                          },
+                                    label: Text(context.tr('Выйти из встречи')),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ])),
-        ));
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _kickUser(String uid) async {
     if (!_active || !_admin || _changingMembership) return;
     final confirmed = await showDialog<bool>(
-        context: context,
-        builder: (dialogContext) => AlertDialog(
-                backgroundColor: LrsTheme.surface,
-                content: Text(context.tr(
-                    'Вы уверены, что хотите исключить этого пользователя?')),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(dialogContext, false),
-                      child: Text(context.tr('Нет'))),
-                  TextButton(
-                      onPressed: () => Navigator.pop(dialogContext, true),
-                      child: Text(context.tr('Да')))
-                ]));
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: LrsTheme.surface,
+        content: Text(
+          context.tr('Вы уверены, что хотите исключить этого пользователя?'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: Text(context.tr('Нет')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: Text(context.tr('Да')),
+          ),
+        ],
+      ),
+    );
     if (confirmed != true || !_active) return;
     setState(() => _changingMembership = true);
     try {
       await _meetRef.update({
         'users': FieldValue.arrayRemove([uid]),
-        'kicked': FieldValue.arrayUnion([uid])
+        'kicked': FieldValue.arrayUnion([uid]),
       });
       if (_active) {
         setState(() => _users.removeWhere((user) => user.uid == uid));
@@ -667,8 +778,10 @@ class _ChatPageState extends State<ChatPage> {
       final confirmed = await request.write.wait();
       if (!_active) return false;
       if (!confirmed) {
-        setState(() => _membershipNotice =
-            'Результат изменения участия пока неизвестен. Проверьте его перед повтором.');
+        setState(
+          () => _membershipNotice =
+              'Результат изменения участия пока неизвестен. Проверьте его перед повтором.',
+        );
         return false;
       }
       _membership.acknowledge(request);
@@ -679,8 +792,10 @@ class _ChatPageState extends State<ChatPage> {
     } catch (_) {
       if (_membershipRequest?.write.failed ?? false) _membershipRequest = null;
       if (_active) {
-        setState(() => _membershipNotice =
-            'Не удалось изменить участие. Проверьте соединение.');
+        setState(
+          () => _membershipNotice =
+              'Не удалось изменить участие. Проверьте соединение.',
+        );
       }
       return false;
     } finally {
@@ -696,7 +811,7 @@ class _ChatPageState extends State<ChatPage> {
       await _meetRef.update({
         'usersWithoutNotification': wasMuted
             ? FieldValue.arrayRemove([_ownerUid])
-            : FieldValue.arrayUnion([_ownerUid])
+            : FieldValue.arrayUnion([_ownerUid]),
       });
       if (!_active) return;
       setState(() {
@@ -704,10 +819,10 @@ class _ChatPageState extends State<ChatPage> {
       });
       if (!mounted) return;
       showSnackbar(
-          context,
-          Colors.black54,
-          context
-              .tr(wasMuted ? 'Уведомления включены' : 'Уведомления выключены'));
+        context,
+        Colors.black54,
+        context.tr(wasMuted ? 'Уведомления включены' : 'Уведомления выключены'),
+      );
     } catch (_) {
       _showError('Не удалось изменить уведомления. Проверьте соединение.');
     } finally {
@@ -717,266 +832,424 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-        backgroundAsset: 'assets/final_design/family_back.png',
-        bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom == 0
-            ? const MyBottomNavigationBar()
-            : null,
-        appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            toolbarHeight:
-                math.max(64, MediaQuery.textScalerOf(context).scale(34)),
-            title: TranslatableText(widget.groupName,
-                showAction: false,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 18)),
-            actions: [
+    backgroundAsset: 'assets/family_main.jpg',
+    bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom == 0
+        ? const MyBottomNavigationBar()
+        : null,
+    appBar: AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.transparent,
+      toolbarHeight: MediaQuery.viewInsetsOf(context).bottom > 0 &&
+          MediaQuery.sizeOf(context).height < 500
+          ? 44 : 56 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
+      title: const FittedBox(fit: BoxFit.scaleDown, child: ClrsLogo(size: 34)),
+      actions: [
+        IconButton(
+          tooltip: context.tr(
+            _muted ? 'Включить уведомления' : 'Выключить уведомления',
+          ),
+          onPressed: _changingNotification ? null : _switchNotification,
+          icon: Icon(_muted ? Icons.notifications_off : Icons.notifications),
+        ),
+        Tooltip(
+          message: context.tr('Список участников'),
+          child: TextButton(
+          key: const ValueKey('meeting-participants-action'),
+          onPressed: _loading ? null : _showUsers,
+          child: FittedBox(fit: BoxFit.scaleDown, child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.people_alt_outlined, color: LrsTheme.text),
+              if (!_loading)
+                Text(
+                  context.l10n.number(_users.length),
+                  style: const TextStyle(color: LrsTheme.text, fontSize: 11),
+                ),
+            ],
+          )),
+        ),
+        ),
+        if (_joined || (_admin && _meet != null))
+          PopupMenuButton<String>(
+            tooltip: context.tr('Встреча'),
+            onSelected: (value) async {
+              if (value == 'leave') {
+                final left = await _changeMembership(join: false);
+                if (left && context.mounted) Navigator.pop(context);
+              }
+              if (value == 'edit' && _meet != null && context.mounted) {
+                nextScreenReplace(context, EditMeet(meet: _meet!));
+              }
+            },
+            itemBuilder: (_) => [
               if (_joined)
-                IconButton(
-                    tooltip: context.tr('Выйти из встречи'),
-                    onPressed: _changingMembership
-                        ? null
-                        : () async {
-                            final left = await _changeMembership(join: false);
-                            if (left && context.mounted) Navigator.pop(context);
-                          },
-                    icon: const Icon(Icons.output_sharp)),
-              IconButton(
-                  tooltip: context.tr(_muted
-                      ? 'Включить уведомления'
-                      : 'Выключить уведомления'),
-                  onPressed: _changingNotification ? null : _switchNotification,
-                  icon: Icon(
-                      _muted ? Icons.notifications_off : Icons.notifications)),
+                PopupMenuItem(
+                  value: 'leave',
+                  enabled: !_changingMembership,
+                  child: Text(context.tr('Выйти из встречи')),
+                ),
               if (_admin && _meet != null)
-                IconButton(
-                    tooltip: context.tr('Редактировать встречу'),
-                    onPressed: () =>
-                        nextScreenReplace(context, EditMeet(meet: _meet!)),
-                    icon: const Icon(Icons.edit_calendar_outlined)),
-            ]),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : _loadFailed
-                ? _loadError()
-                : SafeArea(
-                    top: false,
-                    child: LayoutBuilder(
-                        builder: (context, constraints) => Align(
-                            alignment: Alignment.topLeft,
-                            child: SizedBox(
-                                key: const ValueKey('meeting-chat-column'),
-                                height: constraints.maxHeight,
-                                width: _leftColumnWidth(constraints.maxWidth),
-                                child: Column(children: [
-                              if (_membershipNotice != null ||
-                                  _membershipRequest != null)
-                                ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        maxHeight: constraints.maxHeight * .16),
-                                    child: SingleChildScrollView(
-                                        child: Padding(
-                                            padding: const EdgeInsets.symmetric(
-                                                horizontal: 16, vertical: 6),
-                                            child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  if (_membershipNotice != null)
-                                                    Text(context.tr(
-                                                        _membershipNotice!)),
-                                                  TextButton(
-                                                      onPressed: _changingMembership
-                                                          ? null
-                                                          : () => _changeMembership(
-                                                              join: _membershipRequest
-                                                                      ?.joined ??
-                                                                  _joined),
-                                                      child: Text(context.tr(
-                                                          'Проверить результат'))),
-                                                ])))),
-                              if (!_kicked &&
-                                  MediaQuery.viewInsetsOf(context).bottom == 0)
-                                ConstrainedBox(
-                                    constraints: BoxConstraints(
-                                        maxHeight: math.min(
-                                            300, constraints.maxHeight * .46)),
-                                    child: Scrollbar(
-                                        controller: _summaryScrollController,
-                                        thumbVisibility: true,
-                                        child: SingleChildScrollView(
-                                            key: const ValueKey(
-                                                'meeting-summary-scroll'),
-                                            controller:
-                                                _summaryScrollController,
-                                            child: _meetingSummary(
-                                                compact: constraints.maxHeight <
-                                                    600)))),
-                              Expanded(child: _chatMessages()),
-                              ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                      maxHeight: math.min(
-                                          180, constraints.maxHeight * .3)),
-                                  child: SingleChildScrollView(
-                                      child: SafeArea(
-                                          top: false, child: _composer()))),
-                            ]))))),
-      );
+                PopupMenuItem(
+                  value: 'edit',
+                  child: Text(context.tr('Редактировать встречу')),
+                ),
+            ],
+          ),
+      ],
+    ),
+    body: _loading
+        ? const Center(child: CircularProgressIndicator())
+        : _loadFailed
+        ? _loadError()
+        : SafeArea(
+            top: false,
+            child: LayoutBuilder(
+              builder: (context, constraints) => Column(
+                children: [
+                  if (constraints.maxHeight >= 180 && MediaQuery.viewInsetsOf(this.context).bottom == 0)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(6, 0, 12, 10),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        IconButton(
+                          onPressed: Navigator.of(context).canPop()
+                              ? () => Navigator.pop(context)
+                              : null,
+                          icon: const Icon(Icons.chevron_left),
+                        ),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TranslatableText(
+                                widget.groupName,
+                                showAction: false,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 21),
+                              ),
+                              Text(
+                                '${context.tr('{count} участников', count: _users.length)}${_meetingDate == null ? '' : ' · ${context.l10n.date(_meetingDate!)}'}',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: LrsTheme.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_membershipNotice != null || _membershipRequest != null)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: constraints.maxHeight * .16,
+                      ),
+                      child: SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_membershipNotice != null)
+                                Text(context.tr(_membershipNotice!)),
+                              TextButton(
+                                onPressed: _changingMembership
+                                    ? null
+                                    : () => _changeMembership(
+                                        join:
+                                            _membershipRequest?.joined ??
+                                            _joined,
+                                      ),
+                                child: Text(context.tr('Проверить результат')),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (!_kicked && MediaQuery.viewInsetsOf(this.context).bottom == 0)
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: SizedBox(
+                        key: const ValueKey('meeting-chat-column'),
+                        width: _leftColumnWidth(constraints.maxWidth),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: math.min(
+                              140,
+                              constraints.maxHeight * .25,
+                            ),
+                          ),
+                          child: Scrollbar(
+                            controller: _summaryScrollController,
+                            child: SingleChildScrollView(
+                              key: const ValueKey('meeting-summary-scroll'),
+                              controller: _summaryScrollController,
+                              child: _meetingSummary(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  Expanded(child: _chatMessages()),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: math.min(180, constraints.maxHeight *
+                        (constraints.maxHeight < 180 ? .7 : .3)),
+                    ),
+                    child: SingleChildScrollView(
+                      child: SafeArea(top: false, child: _composer()),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+  );
 
   Widget _loadError() => SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: ClrsPanel(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(
-            context.tr('Не удалось загрузить встречу. Проверьте подключение.')),
-        TextButton(
-            onPressed: _loadMeeting, child: Text(context.tr('Повторить')))
-      ])));
+    padding: const EdgeInsets.all(16),
+    child: ClrsPanel(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            context.tr('Не удалось загрузить встречу. Проверьте подключение.'),
+          ),
+          TextButton(
+            onPressed: _loadMeeting,
+            child: Text(context.tr('Повторить')),
+          ),
+        ],
+      ),
+    ),
+  );
 
   Widget _composer() => Container(
-        color: const Color(0x6631241D),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: _joined
-            ? Column(mainAxisSize: MainAxisSize.min, children: [
-                Row(children: [
+    key: const ValueKey('meeting-message-composer'),
+    margin: const EdgeInsets.fromLTRB(10, 4, 10, 8),
+    decoration: BoxDecoration(
+      color: const Color(0x6631241D),
+      border: Border.all(color: LrsTheme.actionBorder),
+      borderRadius: BorderRadius.circular(18),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    child: _joined
+        ? Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
                   Expanded(
-                      child: TextFormField(
-                          controller: _messageController,
-                          enabled: !_sending &&
-                              !_restoringMessage &&
-                              !_messageRestoreFailed &&
-                              _pendingMessage == null,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                              hintText: context.tr('Отправить сообщение...'),
-                              hintStyle: TextStyle(
-                                  color: Colors.white, fontSize: 16)))),
-                  IconButton(
-                      tooltip: context.tr(
-                          _pendingMessage == null && !_messageRestoreFailed
-                              ? 'Отправить сообщение'
-                              : 'Проверить отправку'),
-                      onPressed: _sending || _restoringMessage
-                          ? null
-                          : _messageRestoreFailed
-                              ? _restoreMessage
-                              : _sendMessage,
-                      icon: _sending || _restoringMessage
-                          ? const SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2))
-                          : Icon(
-                              _pendingMessage == null && !_messageRestoreFailed
-                                  ? Icons.send
-                                  : Icons.refresh,
-                              color: Colors.white)),
-                ]),
-                if (_messageRestoreFailed)
-                  Text(context.tr(
-                      'Не удалось восстановить отправку. Попробуйте ещё раз.')),
-                if (_pendingMessage != null && !_sending)
-                  Text(
-                      context.tr(
-                          'Результат отправки пока неизвестен. Проверьте его перед повторной отправкой.'),
-                      style: const TextStyle(color: LrsTheme.peachLight)),
-              ])
-            : Column(mainAxisSize: MainAxisSize.min, children: [
+                    child: TextFormField(
+                      controller: _messageController,
+                      enabled:
+                          !_sending &&
+                          !_restoringMessage &&
+                          !_messageRestoreFailed &&
+                          _pendingMessage == null,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        hintText: context.tr('Отправить сообщение...'),
+                        hintStyle: TextStyle(color: Colors.white, fontSize: 16),
+                        filled: false,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        disabledBorder: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8),
+                      ),
+                    ),
+                  ),
+                  IconButton.filled(
+                    key: const ValueKey('meeting-send-action'),
+                    style: IconButton.styleFrom(
+                      backgroundColor: LrsTheme.peach,
+                      foregroundColor: LrsTheme.background,
+                      disabledBackgroundColor: LrsTheme.actionDisabled,
+                      shape: const CircleBorder(),
+                    ),
+                    tooltip: context.tr(
+                      _pendingMessage == null && !_messageRestoreFailed
+                          ? 'Отправить сообщение'
+                          : 'Проверить отправку',
+                    ),
+                    onPressed: _sending || _restoringMessage
+                        ? null
+                        : _messageRestoreFailed
+                        ? _restoreMessage
+                        : _sendMessage,
+                    icon: _sending || _restoringMessage
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Icon(
+                            _pendingMessage == null && !_messageRestoreFailed
+                                ? Icons.send
+                                : Icons.refresh,
+                            color: LrsTheme.background,
+                          ),
+                  ),
+                ],
+              ),
+              if (_messageRestoreFailed)
                 Text(
-                    context.tr(_kicked
-                        ? 'Вы были исключены из встречи'
-                        : 'Вы не являетесь участником встречи'),
-                    style: const TextStyle(color: Colors.white),
-                    textAlign: TextAlign.center),
-                if (!_kicked)
-                  TextButton(
-                      onPressed: _changingMembership
-                          ? null
-                          : () => _changeMembership(join: true),
-                      child: Text(context.tr('Присоединиться'),
-                          style: TextStyle(color: LrsTheme.peachLight))),
-              ]),
-      );
+                  context.tr(
+                    'Не удалось восстановить отправку. Попробуйте ещё раз.',
+                  ),
+                ),
+              if (_pendingMessage != null && !_sending)
+                Text(
+                  context.tr(
+                    'Результат отправки пока неизвестен. Проверьте его перед повторной отправкой.',
+                  ),
+                  style: const TextStyle(color: LrsTheme.peachLight),
+                ),
+            ],
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                context.tr(
+                  _kicked
+                      ? 'Вы были исключены из встречи'
+                      : 'Вы не являетесь участником встречи',
+                ),
+                style: const TextStyle(color: Colors.white),
+                textAlign: TextAlign.center,
+              ),
+              if (!_kicked)
+                TextButton(
+                  onPressed: _changingMembership
+                      ? null
+                      : () => _changeMembership(join: true),
+                  child: Text(
+                    context.tr('Присоединиться'),
+                    style: TextStyle(color: LrsTheme.peachLight),
+                  ),
+                ),
+            ],
+          ),
+  );
 
   Widget _chatMessages() => StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-      stream: _chats,
-      builder: (context, snapshot) {
-        if (snapshot.hasError || (_messageWaitExpired && !snapshot.hasData)) {
-          return SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: ClrsPanel(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                Text(context.tr(
-                    'Не удалось загрузить сообщения. Проверьте подключение.')),
+    stream: _chats,
+    builder: (context, snapshot) {
+      if (snapshot.hasError || (_messageWaitExpired && !snapshot.hasData)) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: ClrsPanel(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  context.tr(
+                    'Не удалось загрузить сообщения. Проверьте подключение.',
+                  ),
+                ),
                 TextButton(
-                    onPressed: () => setState(_setMessageStream),
-                    child: Text(context.tr('Повторить')))
-              ])));
-        }
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
-        final docs = _history.documents;
-        if (docs.isEmpty) {
-          return Center(child: Text(context.tr('Сообщений пока нет')));
-        }
-        final hasOlder = _history.hasMore;
-        return ListView.builder(
-            controller: _messageScrollController,
-            reverse: true,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            itemCount: docs.length + (hasOlder ? 1 : 0),
-            itemBuilder: (context, index) {
-              if (index == docs.length) {
-                return Center(
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  onPressed: () => setState(_setMessageStream),
+                  child: Text(context.tr('Повторить')),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+      if (!snapshot.hasData) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      final docs = _history.documents;
+      if (docs.isEmpty) {
+        return Center(child: Text(context.tr('Сообщений пока нет')));
+      }
+      final hasOlder = _history.hasMore;
+      return ListView.builder(
+        controller: _messageScrollController,
+        reverse: true,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        itemCount: docs.length + (hasOlder ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index == docs.length) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
                   if (_olderError)
-                    Text(context.tr(
-                        'Не удалось загрузить сообщения. Проверьте подключение.')),
+                    Text(
+                      context.tr(
+                        'Не удалось загрузить сообщения. Проверьте подключение.',
+                      ),
+                    ),
                   TextButton(
-                      onPressed: _loadingOlder ? null : _loadOlderMessages,
-                      child: _loadingOlder
-                          ? const CircularProgressIndicator(strokeWidth: 2)
-                          : Text(context.tr(
-                              _olderError ? 'Повторить' : 'Загрузить ещё'))),
-                ]));
-              }
-              final data = docs[index].data();
-              final sender = '${data['sender'] ?? ''}';
-              UserInfo? profile;
-              for (final user in _users) {
-                if (user.uid == sender) {
-                  profile = user;
-                  break;
-                }
-              }
-              return MessageTile(
-                  key: ValueKey(docs[index].id),
-                  avatar: GroupAvatar(
-                      url: profile?.imageUrl ?? '',
-                      group: profile?.group ?? '',
-                      size: 44),
-                  name: '${data['name'] ?? profile?.name ?? ''}',
-                  sender: sender,
-                  chatId: widget.groupId,
-                  message: docs[index],
-                  sentByMe: _ownerUid == sender,
-                  isRead: true,
-                  isChat: false);
-            });
-      });
+                    onPressed: _loadingOlder ? null : _loadOlderMessages,
+                    child: _loadingOlder
+                        ? const CircularProgressIndicator(strokeWidth: 2)
+                        : Text(
+                            context.tr(
+                              _olderError ? 'Повторить' : 'Загрузить ещё',
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            );
+          }
+          final data = docs[index].data();
+          final sender = '${data['sender'] ?? ''}';
+          UserInfo? profile;
+          for (final user in _users) {
+            if (user.uid == sender) {
+              profile = user;
+              break;
+            }
+          }
+          return MessageTile(
+            compactMeeting: true,
+            key: ValueKey(docs[index].id),
+            avatar: GroupAvatar(
+              url: profile?.imageUrl ?? '',
+              group: profile?.group ?? '',
+              size: 44,
+            ),
+            name: '${data['name'] ?? profile?.name ?? ''}',
+            sender: sender,
+            chatId: widget.groupId,
+            message: docs[index],
+            sentByMe: _ownerUid == sender,
+            isRead: true,
+            isChat: false,
+          );
+        },
+      );
+    },
+  );
 
   Future<void> _sendMessage() async {
     if (!_active ||
         !_joined ||
         _sending ||
         _restoringMessage ||
-        _messageRestoreFailed) return;
+        _messageRestoreFailed)
+      return;
     final text = _outgoing?.text ?? _messageController.text.trim();
     if (text.isEmpty) return;
     setState(() => _sending = true);
     try {
-      _outgoing ??=
-          _submissions.start(chatId: widget.groupId, text: text, group: true);
+      _outgoing ??= _submissions.start(
+        chatId: widget.groupId,
+        text: text,
+        group: true,
+      );
       final operation = _outgoing!;
       final confirmed = await operation.write.wait();
       if (!_active || !confirmed) return;
@@ -989,7 +1262,8 @@ class _ChatPageState extends State<ChatPage> {
       if (!_active) return;
       if (_pendingMessage?.failed ?? true) _outgoing = null;
       _showError(
-          'Не удалось отправить сообщение. Текст сохранён; попробуйте ещё раз.');
+        'Не удалось отправить сообщение. Текст сохранён; попробуйте ещё раз.',
+      );
     } finally {
       if (_active) setState(() => _sending = false);
     }

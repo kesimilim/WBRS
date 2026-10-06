@@ -58,6 +58,10 @@ set -euo pipefail
 [[ " $* " == *'--set-gtid-purged=OFF'* ]]
 [[ " $* " == *'--skip-add-drop-table'* ]]
 [[ " $* " != *' --disable-keys '* ]]
+if [[ " $* " == *'--connect-timeout'* ]]; then
+  printf '%s\n' "mysqldump: [ERROR] unknown variable 'connect-timeout=5'." >&2
+  exit 7
+fi
 printf '%s\\n' '-- MySQL dump 10.13' 'CREATE TABLE `sample` (`id` int PRIMARY KEY);'
 # Model mysqldump's default --opt: a limited restore user must not receive
 # DISABLE/ENABLE KEYS ALTER statements. No real database is contacted.
@@ -122,6 +126,20 @@ fi
         result = self.run_script("backup-mysql84.sh", "--execute")
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(list(self.backups.iterdir()), [])
+
+    def test_mysql_client_connect_timeout_breaks_mysqldump_and_does_not_publish(self) -> None:
+        # The real MySQL 8.4.4 mysqldump rejects this mysql-client-only option.
+        invalid_script = self.root / "backup-with-invalid-connect-timeout.sh"
+        write(invalid_script, (HERE / "backup-mysql84.sh").read_text().replace(
+            "--default-character-set=utf8mb4)",
+            "--default-character-set=utf8mb4 --connect-timeout=5)"))
+        result = subprocess.run(["bash", str(invalid_script), "--execute"],
+                                env=self.env, capture_output=True, text=True,
+                                timeout=10, check=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unknown variable 'connect-timeout=5'", result.stderr)
+        self.assertEqual(list(self.backups.iterdir()), [])
+        self.make_archive()  # The corrected script succeeds with the same client.
 
     def test_archive_validation_and_confirmed_restore(self) -> None:
         archive = self.make_archive()

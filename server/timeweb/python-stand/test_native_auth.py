@@ -11,6 +11,7 @@ import subprocess
 import threading
 import time
 import unittest
+from unittest.mock import patch
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from native_credentials import (CredentialCodec, CredentialUnavailable, FirebaseScryptVerifier,
@@ -19,6 +20,7 @@ from native_sessions import (NativeSessionStore, SessionTokens, SessionRejected,
                              _timestamp, ACCOUNT_QUERY, SESSION_QUERY)
 from native_auth import (NativeAuthService, NativeRejected, NativeUnavailable, NativeRateLimited,
                          BoundedRateLimiter, parse_login_body)
+from profile_store import BUNDLED_CA_FILE
 
 CONFIG = {"algorithm": "SCRYPT",
     "signerKey": "jxspr8Ki0RYycVU8zykbdLGjFQ3McFUH0uiiTvC8pVMXAn210wjLNmdZJzxUECKbm0QsEmYUSDzZvpjeJ9WmXA==",
@@ -204,6 +206,27 @@ class NativeAuthTests(unittest.TestCase):
 
     def login(self, device="synthetic-device"):
         return self.service.login({**self.body, "deviceId": device}, peer="synthetic-peer")
+
+    def test_absent_ca_uses_bundled_verified_tls_and_bad_explicit_ca_never_connects(self):
+        self.env.pop("CLRS_NATIVE_AUTH_DB_CA_FILE")
+        with patch("profile_store.ssl.create_default_context", wraps=ssl.create_default_context) as create_context:
+            self.assertEqual("configured", self.store._transaction(lambda cursor: "configured",
+                deadline=time.monotonic() + 5))
+            create_context.assert_called_once_with(cafile=BUNDLED_CA_FILE)
+        config = self.db.configs[-1]
+        self.assertTrue(Path(BUNDLED_CA_FILE).is_absolute())
+        self.assertTrue(config["ssl"].check_hostname)
+        self.assertEqual(ssl.CERT_REQUIRED, config["ssl"].verify_mode)
+        for key in ["CLRS_NATIVE_AUTH_DB_CA_FILE", "CLRS_DB_CA_FILE"]:
+            for value in ["", "relative-ca.pem", "/__clrs_synthetic__/missing-ca.pem"]:
+                with self.subTest(key=key, value=value):
+                    self.env[key] = value
+                    before = len(self.db.configs)
+                    with self.assertRaises(SessionUnavailable):
+                        self.store._transaction(lambda cursor: self.fail("invalid CA reached action"),
+                            deadline=time.monotonic() + 5)
+                    self.assertEqual(before, len(self.db.configs))
+                    self.env.pop(key)
 
     def test_require_ssl_usage_grant_allows_login_but_other_suffixes_and_scopes_fail(self):
         self.db.require_ssl = True

@@ -62,4 +62,42 @@ status, _ = request(
 )
 assert status == 403, f"An ordinary user issued a moderator grant: {status}"
 
-print("PASS: role request allowed; self-grants and unapproved publication denied")
+den_uid = "4LTxrSEmWmNRcGn5paeFfhWRIDi1"
+status, _ = request(
+    AUTH + f"/projects/{PROJECT}/accounts",
+    {"localId": den_uid, "email": "den@example.test", "password": "local-demo-password"},
+    "owner",
+)
+assert status == 200, f"Local-only fixed-UID account creation failed: {status}"
+status, den = request(
+    AUTH + "/accounts:signInWithPassword?key=local-demo",
+    {"email": "den@example.test", "password": "local-demo-password", "returnSecureToken": True},
+)
+assert status == 200 and den["localId"] == den_uid
+
+status, _ = request(
+    DB + "/author_grants?documentId=approved-reader",
+    fields(uid=uid, status="approved"),
+    den["idToken"],
+)
+assert status == 200, f"The requested social admin UID could not approve an author: {status}"
+status, _ = request(
+    DB + "/posts?documentId=den-publication",
+    fields(authorUid=den_uid, status="published"),
+    den["idToken"],
+)
+assert status == 200, f"The requested social admin UID could not publish: {status}"
+status, _ = request(
+    DB + "/posts?documentId=forged-other-author",
+    fields(authorUid=uid, status="published"),
+    den["idToken"],
+)
+assert status == 403, f"The social admin must not forge another author UID: {status}"
+status, _ = request(
+    DB + "/users?documentId=other-user",
+    fields(balance="999", status="active"),
+    den["idToken"],
+)
+assert status == 403, f"Social fixture must not grant access to unrelated user data: {status}"
+
+print("PASS: requested UID approves/publishes; self-grants, forged author and unrelated writes denied")

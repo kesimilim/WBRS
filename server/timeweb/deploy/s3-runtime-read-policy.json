@@ -1,0 +1,17 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InspectOnlyExistingPrivateBucket",
+      "Effect": "Allow",
+      "Action": ["s3:GetBucketAcl", "s3:GetBucketPolicy"],
+      "Resource": "arn:aws:s3:::0c47012a-fdbc-43ee-96f3-49e43cea0d00"
+    },
+    {
+      "Sid": "ReadOnlyLogicallyPromotedMedia",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:GetObjectAcl"],
+      "Resource": "arn:aws:s3:::0c47012a-fdbc-43ee-96f3-49e43cea0d00/clrs-import-quarantine/*"
+    }
+  ]
+}

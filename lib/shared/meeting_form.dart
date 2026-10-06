@@ -5,6 +5,8 @@ import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/meetings.dart';
 import 'package:wbrs/service/meeting_write_service.dart';
+import 'package:wbrs/service/timeweb_app_runtime.dart';
+import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.dart';
 import 'clrs_screen.dart';
 import 'geo_catalog.dart';
 import 'lrs_theme.dart';
@@ -42,14 +44,27 @@ class MeetingForm extends StatefulWidget {
       this.meetingId,
       this.initialData = const {},
       this.service,
+      this.nativeRuntime,
       this.onSaved});
   final String? meetingId;
   final Map<String, dynamic> initialData;
   final MeetingWriteService? service;
+  final TimewebAppRuntime? nativeRuntime;
   final VoidCallback? onSaved;
 
   @override
-  State<MeetingForm> createState() => _MeetingFormState();
+  // The native State must be chosen before the legacy State initializes Firebase.
+  // ignore: no_logic_in_create_state
+  State<MeetingForm> createState() => nativeRuntime == null
+      ? _MeetingFormState() : _NativeMeetingFormState();
+}
+
+// This branch is selected before the legacy State can construct Firebase services.
+class _NativeMeetingFormState extends State<MeetingForm> {
+  @override
+  Widget build(BuildContext context) => widget.meetingId != null || widget.nativeRuntime == null
+      ? ClrsScaffold(body: Center(child: Text(context.tr('Изменение встречи пока недоступно'))))
+      : TimewebMeetingCreationView(runtime: widget.nativeRuntime!);
 }
 
 class _MeetingFormState extends State<MeetingForm> {

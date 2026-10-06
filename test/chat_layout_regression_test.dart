@@ -256,7 +256,6 @@ void main() {
             matching: find.byType(Text)))
         .map((text) => text.data ?? '')
         .join(' | ');
-    expect(summaryText, contains('2'));
     expect(summaryText, contains('2026'));
     expect(
         find.byKey(const ValueKey('meeting-summary-scroll')), findsOneWidget);
@@ -265,10 +264,8 @@ void main() {
     expect(tester.widget(participantAction), isA<TextButton>());
     expect(tester.getSize(participantAction).width, lessThan(280));
     expect(tester.getTopLeft(participantAction).dy,
-        greaterThan(tester.getBottomLeft(find.text('О встрече')).dy));
-    await tester.ensureVisible(find.text('Список участников'));
-    await tester.pumpAndSettle();
-    expect(find.text('Список участников').hitTestable(), findsOneWidget);
+        lessThan(tester.getTopLeft(find.text('О встрече')).dy));
+    expect(participantAction.hitTestable(), findsOneWidget);
     await tester.ensureVisible(find.text('О встрече'));
     await tester.pumpAndSettle();
     expect(find.text('О встрече').hitTestable(), findsOneWidget);
@@ -310,7 +307,7 @@ void main() {
       final column = find.byKey(ValueKey(key));
       expect(column, findsOneWidget);
       expect(tester.getTopLeft(column).dx, 0);
-      expect(tester.getSize(column).width, closeTo(390 * .68, 1));
+      expect(tester.getSize(column).width, closeTo(390 * 2 / 3, 1));
     }
 
     expectLeftColumn('meeting-chat-column');
@@ -322,8 +319,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Список участников'));
-    await tester.tap(find.text('Список участников'));
+    await tester.tap(find.byKey(const ValueKey('meeting-participants-action')));
     await tester.pumpAndSettle();
     expectLeftColumn('meeting-participants-column');
     await tester.scrollUntilVisible(

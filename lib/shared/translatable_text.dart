@@ -30,6 +30,8 @@ class TranslatableText extends StatefulWidget {
       this.autoTranslate = true,
       this.showAction = true,
       this.selectable = false,
+      this.compactMeeting = false,
+      this.compactFooter,
       this.sourceLanguage});
   final String text;
   final TextStyle? style;
@@ -37,6 +39,8 @@ class TranslatableText extends StatefulWidget {
   final TextOverflow? overflow;
   final TextAlign? textAlign;
   final bool autoTranslate, showAction, selectable;
+  final bool compactMeeting;
+  final Widget? compactFooter;
 
   /// Stored language metadata avoids a paid detection request for same-language
   /// content. If absent, the translation service may detect it on demand.
@@ -176,7 +180,10 @@ class _TranslatableTextState extends State<TranslatableText> {
     final shown = !_showOriginal && _translation != null
         ? _translation!.text
         : widget.text;
-    final text = widget.selectable
+    final alignment = widget.compactMeeting &&
+        (widget.textAlign == TextAlign.end || widget.textAlign == TextAlign.right)
+        ? CrossAxisAlignment.end : CrossAxisAlignment.start;
+    final content = widget.selectable
         ? SelectableText(shown,
             style: widget.style,
             maxLines: widget.maxLines,
@@ -186,6 +193,21 @@ class _TranslatableTextState extends State<TranslatableText> {
             maxLines: widget.maxLines,
             overflow: widget.overflow,
             textAlign: widget.textAlign);
+    final text = widget.compactMeeting
+        ? Container(
+            key: const ValueKey('compact-meeting-bubble'),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0x8031241D),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [content, if (widget.compactFooter != null) widget.compactFooter!],
+            ),
+          )
+        : content;
     final attribution = _translation?.googlePowered == true && !_showOriginal
         ? Semantics(
             label: 'Translated by Google',
@@ -212,7 +234,7 @@ class _TranslatableTextState extends State<TranslatableText> {
       if (_failure == null && attribution == null) return text;
       return Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: alignment,
           children: [
             text,
             if (_failure != null)
@@ -246,14 +268,20 @@ class _TranslatableTextState extends State<TranslatableText> {
             },
       style: TextButton.styleFrom(
           alignment: AlignmentDirectional.centerStart,
-          padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4)),
+          minimumSize: widget.compactMeeting ? Size.zero : null,
+          tapTargetSize: widget.compactMeeting ? MaterialTapTargetSize.shrinkWrap : null,
+          visualDensity: widget.compactMeeting ? VisualDensity.compact : null,
+          padding: widget.compactMeeting ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 0, vertical: 4)),
       child: Text(label,
           softWrap: true,
-          style: const TextStyle(decoration: TextDecoration.underline)),
+          style: TextStyle(
+            fontSize: widget.compactMeeting ? 11 : null,
+            height: widget.compactMeeting ? 1.1 : null,
+            decoration: TextDecoration.underline)),
     );
     return Column(
         mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: alignment,
         children: [
           text,
           if (_failure != null)

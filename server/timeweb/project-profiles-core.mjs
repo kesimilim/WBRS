@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readEncryptedArchive } from './encrypted-archive.mjs';
 import { DEFAULT_IMPORT_LIMITS, payloadHash, scanImportArchive } from './import-core.mjs';
+import { projectProfileDetails } from './project-profile-details.mjs';
 
 const trustedPlans = new WeakSet();
 const summaryFields = ['authUsers', 'authListPages', 'firestoreDocuments',
@@ -135,14 +136,6 @@ function field(fields, name, max = 191) {
   return string(value.stringValue, max, true);
 }
 
-function profileFlag(fields, name) {
-  if (!Object.hasOwn(fields, name)) return 0;
-  const value = fields[name];
-  if (!object(value) || Object.keys(value).length !== 1
-      || typeof value.booleanValue !== 'boolean') throw new Error('Expected typed profile boolean');
-  return value.booleanValue ? 1 : 0;
-}
-
 function projectedProfile(record, uid) {
   const fields = record.encodedPayload.fields;
   // The Firestore document ID is authoritative. A nullable/missing legacy uid
@@ -162,9 +155,7 @@ function projectedProfile(record, uid) {
     country: field(fields, 'country'), city: field(fields, 'city'),
     // The Flutter value is one of 16 combined groups. Splitting it would alter
     // the meaning returned by /v1/me/profile; preserve the exact source string.
-    primary_group: field(fields, 'группа'), secondary_group: null,
-    profile_details_saved: profileFlag(fields, 'profileDetailsSaved'),
-    registration_complete: profileFlag(fields, 'isRegistrationEnd'),
+    primary_group: field(fields, 'группа'), ...projectProfileDetails(fields),
     updated_at: mysqlTimestamp(record.encodedPayload.updateTime),
     legacy_raw: record.encodedPayload,
   } };

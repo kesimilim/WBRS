@@ -11,7 +11,22 @@ import '../auth/session_gate.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 class FirstGroupRed extends StatefulWidget {
-  const FirstGroupRed({super.key});
+  const FirstGroupRed({
+    super.key,
+    this.onNativeSubmit,
+    this.nativeInitialAnswers,
+    this.nativeControlsEnabled = true,
+    this.nativeSubmitEnabled = true,
+    this.nativeSubmitLabel,
+    this.nativeNotice,
+    this.nativeFooter,
+  });
+  final Future<void> Function(List<bool> canonicalAnswers)? onNativeSubmit;
+  final List<bool>? nativeInitialAnswers;
+  final bool nativeControlsEnabled, nativeSubmitEnabled;
+  final String? nativeSubmitLabel, nativeNotice;
+  final Widget? nativeFooter;
+
 
   @override
   State<FirstGroupRed> createState() => _FirstGroupRedState();
@@ -118,6 +133,36 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
   int counter = 0;
   bool _saving = false;
   @override
+  void initState() {
+    super.initState();
+    final saved = widget.nativeInitialAnswers;
+    if (widget.onNativeSubmit != null && saved != null) {
+      if (saved.length != 80) {
+        throw ArgumentError('Invalid questionnaire answers.');
+      }
+      for (var index = 0; index < 80; index++) {
+        final groupIndex = (index ~/ 10) % 4;
+        final canonicalIndex =
+            groupIndex * 20 + index % 10 + (index >= 40 ? 10 : 0);
+        if (saved[canonicalIndex]) {
+          colors[index] = LrsTheme.peach;
+          groupCounter[groupIndex]++;
+        }
+      }
+    }
+  }
+
+  List<bool> get _canonicalAnswers {
+    final answers = List<bool>.filled(80, false);
+    for (var index = 0; index < 80; index++) {
+      final groupIndex = (index ~/ 10) % 4;
+      answers[groupIndex * 20 + index % 10 + (index >= 40 ? 10 : 0)] =
+          colors[index] == LrsTheme.peach;
+    }
+    return List.unmodifiable(answers);
+  }
+
+  @override
   Widget build(BuildContext context) {
     allQuestions = [
       brownQuestions,
@@ -179,9 +224,15 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
                     style: const TextStyle(
                         color: LrsTheme.peachLight, fontSize: 16)),
                 const SizedBox(height: 12),
+                if (widget.onNativeSubmit != null && widget.nativeNotice != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(context.tr(widget.nativeNotice!), textAlign: TextAlign.center),
+                  ),
                 if (groupCounter.fold<int>(0, (sum, item) => sum + item) >= 20)
                   ElevatedButton(
-                    onPressed: _saving
+                    key: const ValueKey('questionnaire-submit'),
+                    onPressed: _saving || !widget.nativeSubmitEnabled
                         ? null
                         : () async {
                             if (groupCounter.fold<int>(
@@ -189,6 +240,17 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
                                   (sum, score) => sum + score,
                                 ) <
                                 20) {
+                              return;
+                            }
+                            if (_saving || !widget.nativeSubmitEnabled) return;
+                            final native = widget.onNativeSubmit;
+                            if (native != null) {
+                              setState(() => _saving = true);
+                              try {
+                                await native(_canonicalAnswers);
+                              } finally {
+                                if (mounted) setState(() => _saving = false);
+                              }
                               return;
                             }
                             final user = firebaseAuth.currentUser;
@@ -277,7 +339,7 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
                               if (mounted) setState(() => _saving = false);
                             }
                           },
-                    child: Text(context.tr('Завершить тест')),
+                    child: Text(context.tr(widget.nativeSubmitLabel ?? 'Завершить тест')),
                   )
                 else
                   Padding(
@@ -289,6 +351,8 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
                       style: TextStyle(color: LrsTheme.muted),
                     ),
                   ),
+                if (widget.onNativeSubmit != null && widget.nativeFooter != null)
+                  widget.nativeFooter!,
               ],
             ),
           ),
@@ -322,7 +386,7 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
                           foregroundColor: selected
                               ? LrsTheme.surface
                               : LrsTheme.peachLight),
-                      onPressed: _saving
+                      onPressed: _saving || !widget.nativeControlsEnabled
                           ? null
                           : () {
                               setState(() {

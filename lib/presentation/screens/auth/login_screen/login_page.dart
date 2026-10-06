@@ -1,3 +1,10 @@
+import 'dart:async';
+
+import 'package:wbrs/service/app_backend.dart';
+import 'package:wbrs/service/app_session.dart';
+import 'package:wbrs/service/timeweb_app_runtime.dart';
+import 'package:wbrs/service/timeweb_auth_lifecycle.dart';
+import 'package:wbrs/presentation/screens/auth/timeweb_session_gate.dart';
 import 'package:wbrs/shared/clrs_auth_shell.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/presentation/screens/auth/session_gate.dart';
@@ -14,9 +21,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.initialEmail, this.authService});
+  const LoginPage({super.key, this.initialEmail, this.authService, this.nativeRuntime});
   final String? initialEmail;
   final AuthService? authService;
+  final TimewebAppRuntime? nativeRuntime;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -36,14 +44,35 @@ class _LoginPageState extends State<LoginPage> {
 
   late final AuthService authService;
   bool _authPending = false;
+  late final bool _native;
+  TimewebAppRuntime? _runtime;
+  Future<AppSessionResult>? _nativeAttempt;
+  int? _nativeEpoch;
+  bool _nativeUnknown = false;
+  bool get _nativeAvailable =>
+      !_native ||
+      (_runtime != null &&
+          !_nativeUnknown &&
+          _runtime!.session.state.phase != AppSessionPhase.stopped &&
+          _runtime!.session.state.phase != AppSessionPhase.closed);
+  String get _rememberKey => _native ? 'timeweb_remember_me' : 'remember_me';
+  String get _emailKey => _native ? 'timeweb_email' : 'email';
+
 
   @override
   void initState() {
     super.initState();
-    authService = widget.authService ?? AuthService();
-    _authPending = authService.hasPendingAttempt;
-    _emailController.text =
-        widget.initialEmail ?? authService.pendingEmail ?? '';
+    _native = widget.nativeRuntime != null || AppBackend.usesTimeweb;
+    if (_native) {
+      try {
+        _runtime = widget.nativeRuntime ?? AppBackend.timewebRuntime;
+      } catch (_) { /* A selected native route never falls back to Firebase. */ }
+      _emailController.text = widget.initialEmail ?? '';
+    } else {
+      authService = widget.authService ?? AuthService();
+      _authPending = authService.hasPendingAttempt;
+      _emailController.text = widget.initialEmail ?? authService.pendingEmail ?? '';
+    }
     _loadUserEmailPassword();
   }
 
@@ -62,6 +91,8 @@ class _LoginPageState extends State<LoginPage> {
             child: Form(
           key: _formKey,
           child: Column(children: [
+            if (!_nativeAvailable)
+              Text(context.tr('Сервис пока недоступен. Попробуйте позднее.')),
             TextFormField(
               controller: _emailController,
               readOnly: _authPending || _isLoading,
@@ -134,6 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                           });
                           _rememberSave = _rememberSave
                               .then((_) => _handleRememberMe(remember));
+                          _rememberSave.ignore();
                         }),
               Expanded(
                   child: Text(context.tr('Запомнить меня'),
@@ -156,7 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                       shadowColor: Colors.transparent,
                       side: const BorderSide(color: LrsTheme.actionBorder),
                       shape: const StadiumBorder()),
-                  onPressed: _isLoading ? null : login,
+                  onPressed: _isLoading || !_nativeAvailable ? null : login,
                   child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 8),
                       child: Row(
@@ -187,10 +219,10 @@ class _LoginPageState extends State<LoginPage> {
                           minimumSize: const Size(0, 26),
                           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                           padding: const EdgeInsets.symmetric(horizontal: 4)),
-                      onPressed: _authPending || _isLoading
+                      onPressed: _authPending || _isLoading || !_nativeAvailable
                           ? null
                           : () => nextScreen(
-                              context, const RegistrationConsentPage()),
+                              context, RegistrationConsentPage(nativeRuntime: _runtime)),
                       child: Text(context.tr('Регистрация'))),
                 ]),
             TextButton(
@@ -198,7 +230,7 @@ class _LoginPageState extends State<LoginPage> {
                   minimumSize: const Size(0, 26),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   padding: const EdgeInsets.symmetric(horizontal: 4)),
-              onPressed: _authPending || _isLoading
+              onPressed: _authPending || _isLoading || !_nativeAvailable
                   ? null
                   : () => showModalBottomSheet<void>(
                       context: context,
@@ -206,6 +238,9 @@ class _LoginPageState extends State<LoginPage> {
                       useSafeArea: true,
                       backgroundColor: LrsTheme.surfaceSoft,
                       builder: (_) => PasswordResetSheet(
+                          timewebLifecycle: _native
+                              ? _runtime!.createEmailLifecycleClient(TimewebLifecyclePurpose.passwordReset)
+                              : null,
                           send: (email) => firebaseAuth.sendPasswordResetEmail(
                               email: email))),
               child: Text(context.tr('Забыли пароль?'),
@@ -217,7 +252,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
   Future<void> login() async {
-    if (_isLoading ||
+    if (_isLoading || !_nativeAvailable ||
         (!_authPending && !(_formKey.currentState?.validate() ?? false))) {
       return;
     }
@@ -225,7 +260,13 @@ class _LoginPageState extends State<LoginPage> {
     try {
       await _rememberSave;
       await _handleRememberMe(_isChecked);
-      if (!mounted) return;
+      if (!mounted || (_native && ModalRoute.of(context)?.isCurrent == false)) {
+        return;
+      }
+      if (_native) {
+        await _loginNative();
+        return;
+      }
       final code = await authService.loginWithUserNameAndPassword(
         _emailController.text,
         _passwordController.text,
@@ -274,14 +315,80 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _loginNative() async {
+    final runtime = _runtime!;
+    if (_nativeAttempt == null) {
+      _nativeAttempt = runtime.login(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      _nativeEpoch = runtime.session.state.epoch;
+    }
+    AppSessionResult result;
+    try {
+      result = await _nativeAttempt!.timeout(runtime.session.waitTimeout);
+    } on TimeoutException {
+      if (!mounted || ModalRoute.of(context)?.isCurrent == false ||
+          runtime.session.state.epoch != _nativeEpoch) {
+        return;
+      }
+      setState(() => _authPending = true);
+      showSnackbar(context, LrsTheme.surface, context.tr(
+          'Вход ещё выполняется. Нажмите «Проверить вход», чтобы дождаться этого же запроса.'));
+      return;
+    }
+    if (!mounted ||
+        ModalRoute.of(context)?.isCurrent == false ||
+        runtime.session.state.epoch != _nativeEpoch) {
+      return;
+    }
+    if (result.outcome == AppSessionOutcome.pending) {
+      _nativeAttempt = result.settled;
+      setState(() => _authPending = true);
+      showSnackbar(
+        context,
+        LrsTheme.surface,
+        context.tr(
+          'Вход ещё выполняется. Нажмите «Проверить вход», чтобы дождаться этого же запроса.',
+        ),
+      );
+      return;
+    }
+    _nativeAttempt = null;
+    _authPending = false;
+    if (result.confirmed && runtime.session.state.authenticated) {
+      _passwordController.clear();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => TimewebSessionGate(runtime: runtime)),
+        (_) => false,
+      );
+      return;
+    }
+    if (result.outcome == AppSessionOutcome.remoteUnknown ||
+        result.outcome == AppSessionOutcome.superseded) {
+      // Login has no receipt endpoint. Never turn a lost ACK into another POST
+      // or pretend that a local token read confirms the original remote result.
+      _nativeUnknown = true;
+      _passwordController.clear();
+    }
+    final message = switch (result.error) {
+      AppSessionError.unauthorized => 'Неверный email или пароль',
+      AppSessionError.invalidRequest => 'Проверьте введённые данные.',
+      AppSessionError.network => 'Нет соединения с сервером',
+      _ => 'Сервис пока недоступен. Попробуйте позднее.',
+    };
+    showSnackbar(context, LrsTheme.danger, context.tr(message));
+  }
+
   Future<void> _handleRememberMe(bool value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('remember_me', value);
+    if (_native) await _runtime!.setRemember(value);
+    await prefs.setBool(_rememberKey, value);
     await prefs.remove('password');
     if (value) {
-      await prefs.setString('email', _emailController.text.trim());
+      await prefs.setString(_emailKey, _emailController.text.trim());
     } else {
-      await prefs.remove('email');
+      await prefs.remove(_emailKey);
     }
   }
 
@@ -290,10 +397,10 @@ class _LoginPageState extends State<LoginPage> {
     await prefs.remove('password');
     if (!mounted) return;
     if (_rememberSelectionChanged) return;
-    final remember = prefs.getBool('remember_me') ?? true;
+    final remember = prefs.getBool(_rememberKey) ?? true;
     setState(() => _isChecked = remember);
     if (remember && _emailController.text.isEmpty) {
-      _emailController.text = prefs.getString('email') ?? '';
+      _emailController.text = prefs.getString(_emailKey) ?? '';
     }
   }
 }

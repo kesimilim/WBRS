@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { payloadHash } from './import-core.mjs';
 import { assertPreparedProfilePlan, assertProjectionConfirmations } from './project-profiles-core.mjs';
+import { PROFILE_DETAILS_COLUMNS } from './project-profile-details.mjs';
 
 const DATABASE = 'clrs_staging';
 const BATCH = 100;
@@ -10,17 +11,15 @@ const json = (value) => typeof value === 'string' || Buffer.isBuffer(value)
   ? JSON.parse(value.toString()) : value;
 const accountColumns = ['uid', 'email_normalized', 'email_verified', 'disabled',
   'lifecycle', 'token_version', 'firebase_created_at', 'firebase_last_login_at', 'legacy_claims'];
-const profileColumns = ['uid', 'full_name', 'country', 'city', 'primary_group', 'secondary_group',
-  'profile_details_saved', 'registration_complete', 'updated_at', 'legacy_raw'];
+const profileColumns = ['uid', 'full_name', 'country', 'city', 'primary_group',
+  ...PROFILE_DETAILS_COLUMNS, 'updated_at', 'legacy_raw'];
 const identityColumns = ['uid', 'provider', 'provider_subject', 'provider_email', 'legacy_raw'];
-const profileUnusedColumns = ['age', 'height_cm', 'about_text', 'interests_text', 'has_children',
-  'gender', 'relationship_status', 'country_code', 'region', 'language_code',
-  'invisible_until', 'last_online_at'];
+const profileUnusedColumns = ['invisible_until', 'last_online_at'];
 const timestampColumns = new Set(['firebase_created_at', 'firebase_last_login_at',
   'updated_at', 'created_at']);
 const jsonColumns = new Set(['legacy_claims', 'legacy_raw']);
 const numericColumns = new Set(['email_verified', 'disabled', 'token_version',
-  'profile_details_saved', 'registration_complete']);
+  'profile_details_saved', 'registration_complete', 'age', 'height_cm', 'has_children']);
 const batches = function* (records) {
   for (let index = 0; index < records.length; index += BATCH) yield records.slice(index, index + BATCH);
 };
@@ -45,7 +44,7 @@ function selectColumns(columns) {
 function normalize(row, columns) {
   return Object.fromEntries(columns.map((name) => [name,
     jsonColumns.has(name) ? json(row[name])
-      : numericColumns.has(name) ? count(row[name]) : row[name]]));
+      : numericColumns.has(name) && row[name] !== null ? count(row[name]) : row[name]]));
 }
 
 function sameRow(row, expected, columns) {

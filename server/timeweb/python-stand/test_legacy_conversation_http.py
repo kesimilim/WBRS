@@ -1,11 +1,13 @@
 """Resource HTTP contracts with synthetic identities; no cloud or SQL calls."""
 import json
+import base64
 import unittest
 
 from auth_bridge import AuthenticatedIdentity, AuthRejected, AuthUnavailable
 from app import create_app
-from legacy_conversation_http import LegacyConversationHttp
-from legacy_conversation_read import LegacyReadRejected, LegacyReadRateLimited
+from legacy_conversation_http import LegacyConversationHttp, create_legacy_read_service
+from legacy_conversation_read import LegacyReadRejected, LegacyReadRateLimited, LegacyReadUnavailable
+from legacy_own_profile import LegacyReadApiService
 from native_auth import NativeRejected
 from native_sessions import NativeIdentity
 from test_native_http import request
@@ -115,6 +117,71 @@ class LegacyHttpTest(unittest.TestCase):
                 self.assertEqual(response["headers"]["Retry-After"], "60")
         self.service.error = None; self.service.response = {"text": "a" * 262144}
         self.assertEqual(self.get("/v1/chats")["status"], "503 Service Unavailable")
+
+    def test_full_profile_default_off_fixed_route_and_shared_factory(self):
+        for change in ({"CLRS_LEGACY_READ_ENABLED": "0"},
+                       {"CLRS_LEGACY_READ_SNAPSHOT_REVIEWED": "0"},
+                       {"CLRS_LEGACY_READ_MEMBERSHIP_MODE": "mutable"}):
+            closed = LegacyConversationHttp(ENV | change,
+                service_factory=lambda _: self.fail("Unexpected service construction"))
+            self.assertEqual(closed.dispatch({"PATH_INFO": "/v1/me/full-profile",
+                "REQUEST_METHOD": "GET"}).status, "404 Not Found")
+        combined = create_legacy_read_service(ENV | {
+            "CLRS_LEGACY_CURSOR_KEY_B64": base64.b64encode(b"K"*32).decode()})
+        self.assertIs(type(combined), LegacyReadApiService)
+        self.assertTrue(callable(combined.own_profile))
+        self.assertTrue(callable(combined.personal_chats))
+        self.assertTrue(callable(combined.meeting_messages))
+        self.assertEqual(request(self.app,"/v1/me/full-profile",body={})["status"],"405 Method Not Allowed")
+        self.assertEqual(self.get("/v1/me/full-profile/other")["status"],"404 Not Found")
+        self.assertEqual([],self.identities); self.assertEqual([],self.service.calls)
+
+    def test_full_profile_each_request_uses_verified_firebase_or_native_identity_only(self):
+        self.service.response={"profile":None,"onboarding":"registration","uid":"owner-A"}
+        for uid in ("owner-A","owner-B"):
+            self.identity=AuthenticatedIdentity(uid,10,10,100)
+            self.service.response["uid"]=uid
+            response=self.get("/v1/me/full-profile")
+            self.assertEqual("200 OK",response["status"])
+            self.assertEqual("no-store",response["headers"]["Cache-Control"])
+            self.assertEqual(("own_profile",self.identity,(),{}),self.service.calls[-1])
+        self.assertEqual(2,len(self.identities))
+        native_identity=NativeIdentity("owner-native",True,"synthetic-session",10,100)
+        calls=[]
+        class Native:
+            def authorize(self,token,*,peer):
+                calls.append((token,peer)); return native_identity
+        self.service.response["uid"]=native_identity.uid
+        reply=self.dispatcher.dispatch({"PATH_INFO":"/v1/me/full-profile","REQUEST_METHOD":"GET",
+            "HTTP_AUTHORIZATION":"Bearer na1.synthetic","REMOTE_ADDR":"synthetic-peer"},
+            native_configured=True,native_service=Native())
+        self.assertEqual("200 OK",reply.status)
+        self.assertEqual(("own_profile",native_identity,(),{}),self.service.calls[-1])
+        self.assertEqual([("na1.synthetic","synthetic-peer")],calls)
+        self.assertEqual(2,len(self.identities))  # Native never invokes Firebase fallback.
+
+    def test_full_profile_rejects_every_query_before_identity_or_read(self):
+        for query in ["&","&&","?","uid=other","limit=1","cursor=opaque","own_removed=1","x=",
+                      "uid=other&uid=owner","uid=%ff","%zz=1","uid","a="+"x"*8193]:
+            self.assertEqual("400 Bad Request",self.get("/v1/me/full-profile",QUERY_STRING=query)["status"])
+        self.assertEqual([],self.identities); self.assertEqual([],self.service.calls)
+
+    def test_full_profile_unavailable_auth_error_and_oversize_are_generic_failclosed(self):
+        unavailable=LegacyConversationHttp(ENV,service_factory=lambda _: (_ for _ in ()).throw(RuntimeError("private")))
+        self.assertEqual("503 Service Unavailable",unavailable.dispatch({"PATH_INFO":"/v1/me/full-profile",
+            "REQUEST_METHOD":"GET","HTTP_AUTHORIZATION":"Bearer synthetic"}).status)
+        for error,status in [(LegacyReadRejected,"404 Not Found"),(LegacyReadUnavailable,"503 Service Unavailable"),
+                             (RuntimeError,"503 Service Unavailable")]:
+            self.service.error=error; response=self.get("/v1/me/full-profile")
+            self.assertEqual(status,response["status"]); self.assertNotIn("private",response["raw"].decode())
+        self.service.error=None; self.service.response={"profile":{"fullName":"x"*262144}}
+        self.assertEqual("503 Service Unavailable",self.get("/v1/me/full-profile")["status"])
+        self.identity={"uid":"guessed"}; before=len(self.service.calls)
+        self.assertEqual("503 Service Unavailable",self.get("/v1/me/full-profile")["status"])
+        self.assertEqual(before,len(self.service.calls))
+        native_reply=self.dispatcher.dispatch({"PATH_INFO":"/v1/me/full-profile","REQUEST_METHOD":"GET",
+            "HTTP_AUTHORIZATION":"Bearer na1.unavailable"},native_configured=False)
+        self.assertEqual("401 Unauthorized",native_reply.status)
 
 
 if __name__ == "__main__": unittest.main()

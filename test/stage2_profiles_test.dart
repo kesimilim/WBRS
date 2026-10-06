@@ -452,7 +452,9 @@ void main() {
     await page(tester, const ProfileSettingsPage(),
         size: const Size(320, 640), scale: 2);
     await tester.pump();
-    expect(find.text('Язык'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Помощь'), 220,
+        scrollable: find.byType(Scrollable).first);
+    expect(find.text('Помощь'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

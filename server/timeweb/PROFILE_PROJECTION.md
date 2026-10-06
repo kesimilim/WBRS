@@ -50,14 +50,63 @@
 | Auth.providerData | auth_identities | Только фактические providerId/uid/email; нет выдуманной identity для отсутствующего провайдера |
 | users/{UID}.fullName | profiles.full_name | Исходная строка, включая пустую; отсутствие/typed null остаётся NULL |
 | country / city | profiles.country / city | Исходные строки; отсутствующие значения NULL |
-| группа | profiles.primary_group | Полная комбинированная группа без разбиения и перевода; secondary_group=NULL |
-| profileDetailsSaved / isRegistrationEnd | Соответствующие flags | Фактический boolean; при отсутствии false, как в текущем Flutter; точное отсутствие видно в legacy_raw |
+| группа | profiles.primary_group | Полная комбинированная группа без разбиения и перевода; secondaryGroup переносится только из одноимённого исходного поля |
+| age / rost / about / hobbi / deti / pol / relationStatus / countryCode / region / languageCode / secondaryGroup | Соответствующие canonical columns | Strict details projector, точные правила ниже; missing/typed null сохраняются NULL в nullable columns |
+| profileDetailsSaved / isRegistrationEnd | Соответствующие flags | Фактический boolean; при отсутствии false, как в текущем Flutter; typed null не помещается в NOT NULL и блокирует plan; точное отсутствие видно в legacy_raw |
 | createTime / updateTime + все typed fields | profiles.legacy_raw | Полный исходный объект; целые числа Firestore остаются typed strings |
 | updateTime | profiles.updated_at | UTC до шести дробных цифр, поддерживаемых MySQL; nanoseconds полностью сохраняются в legacy_raw |
 
 `token_version=0` — новая версия токенов Timeweb на старте, не перенос Firebase refresh/session токенов. Прежние `tokensValidAfterTime` остаются в `legacy_auth_users`, их применение относится к отдельному auth/session шагу.
 
-Остальные нормализованные колонки профиля пока остаются в исходном состоянии схемы (`NULL` / пустой test_result); исходные about/interests, возраст, фото, группы и прочие поля полностью сохранены в `legacy_raw` и исходном `legacy_documents`. Их API, media mapping и пользовательские сценарии требуют следующей доменной проекции. Этот узкий шаг покрывает **только текущий read-only /me/profile**. Не объявлять по нему полный перенос профилей/приложения.
+Strict initial-import mapping находится в `project-profile-details.mjs`.
+Export `projectProfileDetails(fields)` возвращает ровно `PROFILE_DETAILS_COLUMNS`:
+`age,height_cm,about_text,interests_text,has_children,gender,relationship_status,
+country_code,region,language_code,secondary_group,profile_details_saved,registration_complete`.
+Один helper используется initial profile plan и conversation dependencies; эти
+columns включены в parameterized initial INSERT и полный expected-row proof.
+Нормализованные `invisible_until/last_online_at` остаются NULL, test_result — `{}`.
+Visibility/deadlines, деньги, роли, source lifecycle/raw и timestamps не меняются.
+
+Source value — объект ровно с одним Firestore type key. Отсутствие/explicit
+`nullValue` сохраняется NULL в nullable колонках. Strings сохраняются без trim,
+Unicode normalization/aliases; считаются Unicode code points и strict UTF-8.
+`about/hobbi` допускают исходные short/empty строки до4096; pol/relationStatus,
+languageCode/secondaryGroup — до191; countryCode — прежние20. ISO/catalog/enum
+проверки на historical текст этим initial mapping не накладываются. languageCode
+не выводится из language/languageGroup/countrySegment; secondaryGroup не выводится
+из group/комбинированной группы; region не выводится из city.
+
+Representable age: legacy integerValue/stringValue с1..3 ASCII digits либо finite
+integral doubleValue, затем exact schema range0..130. Source age131..150,
+дробный double или неверная typed форма прекращают plan. rost в legacy decoder
+и Firestore write-source — stringValue: только непустая ASCII цифровая строка
+точного численного значения0..300 преобразуется в height_cm INT; leading zeros
+не меняют число и остаются в raw. Пустая строка, units, пробелы, дробь, другой
+type tag или число вне0..300 не заменяются наNULL/округлённое значение. Region
+192..1000 допустим старому reader, но не помещается в существующий VARCHAR191:
+plan останавливается, schema не расширяется.
+
+`ProfileDetailsProjectionError` содержит только `field` и `reason`, без UID,
+значений профиля или raw payload. Причины несовместимости конкретной строки:
+
+| Reason | Отказ |
+|---|---|
+| schema_integer_range | age вне0..130 или rost вне0..300 |
+| fractional_number | дробный age |
+| expected_integer_string | rost не является непустой ASCII цифровой строкой |
+| schema_string_bound | строка превышает canonical bound, в частности region>191 |
+| source_string_bound | строка превышает retained reader bound, в частности countryCode>20 |
+| schema_not_nullable | explicit null в saved/completed flags |
+| invalid_typed_field / expected_string / expected_boolean / expected_integer_digits / expected_finite_number / invalid_utf8 | повреждённый или неподдержанный source type |
+
+Исходные record hashes/archive SHA и исходный updateTime не меняются. Canonical
+projection/dependency digest меняется вместе с plan; receipt старого plan не
+является подтверждением нового. Stage требует empty normalized tables и
+использует INSERT, без upsert/UPDATE. Readback/rollback отказывают при later
+native edit в любом projected column. Этот source fix относится к будущему
+первоначальному импорту: **существующие6031 rows не обновляет**. Отдельный additive
+backfill потребует доказанного первоначального baseline/source и запрета
+перезаписи native edits. Полный cutover/public directory этим шагом не включается.
 
 `legacy_claims` сохраняет проверенные серверные Auth claims; проекция не выдаёт `role_grants` по клиентскому `isAdmin`. Для админки нужен свежий снимок claims, затем отдельное проверенное серверное назначение ролей. В раннем metadata-снимке нет новых admin claims.
 

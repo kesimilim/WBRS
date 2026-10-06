@@ -3,6 +3,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { payloadHash } from './import-core.mjs';
 import { assertMigrationGrants } from './mysql84-schema-core.mjs';
 import { assertPreparedConversationPlan } from './project-conversations-core.mjs';
+import { PROFILE_DETAILS_COLUMNS } from './project-profile-details.mjs';
 
 const DATABASE = 'clrs_staging';
 const poisoned = new WeakSet();
@@ -19,7 +20,7 @@ const dates = new Set(['created_at', 'updated_at', 'starts_at', 'archived_at', '
   'deleted_at', 'joined_at', 'left_at', 'kicked_at', 'firebase_created_at', 'firebase_last_login_at']);
 const numbers = new Set(['last_sequence', 'revision', 'sequence', 'source_sequence', 'read_through_sequence',
   'notifications_enabled', 'membership_revision', 'email_verified', 'disabled', 'token_version',
-  'profile_details_saved', 'registration_complete']);
+  'profile_details_saved', 'registration_complete', 'age', 'height_cm', 'has_children']);
 const jsonFields = new Set(['legacy_raw', 'legacy_claims', 'test_result']);
 const contract = (table, property, keys, columns) => Object.freeze({ table, property, keys, columns });
 export const CONVERSATION_TABLES = Object.freeze([
@@ -34,10 +35,9 @@ export const CONVERSATION_TABLES = Object.freeze([
 for (const spec of CONVERSATION_TABLES) { Object.freeze(spec.keys); Object.freeze(spec.columns); }
 const accountColumns = ['uid', 'email_normalized', 'email_verified', 'disabled', 'lifecycle', 'token_version',
   'firebase_created_at', 'firebase_last_login_at', 'legacy_claims'];
-const profileColumns = ['uid', 'full_name', 'country', 'city', 'primary_group', 'secondary_group',
-  'profile_details_saved', 'registration_complete', 'updated_at', 'legacy_raw'];
-const profileUnused = ['age', 'height_cm', 'about_text', 'interests_text', 'has_children', 'gender',
-  'relationship_status', 'country_code', 'region', 'language_code', 'invisible_until', 'last_online_at'];
+const profileColumns = ['uid', 'full_name', 'country', 'city', 'primary_group',
+  ...PROFILE_DETAILS_COLUMNS, 'updated_at', 'legacy_raw'];
+const profileUnused = ['invisible_until', 'last_online_at'];
 const identityColumns = ['uid', 'provider', 'provider_subject', 'provider_email', 'legacy_raw'];
 
 export function assertConversationConfirmations(plan, values) {

@@ -5,7 +5,9 @@ raw documents for personal message history, meeting message history, an account'
 own removed meeting history, and meeting participants. They include cases the
 normalized conversation projection classifies as raw-only. They do not change
 accounts, membership, messages, read flags, schema, Firebase or Storage objects.
-There are no HTTP routes or Flutter bindings in this change.
+HTTP routes are prepared separately in `app.py` and
+`legacy_conversation_http.py` and remain default-off. Flutter is not wired to
+these compatibility routes yet.
 
 ## Primary access evidence and the narrower service policy
 
@@ -86,18 +88,26 @@ completed sealed full archive and independently verified SQL import receipt
 not an archive-SHA column. The service checks that row in every transaction; it
 does not pretend the environment digest is a new database source proof.
 
-Required dedicated grants are exactly global `USAGE` plus `SELECT` on only:
+Default `strict-tables-v1` grants are exactly global `USAGE` plus `SELECT` on only:
 
 - `clrs_staging.accounts`
 - `clrs_staging.legacy_source`
 - `clrs_staging.legacy_documents`
 
-`SHOW GRANTS` rejects schema-wide SELECT, migration DDL/write rights, other tables,
+In that default model, `SHOW GRANTS` rejects schema-wide SELECT, migration DDL/write rights, other tables,
 credential/session/Storage tables, roles and GRANT OPTION. This new role has not
 been granted or deployed by this change. It is separate from both the migrator
 and native Auth role. Existing strict CA and DNS certificate verification are
 preserved; no TLS verification flag is weakened. Only MySQL 8.4/clrs_staging with
 a live TLS cipher is accepted.
+
+The separately reviewed `CLRS_LEGACY_READ_PERMISSION_MODEL=provider-database-v1`
+accepts exactly `USAGE ON *.*` plus one `SELECT ON clrs_staging.*` grant, so the
+existing approved read-only `clrs_api_ro` may be used after actual grant/TLS
+verification. It rejects mixed table/database grants and all additional rights.
+This grants SQL read access to the whole staging database, so it is an explicit
+permission-model choice; application output/authorization and snapshot gates
+remain unchanged. See [runtime role models](../RUNTIME_MYSQL84_GRANTS.md).
 
 ## Bounded ordering, integrity and data views
 

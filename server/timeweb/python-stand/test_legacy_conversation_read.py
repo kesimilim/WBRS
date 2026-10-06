@@ -15,6 +15,7 @@ from unittest.mock import patch
 
 from auth_bridge import AuthenticatedIdentity
 from native_sessions import NativeIdentity
+from profile_store import BUNDLED_CA_FILE
 import legacy_conversation_read as read_module
 from legacy_conversation_read import (LegacyConversationReadService,
     LegacyReadRejected, LegacyReadUnavailable, LegacyReadRateLimited, messages_query)
@@ -180,6 +181,22 @@ class FakeConnection:
 class CompatibilityReadTests(unittest.TestCase):
     def setUp(self):
         self.db = FakeDatabase(); self.db.base(); self.service = self.db.service()
+
+    def test_absent_ca_uses_bundled_verified_tls_and_bad_explicit_ca_never_connects(self):
+        env = enabled(); env.pop("CLRS_LEGACY_READ_DB_CA_FILE")
+        with patch("profile_store.ssl.create_default_context", wraps=ssl.create_default_context) as create_context:
+            config, _, _ = self.db.service(env=env)._configuration()
+            create_context.assert_called_once_with(cafile=BUNDLED_CA_FILE)
+        self.assertTrue(Path(BUNDLED_CA_FILE).is_absolute())
+        self.assertTrue(config["ssl"].check_hostname)
+        self.assertEqual(ssl.CERT_REQUIRED, config["ssl"].verify_mode)
+        for value in ["", "relative-ca.pem", "/__clrs_synthetic__/missing-ca.pem"]:
+            with self.subTest(value=value):
+                env["CLRS_LEGACY_READ_DB_CA_FILE"] = value
+                before = len(self.db.configs)
+                with self.assertRaises(LegacyReadUnavailable):
+                    self.db.service(env=env).personal_messages(identity(), "old-room")
+                self.assertEqual(before, len(self.db.configs))
 
     def test_default_off_and_unverified_or_expired_identity_never_connect(self):
         for value in [UID_A, {"uid": UID_A}, identity(expires=NOW), identity(uid="bad/uid")]:

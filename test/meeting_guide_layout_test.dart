@@ -30,22 +30,22 @@ class _CatalogDelegate extends LocalizationsDelegate<ClrsLocalizations> {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   const steps = [
-    'Вы один(одна) и хотите пригласить кого-то. Создавайте индивидуальную встречу, укажите в описании куда идёте, что будете делать.',
-    'Вас, например, двое. Один создаёт коллективную встречу и пишет: ждём двух девушек, и что вы предлагаете. (К примеру, пьём кофе на набережной и т.п.)',
-    'Вы — компания и хотите устроить что-то масштабное. Один пусть создаёт коллективную встречу, опишите кратко предложение.',
-    'Когда кто-нибудь вступит, придёт уведомление как создателю.',
+    'Хотите пригласить кого-то? Укажите, куда идёте и что планируете.',
+    'Собираете компанию? Кратко опишите идею и кого ждёте.',
+    'Выберите страну и регион, укажите дату и время.',
+    'Когда кто-то присоединится, организатор получит уведомление.',
   ];
   const titles = [
     'Индивидуальная встреча',
     'Коллективная встреча',
-    'Коллективная встреча',
-    'Участники встречи',
+    'Место и время',
+    'Участники',
   ];
   const icons = [
-    Icons.person_outline,
-    Icons.group_outlined,
+    Icons.account_circle_outlined,
     Icons.groups_outlined,
-    Icons.how_to_reg_outlined,
+    Icons.calendar_month_outlined,
+    Icons.people_alt_outlined,
   ];
   final catalogs = <String, Map<String, dynamic>>{
     for (final code in ClrsLocalizations.codes)
@@ -58,6 +58,8 @@ void main() {
     for (final font in {
       'MaterialIcons': 'fonts/MaterialIcons-Regular.otf',
       'Lato': 'assets/fonts/Lato-Regular.ttf',
+      'CormorantGaramond': 'assets/fonts/CormorantGaramond-Variable.ttf',
+      'Caveat': 'assets/fonts/Caveat-Variable.ttf',
     }.entries) {
       await (FontLoader(font.key)..addFont(rootBundle.load(font.value))).load();
     }
@@ -137,8 +139,8 @@ void main() {
         );
         expect(
           tester.widget<Text>(text).style!.fontSize,
-          greaterThanOrEqualTo(16),
-          reason: 'Fit the text without shrinking the normal body font',
+          greaterThanOrEqualTo(11),
+          reason: 'Reference compact body font remains readable',
         );
         expect(
           tester.renderObject<RenderParagraph>(text).didExceedMaxLines,
@@ -151,7 +153,7 @@ void main() {
         );
         final panel = find.byKey(ValueKey('meeting-guide-step-${index + 1}'));
         final bounds = tester.getRect(panel);
-        expect(bounds.left, 16);
+        expect(bounds.left, 12);
         expect(
           bounds.right,
           closeTo(360 * 2 / 3, .01),

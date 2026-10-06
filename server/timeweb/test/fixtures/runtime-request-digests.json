@@ -1,0 +1,31 @@
+{
+  "encoding": "UTF-8, sorted object keys, compact JSON, no normalization",
+  "cases": [
+    {
+      "payload": {
+        "chatId": "чат_тест",
+        "text": " Привет 👋\nHello ",
+        "quoteMessageId": null
+      },
+      "sha256": "728d4c12d27d3e36617adc092046ca02e9eba09b6292737764ce161c01d2c375"
+    },
+    {
+      "payload": {
+        "chatId": "чат_тест",
+        "throughSequence": 5
+      },
+      "sha256": "09d42541e42d9b568e0d90b67023a2f9fae8c1e0a5335f8d4ae9654328ddaa30"
+    },
+    {
+      "payload": {
+        "expectedUpdatedAt": "2026-10-01T18:00:00.000000Z",
+        "changes": {
+          "about": "Привет, это тестовая анкета 👋",
+          "hobbi": "Читаю книги и гуляю каждый вечер",
+          "deti": false
+        }
+      },
+      "sha256": "2bee65cc19a43b79508a60d72817281126c0d5c0972629a977e820407994453f"
+    }
+  ]
+}

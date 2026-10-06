@@ -10,6 +10,7 @@ import 'package:wbrs/app/pages/policy/soglashenie.dart';
 import 'package:wbrs/app/widgets/drawer.dart';
 import 'package:wbrs/app/widgets/bottom_nav_bar.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
+import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/localization/language_picker.dart';
 
@@ -18,7 +19,7 @@ class About_App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Widget link(IconData icon, String text, Widget page) => Padding(
-      padding: EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 5),
       child: ClrsPanel(
         padding: EdgeInsets.zero,
         child: InkWell(
@@ -27,7 +28,7 @@ class About_App extends StatelessWidget {
             context,
           ).push(MaterialPageRoute(builder: (_) => page)),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             child: Row(
               children: [
                 Icon(icon, size: 20, color: LrsTheme.peach),
@@ -35,7 +36,7 @@ class About_App extends StatelessWidget {
                 Expanded(
                   child: Text(
                     context.tr(text),
-                    style: const TextStyle(fontSize: 14),
+                    style: const TextStyle(fontSize: 12, height: 1.15),
                   ),
                 ),
                 const SizedBox(width: 6),
@@ -47,22 +48,68 @@ class About_App extends StatelessWidget {
       ),
     );
     return ClrsScaffold(
-      appBar: AppBar(title: Text(context.tr('О приложении'))),
+      backgroundAsset: 'assets/family_main.jpg',
+      backgroundScale: 1.42,
+      appBar: AppBar(
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16),
+            child: Icon(Icons.favorite_border, color: LrsTheme.peach),
+          ),
+        ],
+      ),
       drawer: MyDrawer(),
       bottomNavigationBar: const MyBottomNavigationBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final availableWidth = (constraints.maxWidth - 36).clamp(
+          final availableWidth = (constraints.maxWidth - 28).clamp(
             0.0,
             double.infinity,
           );
-          final panelWidth = availableWidth < 245
-              ? availableWidth
-              : (availableWidth * .72).clamp(245.0, availableWidth);
+          final panelWidth = availableWidth * .64;
+          final detailWidth = availableWidth * .86;
           return ListView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 8),
             children: [
-              const ClrsBrandHeader(),
+              const ClrsLogo(size: 48),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 205,
+                  child: Text(
+                    context.tr(ClrsBrand.ruTagline),
+                    style: const TextStyle(fontSize: 10, height: 1.4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 125,
+                  child: Column(
+                    children: [
+                      ClrsMotto(size: 19),
+                      Icon(
+                        Icons.favorite_border,
+                        color: LrsTheme.peach,
+                        size: 19,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                context.tr('О приложении'),
+                style: const TextStyle(
+                  fontFamily: 'CormorantGaramond',
+                  fontWeight: FontWeight.w600,
+                  fontSize: 28,
+                ),
+              ),
+              const SizedBox(height: 6),
               Align(
                 alignment: Alignment.centerLeft,
                 child: SizedBox(
@@ -70,23 +117,6 @@ class About_App extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        context.tr('О приложении'),
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 12),
-                      ClrsPanel(
-                        child: Text(
-                          context.tr(
-                            'Знакомства для серьёзных отношений и семьи',
-                          ),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: LrsTheme.peachLight,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 18),
                       link(
                         Icons.shield_outlined,
                         'Политика конфиденциальности',
@@ -107,34 +137,66 @@ class About_App extends StatelessWidget {
                         'Правила использования',
                         Rule(),
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: detailWidth,
+                  child: Column(
+                    children: [
                       ClrsPanel(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                         child: Row(
                           children: [
-                            Expanded(
-                              child: Text(context.tr('Версия приложения')),
+                            const Icon(
+                              Icons.info_outline,
+                              size: 20,
+                              color: LrsTheme.peach,
                             ),
-                            const Text('1.0.25'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      ClrsPanel(
-                        child: Row(
-                          children: [
-                            const Icon(Icons.language, color: LrsTheme.peach),
                             const SizedBox(width: 8),
-                            Expanded(child: Text(context.tr('Язык'))),
-                            const LanguagePickerButton(compact: true),
+                            Expanded(
+                              child: Text(
+                                context.tr('Версия приложения'),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            const Text(
+                              '1.0.25',
+                              style: TextStyle(fontSize: 12),
+                            ),
+                            const SizedBox(width: 5),
+                            const Icon(Icons.chevron_right, size: 20),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 5),
                       ClrsPanel(
                         padding: EdgeInsets.zero,
                         child: ListTile(
-                          leading: const Icon(Icons.mail_outline),
-                          title: Text(context.tr('Обратная связь')),
-                          subtitle: const Text('supp.lrs@ya.ru'),
+                          dense: true,
+                          minTileHeight: 40,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                          ),
+                          leading: const Icon(
+                            Icons.chat_bubble_outline,
+                            size: 20,
+                          ),
+                          horizontalTitleGap: 8,
+                          title: Text(
+                            context.tr('Обратная связь'),
+                            style: const TextStyle(
+                              fontFamily: 'Lato',
+                              fontSize: 12,
+                            ),
+                          ),
+                          trailing: const Icon(Icons.chevron_right, size: 20),
                           onTap: () => openSupportEmail(context),
                         ),
                       ),
@@ -142,7 +204,27 @@ class About_App extends StatelessWidget {
                   ),
                 ),
               ),
-              const ClrsValuesFooter(),
+              const SizedBox(height: 14),
+              ClrsPanel(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 2,
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.language, size: 20, color: LrsTheme.peach),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        context.tr('Язык'),
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                    const LanguagePickerButton(showIcon: false),
+                  ],
+                ),
+              ),
+              const ClrsValuesFooter(compact: true),
             ],
           );
         },

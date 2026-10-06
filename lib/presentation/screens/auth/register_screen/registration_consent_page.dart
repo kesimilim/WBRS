@@ -1,3 +1,4 @@
+import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:flutter/material.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/presentation/screens/auth/login_screen/login_page.dart';
@@ -5,7 +6,8 @@ import 'package:wbrs/presentation/screens/auth/register_screen/register_page.dar
 
 /// The required acknowledgement immediately before creating an account.
 class RegistrationConsentPage extends StatefulWidget {
-  const RegistrationConsentPage({super.key});
+  const RegistrationConsentPage({super.key, this.nativeRuntime});
+  final TimewebAppRuntime? nativeRuntime;
 
   @override
   State<RegistrationConsentPage> createState() =>
@@ -163,8 +165,9 @@ class _RegistrationConsentPageState extends State<RegistrationConsentPage> {
                                                   .pushReplacement(
                                                 MaterialPageRoute<void>(
                                                   builder: (_) =>
-                                                      const RegisterPage(
+                                                      RegisterPage(
                                                     consentConfirmed: true,
+                                                    nativeRuntime: widget.nativeRuntime,
                                                   ),
                                                 ),
                                               )
@@ -195,7 +198,7 @@ class _RegistrationConsentPageState extends State<RegistrationConsentPage> {
                                     onPressed: () =>
                                         Navigator.of(context).pushReplacement(
                                       MaterialPageRoute<void>(
-                                        builder: (_) => const LoginPage(),
+                                        builder: (_) => LoginPage(nativeRuntime: widget.nativeRuntime),
                                       ),
                                     ),
                                     child: Text(

@@ -1,6 +1,6 @@
 # Native Auth для существующего Python 3.12 stand
 
-Подготовлены `native_credentials.py`, `native_sessions.py`, `native_auth.py` и их тесты. В `app.py` подключены HTTP routes login/refresh/logout и native bearer для собственного профиля. Они выключены по умолчанию, не изменяют Firebase, не создают аккаунты, не выполняют DDL и не подключаются к сети при импорте. `profile_store.py` и зависимости не изменялись. Деплой этой версии и живой вход прежним паролем ещё не подтверждены.
+Подготовлены `native_credentials.py`, `native_sessions.py`, `native_auth.py` и их тесты. В `app.py` подключены HTTP routes login/refresh/logout и native bearer для собственного профиля. Они выключены по умолчанию, не изменяют Firebase, не создают аккаунты, не выполняют DDL и не подключаются к сети при импорте. 1 октября 2026 создана отдельная runtime role и подтверждены её реальное TLS-соединение, три согласованных права только на staging и отказ в доступе к `default_db`. Серверный TLS-коммит `bc5fe138` опубликован в GitLab; живой вход прежним паролем и переключение APK ещё не подтверждены.
 
 `NativeAuthService.from_env()` возвращает `None`, пока **оба** `CLRS_NATIVE_AUTH_ENABLED` и `CLRS_NATIVE_AUTH_WRITES_ENABLED` не равны `1`. Текущему `clrs_api_ro` не выдаются write permissions. Наличие подготовленных файлов/прохождение тестов не означает включение native auth или готовность `/readyz`.
 
@@ -8,7 +8,7 @@
 
 1. Получить завершённый segmented full archive и FINAL manifest. Импортировать raw данные, нормализованные аккаунты/профили/идентичности и encrypted credentials; выполнить независимые readback/receipt проверки. См. `../CREDENTIAL_STAGE.md`.
 2. Сохранить hashConfig из проверенного encrypted credential bundle и wrapping key только в server secrets. Значения должны полностью совпадать с credential stage: raw base64 signerKey/saltSeparator, rounds/memoryCost, configRef, wrapping key. Google Owner ADC/Firebase export credentials серверу не нужны.
-3. Создать отдельный runtime role с прямыми `SELECT` только на `clrs_staging.accounts` и `clrs_staging.auth_credentials`, а также `SELECT, INSERT, UPDATE` только на `clrs_staging.device_sessions`. Глобально допускается только `USAGE`. Grant на всю БД, DELETE/DDL/GRANT OPTION и доступ к другим таблицам/БД отвергаются. Эти права/создание роли здесь не выполнялись.
+3. Использовать отдельную runtime role. Строгий режим разрешает прямые `SELECT` только на `clrs_staging.accounts` и `clrs_staging.auth_credentials`, а также `SELECT, INSERT, UPDATE` только на `clrs_staging.device_sessions`. Для ограниченного интерфейса Timeweb явно согласован и реализован альтернативный `CLRS_NATIVE_AUTH_PERMISSION_MODEL=provider-database-v1`: ровно `SELECT, INSERT, UPDATE` на `clrs_staging.*`. Он шире табличного режима, но не даёт DELETE/DDL/GRANT OPTION или доступ к другим БД. Смешанные/дополнительные права отвергаются. Именно второй режим создан и проверен для `clrs_native_auth`; миграционный пользователь не используется для HTTP.
 4. Выполнить контролируемые HTTP login/refresh/logout/current-status тесты на stand после включения подготовленных routes. Проверить реальный источник IP от прокси Timeweb: текущий `REMOTE_ADDR` безопасен от spoofed X-Forwarded-For, но один общий адрес прокси может сделать per-peer limit общим для всех пользователей. Не доверять заголовку до проверки контролируемой proxy-интеграции. Только после этого переключать APK. Регистрация новых пользователей, password reset/change, social providers и email verification — следующие отдельные этапы.
 
 ## Server env/secrets
@@ -16,7 +16,7 @@
 Не коммитить и не передавать в APK значения:
 
 - `CLRS_NATIVE_AUTH_DB_URL`: URL отдельной технической роли, только `mysql://…/clrs_staging?sslmode=verify-full` с DNS-именем БД. IP/local host запрещены.
-- `CLRS_NATIVE_AUTH_DB_CA_FILE`: абсолютный путь к серверному CA. Можно явно использовать установленный `timeweb-ca.pem`.
+- `CLRS_NATIVE_AUTH_DB_CA_FILE`: необязательный абсолютный путь к серверному CA. При отсутствии native и общего `CLRS_DB_CA_FILE` используется `timeweb-ca.pem` из серверной сборки. Явный пустой/неверный путь не заменяется предположением и блокирует соединение.
 - `CLRS_NATIVE_SCRYPT_CONFIG_JSON`: точный JSON hashConfig из sealed credential bundle, не более 4 KiB, включая secret signerKey.
 - `CLRS_NATIVE_CREDENTIAL_CONFIG_REF`: тот же стабильный configRef, который использовал credential stage.
 - `CLRS_NATIVE_CREDENTIAL_WRAPPING_KEY_B64`: тот же 32-байтовый wrapping key, base64/base64url.

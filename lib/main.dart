@@ -10,6 +10,7 @@ import 'package:sizer/sizer.dart';
 import 'package:wbrs/app/helper/global.dart';
 import 'package:wbrs/firebase_options.dart';
 import 'package:wbrs/presentation/screens/auth/session_gate.dart';
+import 'package:wbrs/presentation/screens/auth/timeweb_session_gate.dart';
 import 'package:wbrs/presentation/screens/chat_screen/chatscreen.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/show/about_meet.dart';
 import 'package:wbrs/presentation/screens/notifications_center/notification_destination_page.dart';
@@ -31,7 +32,7 @@ String? _initialLocalPayload;
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  if (AppBackend.useEmulators) return;
+  if (AppBackend.useEmulators || AppBackend.usesTimeweb) return;
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 }
 
@@ -61,6 +62,10 @@ class _StartupState extends State<_Startup> {
       await LocaleController.instance.initialize();
     }
     await AppBackend.initialize().timeout(const Duration(seconds: 20));
+    if (AppBackend.usesTimeweb) {
+      FlutterError.onError = FlutterError.presentError;
+      return;
+    }
     FlutterError.onError = AppBackend.useEmulators
         ? FlutterError.presentError
         : FirebaseCrashlytics.instance.recordFlutterFatalError;
@@ -162,6 +167,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    if (AppBackend.usesTimeweb) return;
     _pushLanguageSync = PushLanguageSync(
       firestore: firebaseFirestore,
       currentUid: () => firebaseAuth.currentUser?.uid,
@@ -479,11 +485,19 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    _updatePresence(state == AppLifecycleState.resumed);
+    if (!AppBackend.usesTimeweb) {
+      _updatePresence(state == AppLifecycleState.resumed);
+    }
   }
 
   @override
   void dispose() {
+    if (AppBackend.usesTimeweb) {
+      // Runtime teardown preserves remembered protected credentials.
+      unawaited(AppBackend.timewebRuntime.stop());
+      super.dispose();
+      return;
+    }
     _localTapHandler = null;
     SessionService.readyUserId.removeListener(_onSessionReady);
     LocaleController.instance.removeListener(_syncPushLanguage);
@@ -510,7 +524,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
                 textTheme: LrsTheme.theme.textTheme.apply(fontFamily: 'Lato'),
               ),
               debugShowCheckedModeBanner: false,
-              home: const SessionGate(enforceRememberMe: true),
+              home: AppBackend.usesTimeweb
+                  ? TimewebSessionGate(runtime: AppBackend.timewebRuntime)
+                  : const SessionGate(enforceRememberMe: true),
             );
           },
         ),

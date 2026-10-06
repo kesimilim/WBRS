@@ -61,9 +61,10 @@ client_defaults() {
   escaped=${escaped//\"/\\\"}
   printf '[client]\npassword="%s"\n' "$escaped"
 }
+# mysqldump does not accept mysql's --connect-timeout; the caller bounds the operation.
 client_flags=(--no-login-paths --protocol=TCP --host="$MYSQL_HOST" --port="$MYSQL_PORT"
   --user="$MYSQL_USER" --ssl-mode=VERIFY_IDENTITY --ssl-ca="$MYSQL_CA_FILE"
-  --default-character-set=utf8mb4 --connect-timeout=5)
+  --default-character-set=utf8mb4)
 
 partial=$(mktemp "$BACKUP_DIR/.clrs-staging-XXXXXXXX")
 nonce=${partial##*-}

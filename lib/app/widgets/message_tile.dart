@@ -27,6 +27,7 @@ class MessageTile extends StatefulWidget {
   final bool isRead;
   final Widget? avatar;
   final bool isChat;
+  final bool compactMeeting;
 
   const MessageTile({
     super.key,
@@ -38,6 +39,7 @@ class MessageTile extends StatefulWidget {
     required this.name,
     this.avatar,
     required this.isChat,
+    this.compactMeeting = false,
   });
 
   @override
@@ -329,6 +331,40 @@ class _MessageTileState extends State<MessageTile> {
       }
     }
 
+    final compactMeeting = widget.compactMeeting && isMessage && !isReply && shared == null &&
+        (giftNoticeName == null || giftNoticeName.isEmpty);
+    final compactText = compactMeeting;
+    final messageStatus = Align(
+                        alignment: Alignment.centerRight,
+                        widthFactor: compactMeeting ? 1 : null,
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 10,
+                          children: [
+                            if (widget.sentByMe)
+                              FaIcon(
+                                FontAwesomeIcons.check,
+                                size: compactMeeting ? 10 : 15,
+                                color: widget.isRead
+                                    ? Colors.greenAccent
+                                    : Colors.grey,
+                              ),
+                            Text(
+                              context.l10n.time(time.toDate(),
+                                  alwaysUse24HourFormat:
+                                      MediaQuery.alwaysUse24HourFormatOf(
+                                          context)),
+                              style: TextStyle(
+                                fontSize: compactMeeting ? 9 : 12,
+                                height: compactMeeting ? 1.1 : null,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+
     return GestureDetector(
       onTapDown: storePosition,
       onLongPress: () {
@@ -336,15 +372,16 @@ class _MessageTileState extends State<MessageTile> {
       },
       child: Container(
         padding: EdgeInsets.only(
-          top: 4,
-          bottom: 4,
-          left: widget.sentByMe ? 0 : 15,
-          right: widget.sentByMe ? 24 : 0,
+          top: compactMeeting ? 2 : 4,
+          bottom: compactMeeting ? 2 : 4,
+          left: compactMeeting ? 10 : widget.sentByMe ? 0 : 15,
+          right: compactMeeting ? 10 : widget.sentByMe ? 24 : 0,
         ),
         alignment:
             widget.sentByMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: compactMeeting ? CrossAxisAlignment.start : CrossAxisAlignment.center,
           children: [
             widget.sentByMe
                 ? const SizedBox.shrink()
@@ -366,23 +403,27 @@ class _MessageTileState extends State<MessageTile> {
                         ),
                       );
                     },
-                    child: widget.avatar ?? const SizedBox.shrink(),
+                    child: compactMeeting
+                        ? SizedBox(width: 32, height: 32, child: FittedBox(fit: BoxFit.scaleDown, child: widget.avatar ?? const SizedBox.shrink()))
+                        : widget.avatar ?? const SizedBox.shrink(),
                   ),
             const SizedBox(width: 5),
             Flexible(
                 child: Container(
               constraints: BoxConstraints(
-                  maxWidth: size.width * (isReply ? 0.9 : 0.74)),
-              margin: widget.sentByMe
+                  maxWidth: compactMeeting
+                      ? size.width * 2 / 3 - (widget.sentByMe ? 0 : 47)
+                      : size.width * (isReply ? 0.9 : 0.74)),
+              margin: compactMeeting ? EdgeInsets.zero : widget.sentByMe
                   ? EdgeInsets.only(left: isReply ? 8 : 30)
                   : EdgeInsets.only(right: isReply ? 8 : 30),
-              padding: const EdgeInsets.only(
+              padding: compactMeeting ? EdgeInsets.zero : const EdgeInsets.only(
                 top: 10,
                 bottom: 10,
                 left: 10,
                 right: 10,
               ),
-              decoration: BoxDecoration(
+              decoration: compactMeeting ? null : BoxDecoration(
                 borderRadius: widget.sentByMe
                     ? const BorderRadius.only(
                         topLeft: Radius.circular(20),
@@ -399,14 +440,14 @@ class _MessageTileState extends State<MessageTile> {
                     : const Color(0xE02B211D),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: compactMeeting && widget.sentByMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.name.toUpperCase(),
+                    compactMeeting ? widget.name : widget.name.toUpperCase(),
                     textAlign: TextAlign.start,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                    style: TextStyle(
+                      fontSize: compactMeeting ? 11 : 12,
+                      fontWeight: compactMeeting ? FontWeight.normal : FontWeight.bold,
                       color: Colors.white,
                       letterSpacing: -0.5,
                     ),
@@ -439,10 +480,10 @@ class _MessageTileState extends State<MessageTile> {
                         ],
                       ),
                     ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: compactMeeting ? 1 : 5),
                   Column(
                     mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: compactMeeting && widget.sentByMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
                       isMessage
                           ? shared != null
@@ -452,16 +493,19 @@ class _MessageTileState extends State<MessageTile> {
                                   '${context.tr('Подарок {name} подарен!', args: {
                                         'name': context.tr(giftNoticeName)
                                       })} ❤️',
-                                  textAlign: TextAlign.start,
+                                  textAlign: compactMeeting && widget.sentByMe ? TextAlign.end : TextAlign.start,
                                   style: const TextStyle(
                                       fontSize: 14, color: Colors.white))
                               : TranslatableText(
                                   '${widget.message['message'] ?? ''}',
                                   autoTranslate: false,
                                   showAction: true,
-                                  textAlign: TextAlign.start,
-                                  style: const TextStyle(
-                                    fontSize: 14,
+                                  compactMeeting: compactMeeting,
+                                  compactFooter: compactText ? messageStatus : null,
+                                  textAlign: compactMeeting && widget.sentByMe ? TextAlign.end : TextAlign.start,
+                                  style: TextStyle(
+                                    fontSize: compactMeeting ? 13 : 14,
+                                    height: compactMeeting ? 1.15 : null,
                                     color: Colors.white,
                                   ),
                                 )
@@ -508,34 +552,7 @@ class _MessageTileState extends State<MessageTile> {
                               ),
                             ),
                       if (shared != null) _sharedContentCard(shared),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: Wrap(
-                          alignment: WrapAlignment.end,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          spacing: 10,
-                          children: [
-                            if (widget.sentByMe)
-                              FaIcon(
-                                FontAwesomeIcons.check,
-                                size: 15,
-                                color: widget.isRead
-                                    ? Colors.greenAccent
-                                    : Colors.grey,
-                              ),
-                            Text(
-                              context.l10n.time(time.toDate(),
-                                  alwaysUse24HourFormat:
-                                      MediaQuery.alwaysUse24HourFormatOf(
-                                          context)),
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                      if (!compactText) messageStatus,
                     ],
                   ),
                 ],

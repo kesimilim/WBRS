@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { EncryptedArchiveWriter } from '../encrypted-archive.mjs';
 import { payloadHash } from '../import-core.mjs';
+import { PROFILE_DETAILS_COLUMNS, projectProfileDetails } from '../project-profile-details.mjs';
 import { prepareProfileProjection, profileProjectionSummary } from '../project-profiles-core.mjs';
 import { mainProfileProjection, parseProfileProjectionArgs, readProfileProjectionReceipt } from '../project-profiles-cli.mjs';
 import { profileInsertBatches, rollbackProfileProjection, stageProfileProjection,
@@ -83,8 +84,7 @@ function confirmations(plan) {
     rollbackArchiveSha256: plan.archiveSha256 };
 }
 
-const unusedProfileColumns = ['age', 'height_cm', 'about_text', 'interests_text', 'has_children',
-  'gender', 'relationship_status', 'country_code', 'region', 'language_code', 'invisible_until', 'last_online_at'];
+const unusedProfileColumns = ['invisible_until', 'last_online_at'];
 
 // A transaction-aware mysql2-shaped double tests parameterization, immutable
 // source joins, state changes and rollback. It does not replace a real MySQL
@@ -270,6 +270,36 @@ test('stage binds exact legacy rows and performs parameterized, insert-only SQL 
   assert.equal(query.databaseWrites, 0);
   assert.deepEqual(query.counts, { accounts: 3, profiles: 2, identities: 2 });
   await assert.rejects(stageProfileProjection(client, plan, confirmations(plan), async () => {}), /empty normalized/);
+});
+
+test('profile details initial INSERT and expected-row proof preserve original typed source and refuse later edits', async (t) => {
+  const docs = documents();
+  Object.assign(docs[0].fields, { age: { doubleValue: 28.0 }, rost: textField('180'),
+    about: textField(' Короткое описание\n'), hobbi: textField('Хобби'), deti: { booleanValue: false },
+    pol: textField('мужской'), relationStatus: textField('свободен'), countryCode: textField('RU'),
+    region: textField('Регион'), languageCode: textField('ru'), secondaryGroup: textField('белая'),
+    profileDetailsSaved: { booleanValue: true } });
+  const original = structuredClone(docs[0]);
+  const plan = await prepareProfileProjection(await fixture(t, { docs }));
+  const expected = projectProfileDetails(original.fields);
+  assert.deepEqual(Object.fromEntries(PROFILE_DETAILS_COLUMNS.map((key) => [key, plan.profiles[0][key]])), expected);
+  assert.deepEqual(plan.profiles[0].legacy_raw.fields, original.fields);
+  assert.equal(plan.rootDocuments[0].sha256, payloadHash(plan.rootDocuments[0].encodedPayload));
+  assert.equal(plan.profiles[0].updated_at, '2026-09-30 01:02:03.123456');
+  assert.deepEqual(docs[0], original);
+  const client = fakeMySql(plan); let receipt;
+  await stageProfileProjection(client, plan, confirmations(plan), async (value) => { receipt = value; });
+  await verifyProfileProjection(client, plan, 'clrs_staging', receipt);
+  for (const column of PROFILE_DETAILS_COLUMNS) assert.equal(client.data.profiles[0][column], expected[column]);
+  const insert = client.calls.find((call) => call.sql.startsWith('INSERT INTO clrs_staging.profiles'));
+  for (const column of PROFILE_DETAILS_COLUMNS) assert.ok(insert.sql.includes(column));
+  assert.equal(client.data.profiles[0].invisible_until, null);
+  assert.equal(client.data.profiles[0].last_online_at, null);
+  client.data.profiles[0].about_text = 'Native later edit';
+  const changed = structuredClone(client.data);
+  await assert.rejects(verifyProfileProjection(client, plan, 'clrs_staging', receipt), /profile mismatch/);
+  await assert.rejects(stageProfileProjection(client, plan, confirmations(plan), async () => {}), /empty normalized/);
+  assert.deepEqual(client.data, changed);
 });
 
 test('explicit confirmations and target/version checks stop stage before INSERT', async (t) => {

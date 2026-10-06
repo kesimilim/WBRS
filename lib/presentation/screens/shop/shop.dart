@@ -20,6 +20,51 @@ import 'package:random_string/random_string.dart';
 
 import '../../../service/notifications.dart';
 
+/// The gift-store reference uses its own bold italic sans logo treatment.
+/// Other screens retain the shared approved serif brand.
+class _GiftStoreLogo extends StatelessWidget {
+  const _GiftStoreLogo();
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      const Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'CLRS',
+            key: ValueKey('gift-store-logo'),
+            style: TextStyle(
+              fontFamily: 'Lato',
+              fontWeight: FontWeight.w900,
+              fontStyle: FontStyle.italic,
+              fontSize: 42,
+              height: .95,
+              color: Color(0xFFFFE4C8),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.only(top: 1, left: 2),
+            child: Icon(Icons.favorite, size: 12, color: Color(0xFFFFA06C)),
+          ),
+        ],
+      ),
+      const SizedBox(height: 5),
+      Text(
+        ClrsBrand.fullName.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: 'Lato',
+          fontSize: 7,
+          color: Color(0xFFFFE4C8),
+          letterSpacing: 1.05,
+        ),
+      ),
+    ],
+  );
+}
+
 class Podarok {
   String img;
   String name;
@@ -104,10 +149,26 @@ class _ShopPageState extends State<ShopPage> with TickerProviderStateMixin {
                 const Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: ClrsBrandHeader()),
+                    Expanded(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(4, 6, 4, 14),
+                        child: _GiftStoreLogo(),
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.only(top: 15),
-                      child: ClrsMotto(size: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ClrsMotto(size: 16),
+                          SizedBox(height: 3),
+                          Icon(
+                            Icons.favorite_border,
+                            size: 18,
+                            color: LrsTheme.peach,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -121,7 +182,9 @@ class _ShopPageState extends State<ShopPage> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  context.tr('Дарите внимание. Создавайте особенные моменты.'),
+                  context
+                      .tr('Дарите внимание. Создавайте особенные моменты.')
+                      .replaceFirst('. ', '.\n'),
                   style: const TextStyle(
                     color: LrsTheme.text,
                     fontSize: 15,

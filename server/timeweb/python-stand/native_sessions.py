@@ -18,7 +18,7 @@ import base64
 
 from native_credentials import (CredentialCodec, CredentialMaterial, CredentialUnavailable,
                                 compact_json, credential_row_identity)
-from profile_store import _database_config, DatabaseUnavailable
+from profile_store import _database_config, DatabaseUnavailable, BUNDLED_CA_FILE
 
 
 class SessionRejected(Exception):
@@ -34,7 +34,7 @@ class LoginSnapshot:
     uid: str
     token_version: int
     email_verified: bool
-    credential: CredentialMaterial
+    credential: object
     credential_identity: bytes
 
 
@@ -161,6 +161,18 @@ ACCOUNT_QUERY = """SELECT a.uid, a.disabled, a.lifecycle, a.token_version, a.ema
  c.scheme, c.password_hash, c.password_salt, c.parameters
  FROM clrs_staging.accounts AS a JOIN clrs_staging.auth_credentials AS c ON c.uid = a.uid
  WHERE a.uid = %s LIMIT 1 FOR SHARE OF a, c"""
+PASSWORD_LOGIN_QUERY = """SELECT a.uid, a.disabled, a.lifecycle, a.token_version, a.email_verified,
+ c.scheme, c.password_hash, c.password_salt, c.parameters,
+ n.scheme, n.password_version, n.material_ciphertext, n.parameters
+ FROM clrs_staging.accounts AS a LEFT JOIN clrs_staging.auth_credentials AS c ON c.uid = a.uid
+ LEFT JOIN clrs_staging.native_password_credentials AS n ON n.uid = a.uid
+ WHERE a.email_normalized = %s LIMIT 2"""
+PASSWORD_ACCOUNT_QUERY = """SELECT a.uid, a.disabled, a.lifecycle, a.token_version, a.email_verified,
+ c.scheme, c.password_hash, c.password_salt, c.parameters,
+ n.scheme, n.password_version, n.material_ciphertext, n.parameters
+ FROM clrs_staging.accounts AS a LEFT JOIN clrs_staging.auth_credentials AS c ON c.uid = a.uid
+ LEFT JOIN clrs_staging.native_password_credentials AS n ON n.uid = a.uid
+ WHERE a.uid = %s LIMIT 1 FOR SHARE OF a, c, n"""
 SESSION_QUERY = """SELECT s.session_id, s.uid, s.device_id, s.refresh_token_hash,
  DATE_FORMAT(s.issued_at, '%%Y-%%m-%%d %%H:%%i:%%s.%%f'),
  DATE_FORMAT(s.expires_at, '%%Y-%%m-%%d %%H:%%i:%%s.%%f'),
@@ -171,17 +183,33 @@ SESSION_QUERY = """SELECT s.session_id, s.uid, s.device_id, s.refresh_token_hash
 
 
 class NativeSessionStore:
-    def __init__(self, env, codec, tokens, *, connect=None, clock=time.time, monotonic=time.monotonic):
+    def __init__(self, env, codec, tokens, *, connect=None, clock=time.time, monotonic=time.monotonic,
+                 password_selector=None):
         self._env = env
         if not isinstance(codec, CredentialCodec) or not isinstance(tokens, SessionTokens):
             raise SessionUnavailable()
         self.codec = codec; self.tokens = tokens
+        self._password_selector = password_selector
+        password_flag = env.get("CLRS_NATIVE_PASSWORD_ENABLED")
+        if password_flag not in (None, "0", "1") or ((password_flag == "1") != (password_selector is not None)):
+            raise SessionUnavailable()
         self._connect = connect; self._clock = clock; self._monotonic = monotonic
 
     def _enabled(self):
         if (self._env.get("CLRS_NATIVE_AUTH_ENABLED") != "1"
                 or self._env.get("CLRS_NATIVE_AUTH_WRITES_ENABLED") != "1"):
             raise SessionUnavailable()
+        password_flag = self._env.get("CLRS_NATIVE_PASSWORD_ENABLED")
+        if password_flag not in (None, "0", "1") or ((password_flag == "1") != (self._password_selector is not None)):
+            raise SessionUnavailable()
+        self.permission_model
+
+    @property
+    def permission_model(self):
+        model = self._env.get("CLRS_NATIVE_AUTH_PERMISSION_MODEL", "strict-tables-v1")
+        if not isinstance(model, str) or model not in {"strict-tables-v1", "provider-database-v1"}:
+            raise SessionUnavailable()
+        return model
 
     def _execute(self, cursor, sql, params=(), *, deadline):
         if self._monotonic() >= deadline:
@@ -191,13 +219,18 @@ class NativeSessionStore:
             raise SessionUnavailable()
 
     def _grants(self, rows):
+        if self.permission_model == "provider-database-v1":
+            return self._database_grants(rows)
         expected = {"accounts": {"SELECT"}, "auth_credentials": {"SELECT"},
                     "device_sessions": {"SELECT", "INSERT", "UPDATE"}}
+        if self._password_selector is not None:
+            expected["native_password_credentials"] = {"SELECT"}
         found = {table: set() for table in expected}; usage = False
+        names = "|".join(expected)
         for row in rows:
             if len(row) != 1 or not isinstance(row[0], str):
                 raise SessionUnavailable()
-            match = re.fullmatch(r"GRANT ([A-Z ,]+) ON (\*\.\*|`clrs_staging`\.`(accounts|auth_credentials|device_sessions)`) TO (?:`[^`]+`|'[^']+')@(?:`[^`]+`|'[^']+')( REQUIRE SSL)?", row[0])
+            match = re.fullmatch(r"GRANT ([A-Z ,]+) ON (\*\.\*|`clrs_staging`\.`(" + names + r")`) TO (?:`[^`]+`|'[^']+')@(?:`[^`]+`|'[^']+')( REQUIRE SSL)?", row[0])
             if not match:
                 raise SessionUnavailable()
             privileges = {item.strip() for item in match[1].split(",")}
@@ -215,12 +248,40 @@ class NativeSessionStore:
         if not usage or found != expected:
             raise SessionUnavailable()
 
+    @staticmethod
+    def _database_grants(rows):
+        # Explicit provider mode: exactly one USAGE and one database grant.
+        # Never combine this broader role with the strict table-grant model.
+        usage = False; database = False
+        pattern = (r"GRANT ([A-Z ,]+) ON (\*\.\*|`clrs_staging`\.\*) TO "
+            r"(?:`[^`]+`|'[^']+')@(?:`[^`]+`|'[^']+')( REQUIRE SSL)?")
+        for row in rows:
+            if not isinstance(row, (tuple, list)) or len(row) != 1 or not isinstance(row[0], str):
+                raise SessionUnavailable()
+            match = re.fullmatch(pattern, row[0])
+            if match is None:
+                raise SessionUnavailable()
+            items = [item.strip() for item in match[1].split(",")]
+            privileges = set(items)
+            if len(items) != len(privileges):
+                raise SessionUnavailable()
+            if match[2] == "*.*":
+                if privileges != {"USAGE"} or usage:
+                    raise SessionUnavailable()
+                usage = True
+            else:
+                if privileges != {"SELECT", "INSERT", "UPDATE"} or database or match[3]:
+                    raise SessionUnavailable()
+                database = True
+        if not usage or not database:
+            raise SessionUnavailable()
+
     def _transaction(self, action, *, deadline):
         self._enabled(); connection = None
         try:
             configuration = _database_config({"CLRS_DB_URL": self._env.get("CLRS_NATIVE_AUTH_DB_URL", ""),
                 "CLRS_DB_CA_FILE": self._env.get("CLRS_NATIVE_AUTH_DB_CA_FILE",
-                                                self._env.get("CLRS_DB_CA_FILE", ""))})
+                                                self._env.get("CLRS_DB_CA_FILE", BUNDLED_CA_FILE))})
             configuration.update(connect_timeout=2, read_timeout=2, write_timeout=2,
                                  autocommit=False, charset="utf8mb4")
             connect = self._connect
@@ -268,13 +329,30 @@ class NativeSessionStore:
     def _login_snapshot(self, row):
         if row is None:
             return None
-        if (len(row) != 9 or not isinstance(row[0], str) or not 1 <= len(row[0]) <= 191
+        expected_size = 13 if self._password_selector is not None else 9
+        if (len(row) != expected_size or not isinstance(row[0], str) or not 1 <= len(row[0]) <= 191
                 or type(row[1]) is not int or row[1] not in (0, 1)
                 or row[2] not in ("active", "blocked", "deleted")
                 or type(row[3]) is not int or not 0 <= row[3] <= 2 ** 63 - 1
                 or type(row[4]) is not int or row[4] not in (0, 1)):
             raise SessionUnavailable()
-        if row[1] != 0 or row[2] != "active" or row[5] is None:
+        if row[1] != 0 or row[2] != "active":
+            return None
+        if self._password_selector is not None:
+            # A present native row is authoritative even if unusable. The
+            # selector must never fall back to a retained Firebase verifier.
+            firebase = None if all(value is None for value in row[5:9]) else dict(zip(
+                ["uid", "scheme", "password_hash", "password_salt", "parameters"], [row[0], *row[5:9]]))
+            native = None if all(value is None for value in row[9:13]) else dict(zip(
+                ["uid", "scheme", "password_version", "material_ciphertext", "parameters"], [row[0], *row[9:13]]))
+            if native is None and firebase is None:
+                return None
+            selected = self._password_selector.select(uid=row[0], account_token_version=row[3],
+                firebase_row=firebase, native_row=native)
+            if isinstance(selected.material, CredentialMaterial) and selected.material.disabled:
+                return None
+            return LoginSnapshot(row[0], row[3], bool(row[4]), selected.material, selected.ciphertext_identity)
+        if row[5] is None:
             return None
         credential_row = dict(zip(["uid", "scheme", "password_hash", "password_salt", "parameters"],
                                   [row[0], *row[5:]]))
@@ -285,7 +363,8 @@ class NativeSessionStore:
 
     def read_login(self, email, *, deadline):
         def action(cursor):
-            self._execute(cursor, LOGIN_QUERY, (email,), deadline=deadline)
+            query = PASSWORD_LOGIN_QUERY if self._password_selector is not None else LOGIN_QUERY
+            self._execute(cursor, query, (email,), deadline=deadline)
             rows = cursor.fetchall()
             if len(rows) > 1:
                 raise SessionUnavailable()
@@ -313,7 +392,8 @@ class NativeSessionStore:
         if not isinstance(snapshot, LoginSnapshot):
             raise SessionRejected()
         def action(cursor):
-            self._execute(cursor, ACCOUNT_QUERY, (snapshot.uid,), deadline=deadline)
+            query = PASSWORD_ACCOUNT_QUERY if self._password_selector is not None else ACCOUNT_QUERY
+            self._execute(cursor, query, (snapshot.uid,), deadline=deadline)
             current = self._login_snapshot(cursor.fetchone())
             # The account and credential rows are locked again after KDF;
             # blocking/reset/version changes cannot slip into a new session.

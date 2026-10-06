@@ -24,7 +24,10 @@ const arr = (...items) => ({ arrayValue: { values: items.map(s) } });
 const doc = (path, fields) => ({ kind: 'firestore-document', path, fields,
   createTime: '2026-10-01T00:00:00.123456789Z', updateTime: '2026-10-01T00:00:01.123456789Z' });
 const fixtureDocuments = () => [
-  doc('users/Synthetic-A', { fullName: s('Synthetic name'), status: s('blocked') }),
+  doc('users/Synthetic-A', { fullName: s('Synthetic name'), status: s('blocked'),
+    age: { stringValue: '28' }, rost: s('180'), about: s(' Short '), hobbi: s(''),
+    deti: { booleanValue: false }, pol: s('мужской'), region: s('Регион'), countryCode: s('RU'),
+    languageCode: s('ru'), secondaryGroup: s('белая') }),
   doc('users/synthetic-a', { country: s('Synthetic country') }),
   doc('chats/CaseChat', { user1: s('Synthetic-A'), user2: s('synthetic-a') }),
   doc('chats/CaseChat/chats/CaseMessage', { sendByID: s('Synthetic-A'),
@@ -86,9 +89,8 @@ class Database {
     this.plan = plan; this.options = options; this.trace = []; this.insertCount = 0;
     this.tables = state ?? Object.fromEntries([
       ['accounts', clone(plan.dependencies.accounts)], ['auth_identities', clone(plan.dependencies.identities)],
-      ['profiles', plan.dependencies.profiles.map((row) => ({ ...clone(row), age: null, height_cm: null,
-        about_text: null, interests_text: null, has_children: null, gender: null, relationship_status: null,
-        country_code: null, region: null, language_code: null, invisible_until: null, last_online_at: null, test_result: {} }))],
+      ['profiles', plan.dependencies.profiles.map((row) => ({ ...clone(row),
+        invisible_until: null, last_online_at: null, test_result: {} }))],
       ...CONVERSATION_TABLES.map((spec) => [spec.table, []]),
     ]);
   }
@@ -193,6 +195,10 @@ test('account/profile dependency matches the existing projection exactly, retain
   assert.equal(f.plan.dependencies.accounts[0].lifecycle, 'blocked');
   assert.deepEqual(f.plan.dependencies.accounts[0].legacy_claims, { admin: true });
   assert.deepEqual(f.plan.authRecords.map((row) => row.uid), ['Synthetic-A', 'synthetic-a', 'Ä']);
+  assert.equal(f.plan.dependencies.profiles[0].age, 28);
+  assert.equal(f.plan.dependencies.profiles[0].height_cm, 180);
+  assert.equal(f.plan.dependencies.profiles[0].region, 'Регион');
+  assert.equal(f.plan.dependencies.profiles[0].has_children, 0);
 });
 
 test('metadata, unsupported account dependencies and changed exact acknowledgements fail before SQL', async (t) => {

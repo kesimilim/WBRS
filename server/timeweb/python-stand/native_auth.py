@@ -14,6 +14,7 @@ import time
 from native_credentials import (CredentialCodec, CredentialUnavailable,
                                 FirebaseScryptVerifier, decode_base64, unique_json)
 from native_sessions import NativeSessionStore, SessionTokens, SessionRejected, SessionUnavailable
+from native_password_credentials import NativePasswordCodec, PasswordWorkPool
 
 MAX_BODY_BYTES = 8192
 REQUEST_BUDGET_SECONDS = 8
@@ -112,8 +113,16 @@ class NativeAuthService:
                 raise CredentialUnavailable()
             codec = CredentialCodec(hash_config, env.get("CLRS_NATIVE_CREDENTIAL_CONFIG_REF"), wrapping)
             tokens = SessionTokens(session_key)
-            store = NativeSessionStore(env, codec, tokens, connect=connect)
-            verifier = FirebaseScryptVerifier(codec)
+            password_flag = env.get("CLRS_NATIVE_PASSWORD_ENABLED")
+            if password_flag not in (None, "0", "1"):
+                raise CredentialUnavailable()
+            selector = None
+            if password_flag == "1":
+                verifier = PasswordWorkPool(codec, NativePasswordCodec(wrapping))
+                selector = verifier
+            else:
+                verifier = FirebaseScryptVerifier(codec)
+            store = NativeSessionStore(env, codec, tokens, connect=connect, password_selector=selector)
             return cls(env, store, verifier, BoundedRateLimiter(session_key))
         except Exception:
             if verifier is not None:

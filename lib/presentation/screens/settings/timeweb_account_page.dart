@@ -544,6 +544,31 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
                       ]),
                       const SizedBox(height: 16),
                       ClrsPanel(
+                        key: const ValueKey('timeweb-settings-language'),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 2,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              Icons.language,
+                              size: 20,
+                              color: LrsTheme.peach,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                context.tr('Язык'),
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                            const LanguagePickerButton(showIcon: false),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ClrsPanel(
                         padding: EdgeInsets.zero,
                         child: TextButton.icon(
                           key: const ValueKey('timeweb-settings-logout'),

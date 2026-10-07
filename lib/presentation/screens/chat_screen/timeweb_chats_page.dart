@@ -341,7 +341,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                         final available = constraints.maxWidth - 28 - 21;
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
-                                      padding: EdgeInsets.symmetric(
+                          padding: EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 4,
                           ),
@@ -449,9 +449,25 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
                                       style: const TextStyle(
                                         fontFamily: 'Lato',
                                       ),
-                                      maxLines: 2,
+                                      maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
+                                    subtitle: chat.lastMessage == null
+                                        ? null
+                                        : Text(
+                                            '${chat.lastMessageSenderUid == _lease!.identity.uid ? '${context.tr('Вы')}: ' : ''}${chat.lastMessage}',
+                                            key: ValueKey(
+                                              'timeweb-chat-preview-${chat.chatId}',
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontFamily: 'Lato',
+                                              fontSize: 12,
+                                              color: LrsTheme.muted,
+                                              height: 1.2,
+                                            ),
+                                          ),
                                     trailing: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [

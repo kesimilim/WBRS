@@ -56,7 +56,7 @@ final class TimewebCurrentReadRequest {
   final String? _chatId;
   final TimewebCurrentReadCursor? _cursor;
   String get _scope => '${resource.name}\u0000${_chatId ?? ''}\u0000$limit';
-  Uri _uri(Uri origin) => origin.replace(
+  Uri _uri(Uri origin, {bool includePreview = true}) => origin.replace(
     pathSegments: switch (resource) {
       TimewebCurrentReadResource.chats => ['v1', 'runtime', 'chats'],
       TimewebCurrentReadResource.messages => [
@@ -70,6 +70,8 @@ final class TimewebCurrentReadRequest {
     },
     queryParameters: {
       'limit': '$limit',
+      if (resource == TimewebCurrentReadResource.chats && includePreview)
+        'includePreview': '1',
       if (_cursor != null)
         switch (resource) {
           TimewebCurrentReadResource.chats => 'cursor',
@@ -202,6 +204,16 @@ final class TimewebCurrentChat {
     return _data['updatedAt'];
   }
 
+  String? get lastMessage {
+    _check();
+    return _data['lastMessage'];
+  }
+
+  String? get lastMessageSenderUid {
+    _check();
+    return _data['lastMessageSenderUid'];
+  }
+
   int get lastSequence {
     _check();
     return _data['lastSequence'];
@@ -227,7 +239,8 @@ final class TimewebCurrentChat {
     return _data['notifications'];
   }
 
-  // Avatar hydration is a separate reviewed media capability, currently absent.
+  // Chat metadata never carries arbitrary photo URLs. Avatars use the native
+  // profile-photo reader with its own current account and private media guards.
   TimewebPrivateMediaRequest? get avatar {
     _check();
     return null;
@@ -478,6 +491,22 @@ Future<void> _executeCurrentRead(_CurrentReadFlight flight) async {
       reply = await _currentReadAttempt(flight, session.accessToken);
       flight.check();
     }
+    if (flight.request.resource == TimewebCurrentReadResource.chats &&
+        reply.status == 400 &&
+        reply.body != null &&
+        _mutationExact(reply.body!, {'error'}) &&
+        reply.body!['error'] == 'invalid_request') {
+      // One compatibility read for the pre-preview provider, within the same
+      // owner/epoch/deadline. No retry follows any other error or bad body.
+      flight.check();
+      session = owner._session!;
+      reply = await _currentReadAttempt(
+        flight,
+        session.accessToken,
+        includePreview: false,
+      );
+      flight.check();
+    }
     if (reply.status != 200) {
       if (reply.status == 401 &&
           owner._session?.accessToken == session.accessToken)
@@ -512,8 +541,9 @@ Future<void> _executeCurrentRead(_CurrentReadFlight flight) async {
 
 Future<_Reply> _currentReadAttempt(
   _CurrentReadFlight flight,
-  String bearer,
-) async {
+  String bearer, {
+  bool includePreview = true,
+}) async {
   final owner = flight.owner;
   flight.check();
   if (owner._inflightRequests >= 4) {
@@ -526,7 +556,10 @@ Future<_Reply> _currentReadAttempt(
   final request =
       http.AbortableRequest(
           'GET',
-          flight.request._uri(owner.configuration.endpoint),
+          flight.request._uri(
+            owner.configuration.endpoint,
+            includePreview: includePreview,
+          ),
           abortTrigger: abort.future,
         )
         ..followRedirects = false
@@ -553,7 +586,14 @@ Future<_Reply> _currentReadAttempt(
     if (response.isRedirect ||
         response.statusCode >= 300 && response.statusCode < 400)
       _currentReadInvalid();
-    if (response.statusCode != 200) return _Reply(response.statusCode, null);
+    final compatibilityError =
+        response.statusCode == 400 &&
+        includePreview &&
+        flight.request.resource == TimewebCurrentReadResource.chats;
+    if (response.statusCode != 200 && !compatibilityError) {
+      return _Reply(response.statusCode, null);
+    }
+    final maximumBytes = compatibilityError ? 4096 : _currentReadMaximumBytes;
     final mime = response.headers['content-type']?.toLowerCase() ?? '';
     final cache = (response.headers['cache-control'] ?? '')
         .toLowerCase()
@@ -565,14 +605,13 @@ Future<_Reply> _currentReadAttempt(
         cache.contains('public') ||
         (encoding != null && encoding != 'identity') ||
         (response.contentLength != null &&
-            response.contentLength! > _currentReadMaximumBytes))
+            response.contentLength! > maximumBytes))
       _currentReadInvalid();
     final bytes = <int>[];
     while (await moving) {
       flight.check();
       final chunk = reader.current;
-      if (bytes.length + chunk.length > _currentReadMaximumBytes)
-        _currentReadInvalid();
+      if (bytes.length + chunk.length > maximumBytes) _currentReadInvalid();
       bytes.addAll(chunk);
       moving = reader.moveNext();
     }
@@ -582,7 +621,7 @@ Future<_Reply> _currentReadAttempt(
       _currentReadInvalid();
     final decoded = jsonDecode(utf8.decode(bytes));
     if (decoded is! Map<String, dynamic>) _currentReadInvalid();
-    return _Reply(200, decoded);
+    return _Reply(response.statusCode, decoded);
   } on FormatException {
     _currentReadInvalid();
   } finally {
@@ -617,19 +656,27 @@ TimewebCurrentReadPage _decodeCurrentRead(
     final seen = <String>{};
     Map<String, dynamic>? previous;
     for (final value in items) {
+      const baseKeys = {
+        'chatId',
+        'counterpartUid',
+        'name',
+        'avatar',
+        'updatedAt',
+        'lastSequence',
+        'revision',
+        'readThrough',
+        'archived',
+        'notifications',
+      };
+      final preview =
+          value is Map<String, dynamic> &&
+          _mutationExact(value, {
+            ...baseKeys,
+            'lastMessage',
+            'lastMessageSenderUid',
+          });
       if (value is! Map<String, dynamic> ||
-          !_mutationExact(value, {
-            'chatId',
-            'counterpartUid',
-            'name',
-            'avatar',
-            'updatedAt',
-            'lastSequence',
-            'revision',
-            'readThrough',
-            'archived',
-            'notifications',
-          }) ||
+          (!preview && !_mutationExact(value, baseKeys)) ||
           !_currentIdentifier(value['chatId']) ||
           !_currentIdentifier(value['counterpartUid']) ||
           value['counterpartUid'] == flight.uid ||
@@ -644,6 +691,16 @@ TimewebCurrentReadPage _decodeCurrentRead(
           value['notifications'] is! bool ||
           !seen.add(value['chatId']))
         _currentReadInvalid();
+      if (preview &&
+          (!_currentNullableText(value['lastMessage'], 4096) ||
+              (value['lastMessageSenderUid'] != null &&
+                  (value['lastMessageSenderUid'] != flight.uid &&
+                      value['lastMessageSenderUid'] !=
+                          value['counterpartUid'])) ||
+              (value['lastMessage'] != null &&
+                  value['lastMessageSenderUid'] == null))) {
+        _currentReadInvalid();
+      }
       if (previous != null) {
         final before = previous['updatedAt'] as String?,
             after = value['updatedAt'] as String?;

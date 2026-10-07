@@ -39,7 +39,23 @@ _OWN_PAIR = """(CAST(c.uid_low AS BINARY) = CAST(%s AS BINARY)
  NOT IN (CAST(c.uid_low AS BINARY), CAST(c.uid_high AS BINARY)))"""
 
 
-def chats_query(anchor=None):
+def chats_query(anchor=None, *, include_preview=False):
+    # The legacy response and query remain unchanged unless a client explicitly
+    # asks for canonical message text. One indexed join supplies the whole page.
+    preview_columns = preview_join = preview_lock = ""
+    if include_preview:
+        preview_columns = """,
+ preview.chat_id, preview.message_id, preview.sequence, preview.sender_uid,
+ CASE WHEN OCTET_LENGTH(preview.body) <= 16384 AND CHAR_LENGTH(preview.body) <= 4096
+ THEN LEFT(preview.body, 160) ELSE NULL END,
+ (preview.body IS NULL OR (OCTET_LENGTH(preview.body) <= 16384 AND CHAR_LENGTH(preview.body) <= 4096)),
+ preview.deleted_at"""
+        preview_join = """LEFT JOIN clrs_staging.chat_messages AS preview
+ ON preview.chat_id = c.chat_id AND preview.deleted_at IS NULL
+ AND preview.sequence = (SELECT MAX(recent.sequence) FROM clrs_staging.chat_messages AS recent
+ WHERE recent.chat_id = c.chat_id AND recent.deleted_at IS NULL
+ AND recent.sequence <= c.last_sequence)"""
+        preview_lock = ", preview"
     continuation = ""
     if anchor is not None:
         continuation = (" AND c.updated_at IS NULL AND CAST(c.chat_id AS BINARY) > CAST(%s AS BINARY)"
@@ -53,13 +69,14 @@ def chats_query(anchor=None):
  (ml.archived_at IS NOT NULL), (mh.archived_at IS NOT NULL),
  CASE WHEN CAST(c.uid_low AS BINARY) = CAST(%s AS BINARY)
  THEN CASE WHEN CHAR_LENGTH(ph.full_name) <= 1000 AND OCTET_LENGTH(ph.full_name) <= 4000 THEN ph.full_name ELSE NULL END
- ELSE CASE WHEN CHAR_LENGTH(pl.full_name) <= 1000 AND OCTET_LENGTH(pl.full_name) <= 4000 THEN pl.full_name ELSE NULL END END
+ ELSE CASE WHEN CHAR_LENGTH(pl.full_name) <= 1000 AND OCTET_LENGTH(pl.full_name) <= 4000 THEN pl.full_name ELSE NULL END END{preview_columns}
  FROM clrs_staging.chats AS c {_PAIR_JOINS}
  LEFT JOIN clrs_staging.profiles AS pl ON pl.uid = c.uid_low
  LEFT JOIN clrs_staging.profiles AS ph ON ph.uid = c.uid_high
+ {preview_join}
  WHERE {_OWN_PAIR}{continuation}
  ORDER BY c.updated_at DESC, CAST(c.chat_id AS BINARY) ASC LIMIT %s
- FOR SHARE OF c, ml, mh, al, ah"""
+ FOR SHARE OF c, ml, mh, al, ah{preview_lock}"""
 
 
 def messages_query(before=False):
@@ -195,8 +212,10 @@ class RuntimeReadService:
         return self._codec.seal("cursor", {"v": 1, "uid": uid, "purpose": CHAT_ORDER,
             "limit": limit, "after": [row[3], row[0]], "exp": int(self._clock()) + 300})
 
-    def own_chats(self, identity, *, limit=50, cursor=None, access_token):
+    def own_chats(self, identity, *, limit=50, cursor=None, include_preview=False, access_token):
         limit = _limit(limit)
+        if type(include_preview) is not bool:
+            raise RuntimeInvalidRequest()
         def action(sql_cursor, execute, uid):
             anchor = self._cursor(cursor, uid, limit); parameters = [uid, uid, uid]
             if anchor is not None:
@@ -206,11 +225,11 @@ class RuntimeReadService:
                     stamp = anchor[0][:-1].replace("T", " ")
                     parameters.extend((stamp, stamp, anchor[1]))
             parameters.append(limit + 1)
-            execute(chats_query(anchor), tuple(parameters)); rows = sql_cursor.fetchall()
+            execute(chats_query(anchor, include_preview=include_preview), tuple(parameters)); rows = sql_cursor.fetchall()
             if len(rows) > limit + 1:
                 raise RuntimeUnavailable()
             def convert(row):
-                if not isinstance(row, (tuple, list)) or len(row) != 13:
+                if not isinstance(row, (tuple, list)) or len(row) != (20 if include_preview else 13):
                     raise RuntimeUnavailable()
                 pair = _pair_values(uid, row[1], row[2]); own = 0 if uid == row[1] else 1
                 last, revision = _number(row[4]), _number(row[5])
@@ -219,11 +238,27 @@ class RuntimeReadService:
                 read = _number(row[6 + own]); _number(row[7 - own])
                 if row[6] > last or row[7] > last:
                     raise RuntimeUnavailable()
-                return {"chatId": _id(row[0]), "counterpartUid": next(iter(pair - {uid})),
+                item = {"chatId": _id(row[0]), "counterpartUid": next(iter(pair - {uid})),
                     "name": _text(row[12], 1000, nullable=True), "avatar": None,
                     "updatedAt": _timestamp(row[3], nullable=True), "lastSequence": last,
                     "revision": revision, "readThrough": read, "archived": bool(row[10 + own]),
                     "notifications": bool(row[8 + own])}
+                if include_preview:
+                    text = sender = None
+                    if row[13] is None:
+                        # A left-join miss must contain no other message fields.
+                        if (any(value is not None for value in row[14:18]) or type(row[18]) is not int
+                                or row[18] != 1 or row[19] is not None):
+                            raise RuntimeUnavailable()
+                    else:
+                        if (row[13] != row[0] or _id(row[16]) not in pair
+                                or _number(row[15], minimum=1) > last
+                                or type(row[18]) is not int or row[18] != 1 or row[19] is not None):
+                            raise RuntimeUnavailable()
+                        _id(row[14])
+                        text, sender = _text(row[17], 4096, nullable=True), row[16]
+                    item.update(lastMessage=text, lastMessageSenderUid=sender)
+                return item
             return _pack(rows, limit, {"kind": "canonical-current", "ordering": CHAT_ORDER},
                          convert, "nextCursor", lambda row: self._next(uid, limit, row))
         return self._store.read_authenticated(identity, action, access_token=access_token)

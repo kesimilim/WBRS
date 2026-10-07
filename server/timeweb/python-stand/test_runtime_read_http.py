@@ -82,6 +82,25 @@ class RuntimeReadHttpTests(unittest.TestCase):
         self.request("/v1/runtime/events", "afterEventId=0")
         self.assertEqual(self.reader.calls[-1][2]["after_event_id"], 0)
 
+    def test_chat_preview_is_exact_opt_in_and_keeps_old_options(self):
+        self.assertEqual(self.request(query="includePreview=1&limit=10&cursor=opaque_-cursor").status, "200 OK")
+        self.assertEqual(self.reader.calls[-1], ("chats", "owner", {
+            "limit": 10, "cursor": "opaque_-cursor", "include_preview": True,
+            "access_token": "na1.synthetic"}))
+        self.assertEqual(self.request().status, "200 OK")
+        self.assertNotIn("include_preview", self.reader.calls[-1][2])
+
+    def test_chat_preview_duplicate_invalid_and_wrong_routes_are_rejected_before_auth(self):
+        for query in ("includePreview=1&includePreview=1", "includePreview=0", "includePreview=true",
+                      "includePreview=", "includePreview=01", "includePreview=2", "includePreview=%FF",
+                      "includePreview=1&limit=1&cursor=a&extra=x"):
+            with self.subTest(query=query):
+                self.assertEqual(self.request(query=query).status, "400 Bad Request")
+        for route in ("/v1/runtime/events", "/v1/runtime/chats/chat/messages", "/v1/runtime/people"):
+            with self.subTest(route=route):
+                self.assertEqual(self.request(route, "includePreview=1").status, "400 Bad Request")
+        self.assertEqual(self.native.calls, []); self.assertEqual(self.reader.calls, [])
+
     def test_duplicate_unknown_oversized_and_noncanonical_query_rejected(self):
         for query in ("limit=1&limit=2", "limit=0", "limit=101", "limit=01",
                       "uid=other", "cursor=", "cursor=%ZZ", "cursor=%FF",

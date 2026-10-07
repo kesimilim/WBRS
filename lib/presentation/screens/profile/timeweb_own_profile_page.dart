@@ -8,6 +8,7 @@ import 'package:wbrs/presentation/screens/settings/timeweb_account_page.dart';
 import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
 
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chats_page.dart';
 import 'package:wbrs/presentation/screens/edit_profile/timeweb_profile_edit_page.dart';
@@ -1174,7 +1175,12 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                   Icons.quiz_outlined,
                   available && _temperament != null ? _openTemperament : null,
                 ),
-                _menu('Поддержать проект', Icons.favorite_border, null),
+                _menu(
+                  'Поддержать проект',
+                  Icons.favorite_border,
+                  available ? () => unawaited(_supportProject()) : null,
+                  key: const ValueKey('timeweb-support-project'),
+                ),
                 if (widget.runtime.chatsEnabled)
                   _menu(
                     'Чаты',
@@ -1256,6 +1262,29 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Future<void> _supportProject() async {
+    if (!_current) return;
+    // Preserve the original CLRS donation link. Opening it never changes a
+    // wallet, creates a transaction or needs a Firebase account.
+    final uri = Uri.parse(
+      'https://qr.nspk.ru/BS2A002KUIKV3G1Q8JGRDS9N32P84DCB?type=01&bank=100000000008&crc=5D81',
+    );
+    var opened = false;
+    try {
+      opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // A missing external handler must leave the current profile usable.
+    }
+    if (!mounted || !_current || opened) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          context.tr('Не удалось открыть раздел. Проверьте подключение.'),
+        ),
       ),
     );
   }

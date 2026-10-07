@@ -169,20 +169,6 @@ class _TimewebChatAvatarState extends State<TimewebChatAvatar> {
         }
         _reader = reader;
       }
-      if (widget.readGroup && widget.runtime.peopleEnabled) {
-        try {
-          await reader?.waitForReadCapacity();
-          _check(generation);
-          final person = await widget.runtime.readPerson(widget.uid);
-          _check(generation);
-          person.requireCurrent();
-          setState(() => _group = person.primaryGroup);
-        } catch (_) {
-          // Photo authorization is independent of optional group information.
-          _check(generation);
-          reader?.requireCurrent();
-        }
-      }
       if (reader == null) return;
       _check(generation);
       final page = await reader.photos(limit: 1, waitForCapacity: true);
@@ -221,6 +207,23 @@ class _TimewebChatAvatarState extends State<TimewebChatAvatar> {
     } catch (_) {
       // An unavailable photo/group stays unknown; never guess a URL or group.
     } finally {
+      // The optional group must not delay displaying an authorized avatar.
+      // Keep its read in the same bounded lane and refuse cancelled owners.
+      try {
+        if (admission._started &&
+            widget.readGroup &&
+            widget.runtime.peopleEnabled) {
+          _check(generation);
+          await _reader?.waitForReadCapacity();
+          _check(generation);
+          final person = await widget.runtime.readPerson(widget.uid);
+          _check(generation);
+          person.requireCurrent();
+          setState(() => _group = person.primaryGroup);
+        }
+      } catch (_) {
+        // A missing group neither removes the photo nor invents a group ring.
+      }
       admission.release();
       if (identical(_admission, admission)) _admission = null;
     }

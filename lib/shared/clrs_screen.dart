@@ -1,6 +1,5 @@
 import 'clrs_brand.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'lrs_theme.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'timeweb_bottom_navigation.dart';
@@ -213,8 +212,16 @@ class _CrossPainter extends CustomPainter {
 }
 
 class ClrsDocumentPage extends StatefulWidget {
-  const ClrsDocumentPage({super.key, required this.title, required this.asset});
+  const ClrsDocumentPage({
+    super.key,
+    required this.title,
+    required this.asset,
+    this.localizedAssets = const {},
+  });
   final String title, asset;
+
+  /// Complete, bundled translations only. The source document stays intact.
+  final Map<String, String> localizedAssets;
   @override
   State<ClrsDocumentPage> createState() => _ClrsDocumentPageState();
 }
@@ -222,26 +229,39 @@ class ClrsDocumentPage extends StatefulWidget {
 class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
   late Future<String> _text;
   AssetBundle? _bundle;
+  String? _language, _asset;
+  bool get _originalFallback =>
+      _language != 'ru' &&
+      widget.localizedAssets.isNotEmpty &&
+      !widget.localizedAssets.containsKey(_language);
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final bundle = DefaultAssetBundle.of(context);
-    if (_bundle != bundle) {
+    final language = ClrsLocalizations.of(context).locale.languageCode;
+    final asset = widget.localizedAssets[language] ?? widget.asset;
+    if (_bundle != bundle || _asset != asset) {
       _bundle = bundle;
+      _asset = asset;
       _text = _loadText();
     }
+    _language = language;
   }
 
   @override
   void didUpdateWidget(covariant ClrsDocumentPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.asset != widget.asset) _text = _loadText();
+    final asset = widget.localizedAssets[_language] ?? widget.asset;
+    if (_asset != asset) {
+      _asset = asset;
+      _text = _loadText();
+    }
   }
 
   // Do not retain a failed Future in CachingAssetBundle on an explicit retry.
   Future<String> _loadText() {
     final text = Future<String>.sync(
-      () => _bundle!.loadString(widget.asset, cache: false),
+      () => _bundle!.loadString(_asset!, cache: false),
     );
     // A retry can fail before the next frame subscribes in FutureBuilder.
     // Observe that early error while keeping the original future for the UI.
@@ -261,7 +281,7 @@ class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError)
+        if (snapshot.hasError) {
           return Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
@@ -281,14 +301,25 @@ class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
               ),
             ),
           );
-        if (!snapshot.hasData)
+        }
+        if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
+        }
         return Scrollbar(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 const ClrsBrandHeader(),
+                if (_originalFallback)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      context.tr(
+                        'Перевод документа на выбранный язык пока недоступен. Показан русский оригинал.',
+                      ),
+                    ),
+                  ),
                 ClrsPanel(
                   child: SelectableText(
                     snapshot.data!,

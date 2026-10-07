@@ -179,9 +179,9 @@ void main() {
       await tester.pumpWidget(_avatars(runtime, 1, readGroup: true));
       await _until(tester, () => find.byType(RawImage).evaluate().isNotEmpty);
       expect(wire.calls.map((r) => r.url.path), [
-        '/v1/runtime/people/P0',
         '/v1/runtime/people/P0/photos',
         '/v1/runtime/people/P0/photos/content',
+        '/v1/runtime/people/P0',
       ]);
       await _stop(tester, runtime);
     },

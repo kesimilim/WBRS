@@ -252,7 +252,7 @@ void main() {
       expect(call.followRedirects, isFalse);
       expect(call.url.origin, 'https://clrs-api.example.invalid');
       expect(call.url.path, '/v1/runtime/chats');
-      expect(call.url.queryParameters, {'limit': '3'});
+      expect(call.url.queryParameters, {'limit': '3', 'includePreview': '1'});
       expect(call.headers['Authorization'], 'Bearer na1.A.first');
       expect(
         call.headers.keys.any((key) => key.toLowerCase().contains('preview')),
@@ -263,6 +263,7 @@ void main() {
       );
       expect(wire.calls.last.url.queryParameters, {
         'limit': '3',
+        'includePreview': '1',
         'cursor': 'Synthetic_cursor-next',
       });
       expect(wire.calls.length, 2);

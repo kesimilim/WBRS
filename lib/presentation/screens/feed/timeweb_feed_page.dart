@@ -455,6 +455,7 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
                   _panel(Text(widget.post!.text ?? '')),
                 for (final item in _items)
                   Padding(
+                    key: ValueKey('timeweb-social-item-${item.id}'),
                     padding: const EdgeInsets.only(top: 12),
                     child: _card(item),
                   ),

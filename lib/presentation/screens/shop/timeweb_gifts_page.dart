@@ -724,12 +724,9 @@ class _TimewebGiftsPageState extends State<TimewebGiftsPage> {
                     if (items != null)
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final columns =
-                              MediaQuery.sizeOf(context).width < 340 ||
-                                  MediaQuery.textScalerOf(context).scale(1) >
-                                      1.3
-                              ? 2
-                              : 3;
+                          // Dmitry's approved catalogue is always two columns;
+                          // device width must not bring the old three back.
+                          const columns = 2;
                           final width =
                               (constraints.maxWidth - (columns - 1) * 10) /
                               columns;
@@ -739,6 +736,7 @@ class _TimewebGiftsPageState extends State<TimewebGiftsPage> {
                             children: [
                               for (final gift in items)
                                 SizedBox(
+                                  key: ValueKey('timeweb-gift-card-${gift.id}'),
                                   width: width,
                                   child: ClrsPanel(
                                     padding: const EdgeInsets.all(8),

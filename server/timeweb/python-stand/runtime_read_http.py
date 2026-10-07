@@ -59,7 +59,8 @@ def _query(environ, operation):
         raise RuntimeInvalidRequest()
     try:
         entries = parse_qsl(raw, keep_blank_values=True, strict_parsing=True,
-                            encoding="utf-8", errors="strict", max_num_fields=8 if operation == "people" else 2)
+                            encoding="utf-8", errors="strict",
+                            max_num_fields=8 if operation == "people" else 3 if operation == "chats" else 2)
     except (ValueError, UnicodeError):
         raise RuntimeInvalidRequest() from None
     values = dict(entries)
@@ -92,12 +93,19 @@ def _query(environ, operation):
         return result
     cursor_name = {"chats": "cursor", "messages": "beforeSequence",
                    "events": "afterEventId"}[operation]
-    if len(entries) != len(values) or set(values) - {"limit", cursor_name}:
+    allowed = {"limit", cursor_name}
+    if operation == "chats":
+        allowed.add("includePreview")
+    if len(entries) != len(values) or set(values) - allowed:
         raise RuntimeInvalidRequest()
     limit = values.get("limit", "50")
     if re.fullmatch(r"[1-9][0-9]{0,2}", limit) is None or int(limit) > 100:
         raise RuntimeInvalidRequest()
     result = {"limit": int(limit)}
+    if "includePreview" in values:
+        if values["includePreview"] != "1":
+            raise RuntimeInvalidRequest()
+        result["include_preview"] = True
     if cursor_name in values:
         cursor = values[cursor_name]
         if operation == "chats":

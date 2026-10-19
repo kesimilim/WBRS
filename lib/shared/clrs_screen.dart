@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'clrs_background.dart';
 import 'clrs_brand.dart';
 import 'package:flutter/material.dart';
 import 'lrs_theme.dart';
@@ -13,16 +15,17 @@ class ClrsScaffold extends StatefulWidget {
     this.drawer,
     this.bottomNavigationBar,
     this.backgroundColor,
-    this.backgroundAsset = 'assets/final_design/family_right.png',
+    String? backgroundAsset,
     this.backgroundScale = 1,
     this.floatingActionButton,
     this.extendBodyBehindAppBar = false,
-  });
+  }) : _backgroundAsset = backgroundAsset;
   final Widget body;
   final PreferredSizeWidget? appBar;
   final Widget? drawer, bottomNavigationBar, floatingActionButton;
   final Color? backgroundColor;
-  final String backgroundAsset;
+  final String? _backgroundAsset;
+  String get backgroundAsset => _backgroundAsset ?? 'assets/final_design/family_right.png';
   final double backgroundScale;
   final bool extendBodyBehindAppBar;
   @override
@@ -42,10 +45,9 @@ class _ClrsScaffoldState extends State<ClrsScaffold> {
     child: Stack(
       children: [
         Positioned.fill(
-          child: Transform.scale(
+          child: ClrsAnimatedBackground(
+            backgroundAsset: widget._backgroundAsset,
             scale: widget.backgroundScale,
-            alignment: Alignment.bottomCenter,
-            child: Image.asset(widget.backgroundAsset, fit: BoxFit.cover),
           ),
         ),
         Theme(
@@ -125,7 +127,10 @@ class ClrsPanel extends StatelessWidget {
       borderRadius: BorderRadius.circular(14),
       border: Border.all(color: const Color(0x66E7B092), width: .8),
     ),
-    child: child,
+    child: Material(
+      color: Colors.transparent,
+      child: child,
+    ),
   );
 }
 

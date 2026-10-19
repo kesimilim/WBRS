@@ -20,7 +20,6 @@ class ClrsAuthShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-      backgroundAsset: 'assets/final_design/family_back.png',
       body: SafeArea(child: LayoutBuilder(builder: (context, constraints) {
         final compact = constraints.maxHeight < 525 ||
             MediaQuery.textScalerOf(context).scale(16) > 24;

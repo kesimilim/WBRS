@@ -467,6 +467,10 @@ void main() {
           const ValueKey('timeweb-gift-recipient-panel'));
       await _until(tester, () => panel.evaluate().isNotEmpty);
       await tester.pump(const Duration(milliseconds: 300));
+      expect(find.byKey(const ValueKey('timeweb-gift-recipient-screen')),
+          findsOneWidget);
+      expect(find.byKey(const ValueKey('gift-store-logo')), findsNothing,
+          reason: 'Shop labels must not show through the recipient screen.');
       final recipient = find.text('Current recipient');
       await tester.scrollUntilVisible(recipient, 150,
           scrollable: find.descendant(
@@ -481,9 +485,9 @@ void main() {
       await tester.tap(confirm);
       await _until(
         tester,
-        () =>
-            find.byKey(const ValueKey('timeweb-gifts-busy')).evaluate().isEmpty,
+        () => owned == 0 && panel.evaluate().isEmpty,
       );
+      await tester.pump(const Duration(milliseconds: 400));
       expect(owned, 0);
       unknown = true;
       await tester.ensureVisible(find.text('Выбрать подарки'));

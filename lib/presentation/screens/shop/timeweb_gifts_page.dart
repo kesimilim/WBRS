@@ -8,6 +8,7 @@ import 'package:wbrs/service/timeweb_gift_flow.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 
 /// Current inventory and server-priced purchases; no payment/Firebase callback.
@@ -263,254 +264,297 @@ class _TimewebGiftsPageState extends State<TimewebGiftsPage> {
   Future<void> _chooseRecipient() async {
     String search = '';
     String? selected;
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        _recipientRoute = ModalRoute.of(dialogContext);
-        _recipientNavigator = Navigator.of(dialogContext);
-        return StatefulBuilder(
-          builder: (context, refresh) {
-            final data = _current ? _data : null;
-            final pending = _current && (_flow?.needsCheck ?? false);
-            final recipients = _current
-                ? _chats
-                      .where(
-                        (chat) => (chat.name ?? '').toLowerCase().contains(
-                          search.toLowerCase(),
-                        ),
-                      )
-                      .toList()
-                : <TimewebCurrentChat>[];
-            final preferred = widget.preferredChatId;
-            Future<void> send(String chatId) async {
-              if (!_current || _locked || _sending == null || data == null) {
-                return;
-              }
-              final action = TimewebGiftAction.send(
-                _sending!,
-                chatId,
-                data.owned(_sending!),
-              );
-              final saving = _action(action);
-              refresh(() {});
-              await saving;
-              if (!context.mounted) return;
-              if (!_current || _sending == null) {
-                Navigator.of(context).pop();
-              } else {
-                refresh(() {});
-              }
-            }
-
-            final gift = data?.catalog
-                .where((gift) => gift.id == _sending)
-                .firstOrNull;
-            return PopScope(
-              canPop: !_busy,
-              child: AnimatedPadding(
-                padding:
-                    MediaQuery.viewInsetsOf(context) +
-                    const EdgeInsets.only(right: 12),
-                duration: const Duration(milliseconds: 100),
-                child: LayoutBuilder(
-                  builder: (context, constraints) => Align(
-                    alignment: Alignment.centerLeft,
-                    child: SizedBox(
-                      key: const ValueKey('timeweb-gift-recipient-panel'),
-                      width: constraints.maxWidth * 2 / 3,
-                      height: constraints.maxHeight,
-                      child: Material(
-                        color: const Color(0xE02F2017),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.horizontal(
-                            right: Radius.circular(20),
+    final navigation = TimewebNavigationScope.maybeOf(context);
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(
+        builder: (dialogContext) {
+          _recipientRoute = ModalRoute.of(dialogContext);
+          _recipientNavigator = Navigator.of(dialogContext);
+          final content = StatefulBuilder(
+            builder: (context, refresh) {
+              final data = _current ? _data : null;
+              final pending = _current && (_flow?.needsCheck ?? false);
+              final recipients = _current
+                  ? _chats
+                        .where(
+                          (chat) => (chat.name ?? '').toLowerCase().contains(
+                            search.toLowerCase(),
                           ),
-                          side: BorderSide(color: LrsTheme.actionBorder),
+                        )
+                        .toList()
+                  : <TimewebCurrentChat>[];
+              final preferred = widget.preferredChatId;
+              Future<void> send(String chatId) async {
+                if (!_current || _locked || _sending == null || data == null) {
+                  return;
+                }
+                final action = TimewebGiftAction.send(
+                  _sending!,
+                  chatId,
+                  data.owned(_sending!),
+                );
+                final saving = _action(action);
+                refresh(() {});
+                await saving;
+                if (!context.mounted) return;
+                if (!_current || _sending == null) {
+                  Navigator.of(context).pop();
+                } else {
+                  refresh(() {});
+                }
+              }
+
+              final gift = data?.catalog
+                  .where((gift) => gift.id == _sending)
+                  .firstOrNull;
+              return PopScope(
+                canPop: !_busy,
+                child: ClrsScaffold(
+                  key: const ValueKey('timeweb-gift-recipient-screen'),
+                  appBar: AppBar(
+                    automaticallyImplyLeading: false,
+                    toolbarHeight:
+                        72 *
+                        MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
+                    title: const Row(
+                      children: [
+                        Expanded(child: ClrsLogo(size: 34)),
+                        SizedBox(width: 110, child: ClrsMotto(size: 16)),
+                      ],
+                    ),
+                  ),
+                  bottomNavigationBar: navigation == null
+                      ? null
+                      : IgnorePointer(
+                          ignoring: _busy,
+                          child: const TimewebBottomNavigationBar(),
                         ),
-                        child: SafeArea(
-                          child: ListView(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                            children: [
-                              Row(
+                  body: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => Align(
+                        alignment: Alignment.topLeft,
+                        child: SizedBox(
+                          key: const ValueKey('timeweb-gift-recipient-panel'),
+                          width: constraints.maxWidth * 2 / 3,
+                          child: Material(
+                            color: LrsTheme.surfaceGlass,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.all(
+                                Radius.circular(16),
+                              ),
+                              side: BorderSide(color: LrsTheme.actionBorder),
+                            ),
+                            child: SafeArea(
+                              child: ListView(
+                                shrinkWrap: true,
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  16,
+                                  16,
+                                  12,
+                                ),
                                 children: [
-                                  Expanded(
-                                    child: Text(
-                                      context.tr('Кому подарить?'),
-                                      style: const TextStyle(
-                                        fontFamily: 'CormorantGaramond',
-                                        fontSize: 27,
-                                        fontWeight: FontWeight.w700,
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          context.tr('Кому подарить?'),
+                                          style: const TextStyle(
+                                            fontFamily: 'CormorantGaramond',
+                                            fontSize: 27,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
                                       ),
+                                      IconButton(
+                                        tooltip: context.tr('Закрыть'),
+                                        onPressed: _busy
+                                            ? null
+                                            : () => Navigator.pop(context),
+                                        icon: const Icon(Icons.close),
+                                      ),
+                                    ],
+                                  ),
+                                  if (gift != null)
+                                    Row(
+                                      children: [
+                                        Image.asset(
+                                          gift.assetPath,
+                                          width: 54,
+                                          height: 54,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(context.tr(gift.name)),
+                                        ),
+                                      ],
+                                    ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    context.tr('Выберите собеседника.'),
+                                    style: const TextStyle(
+                                      color: LrsTheme.muted,
                                     ),
                                   ),
-                                  IconButton(
-                                    tooltip: context.tr('Закрыть'),
-                                    onPressed: _busy
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    key: const ValueKey(
+                                      'timeweb-gift-recipient-search',
+                                    ),
+                                    enabled: !_busy && !pending,
+                                    onChanged: _busy || pending
                                         ? null
-                                        : () => Navigator.pop(context),
-                                    icon: const Icon(Icons.close),
+                                        : (value) => refresh(() {
+                                            search = value;
+                                            selected = null;
+                                          }),
+                                    decoration: InputDecoration(
+                                      hintText: context.tr('Поиск по имени'),
+                                      prefixIcon: const Icon(Icons.search),
+                                    ),
+                                  ),
+                                  if (preferred != null)
+                                    TextButton(
+                                      key: const ValueKey(
+                                        'timeweb-gift-current-recipient',
+                                      ),
+                                      onPressed: !_locked
+                                          ? () => send(preferred)
+                                          : null,
+                                      child: Text(
+                                        context.tr(
+                                          'Подарить текущему собеседнику',
+                                        ),
+                                      ),
+                                    ),
+                                  if (_busy) const LinearProgressIndicator(),
+                                  if (_notice != null)
+                                    Text(context.tr(_notice!)),
+                                  if (pending)
+                                    TextButton(
+                                      key: const ValueKey(
+                                        'timeweb-gift-recipient-check',
+                                      ),
+                                      onPressed: _busy
+                                          ? null
+                                          : () async {
+                                              final checking = _action();
+                                              refresh(() {});
+                                              await checking;
+                                              if (!context.mounted) return;
+                                              if (_sending == null ||
+                                                  !_current) {
+                                                Navigator.pop(context);
+                                              } else {
+                                                refresh(() {});
+                                              }
+                                            },
+                                      child: Text(
+                                        context.tr('Проверить результат'),
+                                      ),
+                                    ),
+                                  for (final chat in recipients)
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 4,
+                                      ),
+                                      child: Material(
+                                        color: selected == chat.chatId
+                                            ? LrsTheme.actionGlass
+                                            : Colors.transparent,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          side: BorderSide(
+                                            color: selected == chat.chatId
+                                                ? LrsTheme.peach
+                                                : LrsTheme.actionBorder,
+                                          ),
+                                        ),
+                                        child: ListTile(
+                                          key: ValueKey(
+                                            'timeweb-gift-recipient-${chat.chatId}',
+                                          ),
+                                          contentPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 8,
+                                              ),
+                                          leading: TimewebChatAvatar(
+                                            runtime: widget.runtime,
+                                            uid: chat.counterpartUid,
+                                            size: 38,
+                                          ),
+                                          title: Text(
+                                            chat.name ??
+                                                context.tr('Не указано'),
+                                            style: const TextStyle(
+                                              fontFamily: 'Lato',
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          onTap: _locked
+                                              ? null
+                                              : () => refresh(
+                                                  () => selected = chat.chatId,
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  if (_next != null)
+                                    TextButton(
+                                      onPressed: _locked
+                                          ? null
+                                          : () async {
+                                              final loading = _recipients(
+                                                _sending!,
+                                                more: true,
+                                              );
+                                              refresh(() {});
+                                              await loading;
+                                              if (context.mounted)
+                                                refresh(() {});
+                                            },
+                                      child: Text(context.tr('Загрузить ещё')),
+                                    ),
+                                  const SizedBox(height: 10),
+                                  ElevatedButton.icon(
+                                    key: const ValueKey(
+                                      'timeweb-gift-recipient-confirm',
+                                    ),
+                                    onPressed: _locked || selected == null
+                                        ? null
+                                        : () => send(selected!),
+                                    icon: const Icon(Icons.card_giftcard),
+                                    label: Text(
+                                      context.tr('Подарить'),
+                                      style: const TextStyle(
+                                        fontFamily: 'Lato',
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
-                              if (gift != null)
-                                Row(
-                                  children: [
-                                    Image.asset(
-                                      gift.assetPath,
-                                      width: 54,
-                                      height: 54,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(context.tr(gift.name)),
-                                    ),
-                                  ],
-                                ),
-                              const SizedBox(height: 8),
-                              Text(
-                                context.tr('Выберите собеседника.'),
-                                style: const TextStyle(color: LrsTheme.muted),
-                              ),
-                              const SizedBox(height: 8),
-                              TextField(
-                                key: const ValueKey(
-                                  'timeweb-gift-recipient-search',
-                                ),
-                                enabled: !_busy && !pending,
-                                onChanged: _busy || pending
-                                    ? null
-                                    : (value) => refresh(() {
-                                        search = value;
-                                        selected = null;
-                                      }),
-                                decoration: InputDecoration(
-                                  hintText: context.tr('Поиск по имени'),
-                                  prefixIcon: const Icon(Icons.search),
-                                ),
-                              ),
-                              if (preferred != null)
-                                TextButton(
-                                  key: const ValueKey(
-                                    'timeweb-gift-current-recipient',
-                                  ),
-                                  onPressed: !_locked
-                                      ? () => send(preferred)
-                                      : null,
-                                  child: Text(
-                                    context.tr('Подарить текущему собеседнику'),
-                                  ),
-                                ),
-                              if (_busy) const LinearProgressIndicator(),
-                              if (_notice != null) Text(context.tr(_notice!)),
-                              if (pending)
-                                TextButton(
-                                  key: const ValueKey(
-                                    'timeweb-gift-recipient-check',
-                                  ),
-                                  onPressed: _busy
-                                      ? null
-                                      : () async {
-                                          final checking = _action();
-                                          refresh(() {});
-                                          await checking;
-                                          if (!context.mounted) return;
-                                          if (_sending == null || !_current) {
-                                            Navigator.pop(context);
-                                          } else {
-                                            refresh(() {});
-                                          }
-                                        },
-                                  child: Text(
-                                    context.tr('Проверить результат'),
-                                  ),
-                                ),
-                              for (final chat in recipients)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 4,
-                                  ),
-                                  child: Material(
-                                    color: selected == chat.chatId
-                                        ? LrsTheme.actionGlass
-                                        : Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      side: BorderSide(
-                                        color: selected == chat.chatId
-                                            ? LrsTheme.peach
-                                            : LrsTheme.actionBorder,
-                                      ),
-                                    ),
-                                    child: ListTile(
-                                      key: ValueKey(
-                                        'timeweb-gift-recipient-${chat.chatId}',
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                          ),
-                                      leading: TimewebChatAvatar(
-                                        runtime: widget.runtime,
-                                        uid: chat.counterpartUid,
-                                        size: 38,
-                                      ),
-                                      title: Text(
-                                        chat.name ?? context.tr('Не указано'),
-                                        style: const TextStyle(
-                                          fontFamily: 'Lato',
-                                        ),
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      onTap: _locked
-                                          ? null
-                                          : () => refresh(
-                                              () => selected = chat.chatId,
-                                            ),
-                                    ),
-                                  ),
-                                ),
-                              if (_next != null)
-                                TextButton(
-                                  onPressed: _locked
-                                      ? null
-                                      : () async {
-                                          final loading = _recipients(
-                                            _sending!,
-                                            more: true,
-                                          );
-                                          refresh(() {});
-                                          await loading;
-                                          if (context.mounted) refresh(() {});
-                                        },
-                                  child: Text(context.tr('Загрузить ещё')),
-                                ),
-                              const SizedBox(height: 10),
-                              ElevatedButton.icon(
-                                key: const ValueKey(
-                                  'timeweb-gift-recipient-confirm',
-                                ),
-                                onPressed: _locked || selected == null
-                                    ? null
-                                    : () => send(selected!),
-                                icon: const Icon(Icons.card_giftcard),
-                                label: Text(
-                                  context.tr('Подарить'),
-                                  style: const TextStyle(fontFamily: 'Lato'),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      },
+              );
+            },
+          );
+          return navigation == null
+              ? content
+              : TimewebNavigationScope(
+                  navigation: navigation.forRoute(),
+                  child: content,
+                );
+        },
+      ),
     );
     _recipientRoute = null;
     _recipientNavigator = null;

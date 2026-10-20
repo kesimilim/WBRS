@@ -459,11 +459,26 @@ void main() {
       await tap(const ValueKey('timeweb-gift-buy-assets/gifts/1.png'));
       expect(balance, 56);
       expect(owned, 1);
+      await tester.ensureVisible(find.text('Выбранные подарки'));
+      await tester.tap(find.text('Выбранные подарки'));
+      await tester.pump();
       await tap(const ValueKey('timeweb-gift-send-assets/gifts/1.png'));
+      final panel = find.byKey(
+          const ValueKey('timeweb-gift-recipient-panel'));
+      await _until(tester, () => panel.evaluate().isNotEmpty);
+      await tester.pump(const Duration(milliseconds: 300));
       final recipient = find.text('Current recipient');
-      await tester.ensureVisible(recipient);
+      await tester.scrollUntilVisible(recipient, 150,
+          scrollable: find.descendant(
+              of: panel, matching: find.byType(Scrollable)).first);
       await tester.pump();
       await tester.tap(recipient);
+      await tester.pump();
+      final confirm = find.byKey(
+          const ValueKey('timeweb-gift-recipient-confirm'));
+      await tester.ensureVisible(confirm);
+      await tester.pump();
+      await tester.tap(confirm);
       await _until(
         tester,
         () =>
@@ -471,6 +486,9 @@ void main() {
       );
       expect(owned, 0);
       unknown = true;
+      await tester.ensureVisible(find.text('Выбрать подарки'));
+      await tester.tap(find.text('Выбрать подарки'));
+      await tester.pump();
       await tap(const ValueKey('timeweb-gift-buy-assets/gifts/1.png'));
       expect(posts, 3);
       await tester.pumpWidget(const SizedBox.shrink());

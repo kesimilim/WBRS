@@ -816,6 +816,7 @@ class _TimewebMeetingParticipantsPageState extends State<TimewebMeetingParticipa
       body: !_current
           ? Center(child: Text(context.tr('Обсуждение недоступно')))
           : ListView(
+              key: const ValueKey('native-meeting-participants-scroll'),
               padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
               children: [
                 _left(ClrsPanel(child: Column(
@@ -857,8 +858,13 @@ class _TimewebMeetingParticipantsPageState extends State<TimewebMeetingParticipa
                         Expanded(child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            if (person.name?.isNotEmpty == true)
-                              Text(person.name!, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            Text(
+                              person.name?.trim().isNotEmpty == true
+                                  ? person.name!
+                                  : context.tr('Имя не указано'),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             if (person.organizer)
                               Text(context.tr('Организатор'), style: Theme.of(context).textTheme.labelSmall),
                           ],

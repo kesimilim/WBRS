@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/service/app_session.dart';
+import 'package:wbrs/service/content_translation_service.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_chat_flow.dart';
@@ -11,6 +12,7 @@ import 'package:wbrs/service/timeweb_chat_events.dart';
 import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/translatable_text.dart';
 import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
 import 'timeweb_chat_avatar.dart';
 
@@ -529,9 +531,16 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
 }
 
 class TimewebChatPage extends StatefulWidget {
-  const TimewebChatPage({super.key, required this.flow, this.runtime});
+  const TimewebChatPage({
+    super.key,
+    required this.flow,
+    this.runtime,
+    this.translationFactory,
+  });
   final TimewebChatFlow flow;
   final TimewebAppRuntime? runtime;
+  final ContentTranslationService Function(String? Function())?
+      translationFactory;
   @override
   State<TimewebChatPage> createState() => _TimewebChatPageState();
 }
@@ -542,11 +551,22 @@ class _TimewebChatPageState extends State<TimewebChatPage>
   final _messageScroll = ScrollController();
   StreamSubscription<AppSessionState>? _subscription;
   TimewebChatEventPump? _events;
+  late final ContentTranslationService _translator;
   bool _invalid = false, _sending = false, _reading = false;
   String? _notice;
   @override
   void initState() {
     super.initState();
+    String? owner() => _current ? widget.flow.ownerUid : null;
+    _translator = widget.translationFactory?.call(owner) ??
+        ContentTranslationService(
+          endpoint: null,
+          currentUserId: owner,
+          idToken: () async => null,
+          enableOnDevice: true,
+          enableRemoteFallback: false,
+          maxCacheEntries: 30,
+        );
     WidgetsBinding.instance.addObserver(this);
     _messageScroll.addListener(_onScroll);
     try {
@@ -636,6 +656,7 @@ class _TimewebChatPageState extends State<TimewebChatPage>
       _invalid = true;
       _composer.clear();
     });
+    _translator.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted &&
           ModalRoute.of(context)?.isCurrent == true &&
@@ -754,6 +775,7 @@ class _TimewebChatPageState extends State<TimewebChatPage>
     widget.flow.close();
     unawaited(_subscription?.cancel());
     _composer.dispose();
+    _translator.dispose();
     super.dispose();
   }
 
@@ -909,7 +931,16 @@ class _TimewebChatPageState extends State<TimewebChatPage>
                                               ),
                                             ),
                                           if (message.text != null)
-                                            Text(message.text!)
+                                            ContentTranslationScope(
+                                              service: _translator,
+                                              child: TranslatableText(
+                                                message.text!,
+                                                key: ValueKey(
+                                                  'timeweb-message-translation-${message.messageId}',
+                                                ),
+                                                autoTranslate: false,
+                                              ),
+                                            )
                                           else
                                             const Icon(
                                               Icons.description_outlined,

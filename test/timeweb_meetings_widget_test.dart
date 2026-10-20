@@ -22,6 +22,7 @@ import 'package:wbrs/service/timeweb_meeting_join_flow.dart';
 import 'package:wbrs/service/timeweb_meeting_membership_flow.dart';
 import 'package:wbrs/shared/meeting_form.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 import 'support/timeweb_people_fixtures.dart';
 
@@ -64,7 +65,10 @@ TimewebAppRuntime _runtime(PeopleWire wire, {
   TimewebMeetingJoinJournal? joinJournal,
   TimewebMeetingMembershipJournal? membershipJournal,
   TimewebMeetingChatJournal? chatJournal,
-}) => TimewebAppRuntime(
+}) {
+  final directory = Directory.systemTemp.createTempSync('native-meeting-routes-');
+  addTearDown(() => directory.deleteSync(recursive: true));
+  return TimewebAppRuntime(
   configuration: TimewebAuthConfiguration(
     endpoint: Uri.parse('https://api.example.invalid'),
     enabled: true,
@@ -79,10 +83,13 @@ TimewebAppRuntime _runtime(PeopleWire wire, {
   clock: () => peopleNow,
   currentOwnProfileEnabled: true,
   meetingCreateJournal: journal,
-  meetingJoinJournal: joinJournal,
-  meetingMembershipJournal: membershipJournal,
+  meetingJoinJournal: joinJournal ??
+      TimewebMeetingJoinJournal(directory: () async => directory),
+  meetingMembershipJournal: membershipJournal ??
+      TimewebMeetingMembershipJournal(directory: () async => directory),
   meetingChatJournal: chatJournal,
 );
+}
 Future<void> _until(WidgetTester tester, bool Function() ready, {String Function()? reason}) async {
   for (var i = 0; i < 150 && !ready(); i++) {
     await tester.pump(const Duration(milliseconds: 16));
@@ -222,13 +229,17 @@ void main() {
       await _tap(tester, 'native-meeting-help', 'native-meetings-scroll');
       await _until(tester, () => find.byType(MeetingGuidePage).evaluate().isNotEmpty);
       final guide = find.descendant(of: find.byType(MeetingGuidePage), matching: find.byType(ClrsScaffold));
-      expect(tester.widget<ClrsScaffold>(guide).bottomNavigationBar, isNull);
+      expect(tester.widget<ClrsScaffold>(guide).bottomNavigationBar,
+          isA<TimewebBottomNavigationBar>());
+      await _capture(tester, 'native-meeting-guide-360px-1x.png');
       expect(Firebase.apps, isEmpty);
       Navigator.of(tester.element(find.byType(MeetingGuidePage))).pop();
       await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpWidget(_app(TimewebMeetingsPageView(runtime: runtime), scale: 2));
       await tester.pump(const Duration(milliseconds: 100));
       await _tap(tester, 'native-meeting-m', 'native-meetings-scroll');
+      await _until(tester, () => wire.calls.any(
+          (request) => request.url.path == '/v1/runtime/meetings/m'));
       expect(
         wire.calls.any((request) => request.url.path == '/v1/runtime/meetings/m'),
         isTrue,
@@ -239,9 +250,14 @@ void main() {
       expect(find.text(_local), findsOneWidget);
       expect(find.text('Присоединиться'), findsNothing);
       expect(find.text('Чат'), findsNothing);
+      await _until(tester, () => tester.widget<TextButton>(
+          find.byKey(const ValueKey('native-meeting-participants')))
+          .onPressed != null);
       await _tap(tester, 'native-meeting-participants', 'native-meetings-scroll');
-      await _until(tester, () => find.text('Имя не указано').evaluate().isNotEmpty);
-      await _tap(tester, 'native-participants-next', 'native-meetings-scroll');
+      await _until(tester, () => find.text('Имя не указано').evaluate().isNotEmpty,
+          reason: () => 'roster=$rosterCalls; texts=${tester.widgetList<Text>(find.byType(Text)).map((w) => w.data).toList()}');
+      await _tap(tester, 'native-meeting-participants-next',
+          'native-meeting-participants-scroll');
       await _until(tester, () => rosterCalls == 2);
       var logged = false;
       final login = runtime.login(email: 'B@example.invalid', password: 'synthetic').then((value) {
@@ -475,7 +491,8 @@ void main() {
         expect(posts, 1);
         expect(find.byType(TimewebMeetingsPageView), findsNothing);
         await _tap(tester, 'native-meeting-submit', 'native-meeting-form-scroll');
-        await _until(tester, () => find.byType(TimewebMeetingsPageView).evaluate().isNotEmpty);
+        await _until(tester, () => find.byType(TimewebMeetingsPageView).evaluate().isNotEmpty,
+          reason: () => 'posts=$posts checks=$checks; notices=${find.byType(Text).evaluate().map((e) => (e.widget as Text).data).toList()}');
         await _until(tester, () => find.text('Native meeting').evaluate().isNotEmpty);
         expect(posts, 1);
         expect(checks, 1);

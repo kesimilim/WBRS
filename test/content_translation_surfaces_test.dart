@@ -42,6 +42,8 @@ class _Comments extends Fake implements SocialService {
   _Comments(this.rows);
   final List<QueryDocumentSnapshot<Map<String, dynamic>>> rows;
   @override
+  Future<bool> canModerateComments() async => false;
+  @override
   Stream<QuerySnapshot<Map<String, dynamic>>> comments(String postId) =>
       Stream.value(LayoutQuerySnapshot(rows));
 }

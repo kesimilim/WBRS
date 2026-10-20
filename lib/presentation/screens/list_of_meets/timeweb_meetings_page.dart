@@ -1137,7 +1137,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
           ),
         ),
         _meetingCard(context, _meeting!, full: true),
-        if (!_pendingLeave)
+        if (!_pendingLeave && !_organizer)
           _left(
             TextButton(
               key: const ValueKey('native-meeting-join'),

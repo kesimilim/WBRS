@@ -24,6 +24,19 @@ void main() {
       code: Map<String, dynamic>.from(
           jsonDecode(File('assets/l10n/$code.json').readAsStringSync()) as Map),
   };
+  test('gift notices use catalog names while free text keeps real translation',
+      () {
+    final en = ClrsLocalizations(const Locale('en'), catalogs['en']!);
+    expect(en.literalTranslation('Подарок «Диадема с рубинами» ❤️'),
+        'Gift «Ruby tiara» ❤️');
+    expect(en.literalTranslation('Подарок «Диадема с рубинами»'),
+        'Gift «Ruby tiara»');
+    expect(en.literalTranslation('Подарок «Неизвестный предмет» ❤️'), isNull);
+    expect(en.literalTranslation('Хочу подарить тебе диадему'), isNull);
+    final ru = ClrsLocalizations(const Locale('ru'), catalogs['ru']!);
+    expect(ru.literalTranslation('Подарок «Диадема с рубинами» ❤️'),
+        'Подарок «Диадема с рубинами» ❤️');
+  });
   test('Exactly 23 catalogs have complete keys and matching placeholders', () {
     expect(ClrsLocalizations.codes.toSet(), {
       'en',

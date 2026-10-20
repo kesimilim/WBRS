@@ -155,6 +155,18 @@ class ClrsLocalizations {
   /// Exact, parameter-free catalog matches may be reused for legacy enum values.
   /// Arbitrary content is otherwise handled by the authenticated translator.
   String? literalTranslation(String original) {
+    // Native gift notices contain a catalog name, not free-form user prose.
+    // Keep the approved name instead of asking language detection to guess
+    // from a short product title.
+    final gift = RegExp(r'^Подарок «([^«»\n]{1,200})»( ❤️)?$')
+        .firstMatch(original);
+    if (gift != null) {
+      final name = literalTranslation(gift.group(1)!);
+      final label = literalTranslation('Подарок');
+      if (name != null && label != null) {
+        return '$label «$name»${gift.group(2) ?? ''}';
+      }
+    }
     final value =
         _messages[original] ?? _english[original] ?? _russian[original];
     if (value is! String ||

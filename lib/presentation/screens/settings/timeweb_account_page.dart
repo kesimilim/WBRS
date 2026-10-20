@@ -922,7 +922,6 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
           : settings
           ? 'assets/final_design/house.png'
           : 'assets/final_design/family_right.png',
-      backgroundScale: about ? 1.42 : 1,
       bottomNavigationBar: const TimewebBottomNavigationBar(),
       appBar: settings
           ? null

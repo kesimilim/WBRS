@@ -7,6 +7,7 @@ import 'package:wbrs/presentation/screens/list_of_meets/meetings.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meeting_chat_page.dart';
 import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meeting_archive_page.dart';
 import 'package:wbrs/service/app_session.dart';
+import 'package:wbrs/service/content_translation_service.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_meeting_create_flow.dart';
@@ -18,6 +19,7 @@ import 'package:wbrs/shared/geo_catalog.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/meeting_form.dart';
 import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
+import 'package:wbrs/shared/translatable_text.dart';
 
 const timewebMeetingsRoute = '/timeweb/meetings';
 
@@ -241,6 +243,7 @@ String _participantInitial(String? name) {
 Widget _meetingCard(
   BuildContext context,
   TimewebMeeting meeting, {
+  required ContentTranslationService translator,
   VoidCallback? tap,
   bool full = false,
 }) {
@@ -261,11 +264,15 @@ Widget _meetingCard(
       ),
       if (!full && meeting.description.isNotEmpty) ...[
         const SizedBox(height: 4),
-        Text(
-          meeting.description,
-          maxLines: 3,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 12, color: LrsTheme.muted),
+        ContentTranslationScope(
+          service: translator,
+          child: TranslatableText(
+            meeting.description,
+            autoTranslate: false,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 12, color: LrsTheme.muted),
+          ),
         ),
       ],
       const SizedBox(height: 8),
@@ -303,7 +310,13 @@ Widget _meetingCard(
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 5),
-        Text(meeting.description),
+        ContentTranslationScope(
+          service: translator,
+          child: TranslatableText(
+            meeting.description,
+            autoTranslate: false,
+          ),
+        ),
       ],
     ],
   );
@@ -386,6 +399,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
   late final TimewebAppRuntime _runtime = widget.runtime;
   late final int _epoch = _runtime.session.state.epoch;
   late final String? _owner = _runtime.session.state.identity?.uid;
+  late final ContentTranslationService _translator;
   StreamSubscription<AppSessionState>? _subscription;
   List<GeoCountry>? _countries;
   String? _country, _region;
@@ -444,6 +458,14 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
   @override
   void initState() {
     super.initState();
+    _translator = ContentTranslationService(
+      endpoint: null,
+      currentUserId: () => _actorCurrent ? '$_owner/$_epoch' : null,
+      idToken: () async => null,
+      enableOnDevice: true,
+      enableRemoteFallback: false,
+      maxCacheEntries: 30,
+    );
     _subscription = _runtime.session.states.listen((_) {
       if (!_actorCurrent) _invalidate();
     });
@@ -461,6 +483,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
   void _invalidate() {
     if (!mounted || _invalidated) return;
     _invalidated = true;
+    _translator.clear();
     _generation++;
     _joinFlow?.close();
     _joinFlow = null;
@@ -952,6 +975,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
 
   @override
   void dispose() {
+    _translator.dispose();
     _generation++;
     _joinFlow?.close();
     _joinFlow = null;
@@ -1101,6 +1125,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
           _meetingCard(
             context,
             meeting,
+            translator: _translator,
             tap: () {
               meeting.requireCurrent();
               unawaited(_open(meeting.meetingId));
@@ -1136,7 +1161,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
             label: Text(context.tr('Участники встречи')),
           ),
         ),
-        _meetingCard(context, _meeting!, full: true),
+        _meetingCard(context, _meeting!, translator: _translator, full: true),
         if (!_pendingLeave && !_organizer)
           _left(
             TextButton(

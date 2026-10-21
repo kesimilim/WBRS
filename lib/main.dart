@@ -69,34 +69,8 @@ class _StartupState extends State<_Startup> {
     await AppBackend.initialize().timeout(const Duration(seconds: 20));
     if (AppBackend.usesTimeweb) {
       FlutterError.onError = FlutterError.presentError;
-      if (!AppBackend.useEmulators) {
-        try {
-          // Firebase Core/Messaging provides FCM only. Native identity and all
-          // app data remain in Timeweb; no Auth/Firestore or legacy deep links.
-          if (Firebase.apps.isEmpty) {
-            await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform)
-                .timeout(const Duration(seconds: 10));
-          }
-          await _localNotifications.initialize(const InitializationSettings(
-            android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-            iOS: DarwinInitializationSettings(),
-          ), onDidReceiveNotificationResponse: (response) {
-            final payload = response.payload;
-            if (payload == null) return;
-            if (_localTapHandler != null) { _localTapHandler!(payload); }
-            else { _initialLocalPayload = payload; }
-          }).timeout(const Duration(seconds: 10));
-          final launch = await _localNotifications.getNotificationAppLaunchDetails();
-          if (launch?.didNotificationLaunchApp == true) {
-            _initialLocalPayload = launch?.notificationResponse?.payload;
-          }
-          final android = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
-          await android?.createNotificationChannel(const AndroidNotificationChannel(
-            'wbrs', 'CLRS', importance: Importance.high));
-          await android?.createNotificationChannel(const AndroidNotificationChannel(
-            'wbrs_silent', 'CLRS', importance: Importance.high, playSound: false));
-        } catch (_) { debugPrint('CLRS: native push transport unavailable.'); }
-      }
+      // Notification transport is optional. Never hold the login/Home screen
+      // behind Google services or a platform notification plugin.
       return;
     }
     FlutterError.onError = AppBackend.useEmulators
@@ -198,6 +172,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   String? _translationUserId;
   TimewebPushCoordinator? _nativePush;
   TimewebNotificationDelivery? _nativeNotifications;
+  bool _nativeLocalNotificationsReady = false;
 
   @override
   void initState() {
@@ -211,21 +186,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       final local = _initialLocalPayload;
       _initialLocalPayload = null;
       if (local != null) unawaited(_nativeNotifications!.receiveLocal(local));
-      if (!AppBackend.useEmulators && Firebase.apps.isNotEmpty) {
-        final messaging = FirebaseMessaging.instance;
-        _nativePush = TimewebPushCoordinator(runtime: AppBackend.timewebRuntime,
-          readToken: () => messaging.getToken().timeout(const Duration(seconds: 10)),
-          tokenRefreshes: messaging.onTokenRefresh)..start();
-        unawaited(messaging.requestPermission().then<void>((_) {}, onError: (Object _, StackTrace __) {}));
-        _subscriptions.add(FirebaseMessaging.onMessage.listen((message) {
-          unawaited(_nativeNotifications!.receive(message.data, opened: false));
-        }));
-        _subscriptions.add(FirebaseMessaging.onMessageOpenedApp.listen((message) {
-          unawaited(_nativeNotifications!.receive(message.data, opened: true));
-        }));
-        unawaited(messaging.getInitialMessage().then<void>((message) {
-          if (message != null && mounted) unawaited(_nativeNotifications!.receive(message.data, opened: true));
-        }, onError: (Object _, StackTrace __) {}));
+      if (!AppBackend.useEmulators) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_initializeNativeNotifications());
+        });
       }
       return;
     }
@@ -294,7 +258,121 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _initializeNativeNotifications() async {
+    try {
+      await _localNotifications
+          .initialize(
+            const InitializationSettings(
+              android: AndroidInitializationSettings('@mipmap/ic_launcher'),
+              iOS: DarwinInitializationSettings(),
+            ),
+            onDidReceiveNotificationResponse: (response) {
+              if (!mounted || response.payload == null) return;
+              _localTapHandler?.call(response.payload!);
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+      if (!mounted) return;
+      final launch = await _localNotifications
+          .getNotificationAppLaunchDetails()
+          .timeout(const Duration(seconds: 5));
+      if (!mounted) return;
+      if (launch?.didNotificationLaunchApp == true &&
+          launch?.notificationResponse?.payload != null) {
+        unawaited(
+          _nativeNotifications!.receiveLocal(
+            launch!.notificationResponse!.payload!,
+          ),
+        );
+      }
+      final android = _localNotifications
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      await android
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'wbrs',
+              'CLRS',
+              importance: Importance.high,
+            ),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (!mounted) return;
+      await android
+          ?.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'wbrs_silent',
+              'CLRS',
+              importance: Importance.high,
+              playSound: false,
+            ),
+          )
+          .timeout(const Duration(seconds: 5));
+      if (!mounted) return;
+      _nativeLocalNotificationsReady = true;
+    } catch (_) {
+      debugPrint('CLRS: local notification transport unavailable.');
+    }
+    if (!mounted) return;
+    try {
+      // FCM is only a notification courier. Login and data stay on Timeweb.
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).timeout(const Duration(seconds: 10));
+      }
+      if (!mounted) return;
+      final messaging = FirebaseMessaging.instance;
+      _nativePush = TimewebPushCoordinator(
+        runtime: AppBackend.timewebRuntime,
+        readToken: () =>
+            messaging.getToken().timeout(const Duration(seconds: 10)),
+        tokenRefreshes: messaging.onTokenRefresh,
+      )..start();
+      unawaited(
+        messaging.requestPermission().then<void>(
+          (_) {},
+          onError: (Object _, StackTrace __) {},
+        ),
+      );
+      _subscriptions.add(
+        FirebaseMessaging.onMessage.listen((message) {
+          if (mounted) {
+            unawaited(
+              _nativeNotifications!.receive(message.data, opened: false),
+            );
+          }
+        }),
+      );
+      _subscriptions.add(
+        FirebaseMessaging.onMessageOpenedApp.listen((message) {
+          if (mounted) {
+            unawaited(
+              _nativeNotifications!.receive(message.data, opened: true),
+            );
+          }
+        }),
+      );
+      unawaited(
+        messaging
+            .getInitialMessage()
+            .timeout(const Duration(seconds: 10))
+            .then<void>((message) {
+              if (message != null && mounted) {
+                unawaited(
+                  _nativeNotifications!.receive(message.data, opened: true),
+                );
+              }
+            }, onError: (Object _, StackTrace __) {}),
+      );
+    } catch (_) {
+      debugPrint('CLRS: native push transport unavailable.');
+    }
+  }
+
   Future<void> _showNativeNotification(TimewebNotification item, bool sound) async {
+    if (!_nativeLocalNotificationsReady || !mounted) return;
     final runtime = AppBackend.timewebRuntime, lease = AppBackend.timewebRuntime.session.captureLease();
     item.requireCurrent(); lease.requireCurrent();
     final context = _navigatorKey.currentContext;

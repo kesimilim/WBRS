@@ -244,8 +244,21 @@ void main() {
         () => find.textContaining('Current person A').evaluate().isNotEmpty,
       );
       await tester.tap(
-        find.byKey(const ValueKey('timeweb-home-notifications')),
+        find.byKey(const ValueKey('timeweb-home-tab-profile')),
       );
+      await _until(tester, () => find.byIcon(Icons.menu).evaluate().isNotEmpty);
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Уведомления'),
+        300,
+        scrollable: find.descendant(
+          of: find.byKey(const ValueKey('timeweb-profile-drawer-scroll')),
+          matching: find.byType(Scrollable),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Уведомления'));
       await _until(
         tester,
         () => find

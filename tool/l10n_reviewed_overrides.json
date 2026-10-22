@@ -1,0 +1,71 @@
+{
+  "en": {
+    "Не удалось загрузить чаты.": "Could not load chats."
+  },
+  "de": {
+    "Не удалось загрузить чаты.": "Chats konnten nicht geladen werden."
+  },
+  "es": {
+    "Не удалось загрузить чаты.": "No se pudieron cargar los chats."
+  },
+  "fr": {
+    "Не удалось загрузить чаты.": "Impossible de charger les chats."
+  },
+  "it": {
+    "Не удалось загрузить чаты.": "Impossibile caricare le chat."
+  },
+  "pt": {
+    "Не удалось загрузить чаты.": "Não foi possível carregar os chats."
+  },
+  "el": {
+    "Не удалось загрузить чаты.": "Δεν ήταν δυνατή η φόρτωση των συνομιλιών."
+  },
+  "ru": {
+    "Не удалось загрузить чаты.": "Не удалось загрузить чаты."
+  },
+  "sr": {
+    "Не удалось загрузить чаты.": "Razgovori nisu mogli da se učitaju."
+  },
+  "pl": {
+    "Не удалось загрузить чаты.": "Nie udało się wczytać czatów."
+  },
+  "sl": {
+    "Не удалось загрузить чаты.": "Klepetov ni bilo mogoče naložiti."
+  },
+  "sk": {
+    "Не удалось загрузить чаты.": "Chaty sa nepodarilo načítať."
+  },
+  "cs": {
+    "Не удалось загрузить чаты.": "Chaty se nepodařilo načíst."
+  },
+  "bg": {
+    "Не удалось загрузить чаты.": "Чатовете не можаха да бъдат заредени."
+  },
+  "ro": {
+    "Не удалось загрузить чаты.": "Chaturile nu au putut fi încărcate."
+  },
+  "mk": {
+    "Не удалось загрузить чаты.": "Разговорите не може да се вчитаат."
+  },
+  "hu": {
+    "Не удалось загрузить чаты.": "Nem sikerült betölteni a csevegéseket."
+  },
+  "sv": {
+    "Не удалось загрузить чаты.": "Det gick inte att läsa in chattarna."
+  },
+  "nb": {
+    "Не удалось загрузить чаты.": "Kunne ikke laste inn chatter."
+  },
+  "fi": {
+    "Не удалось загрузить чаты.": "Keskusteluja ei voitu ladata."
+  },
+  "da": {
+    "Не удалось загрузить чаты.": "Chats kunne ikke indlæses."
+  },
+  "nl": {
+    "Не удалось загрузить чаты.": "Kon chats niet laden."
+  },
+  "is": {
+    "Не удалось загрузить чаты.": "Ekki tókst að hlaða spjöllum."
+  }
+}

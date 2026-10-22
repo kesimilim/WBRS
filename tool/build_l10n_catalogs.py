@@ -139,6 +139,18 @@ for code in CODES:
     second = 'Другие участники присоединяются к созданной встрече.'
     CAT[code][first + '\n' + second] = CAT[code][first] + '\n' + CAT[code][second]
 
+from l10n_native_meetings import add_native_meetings
+add_native_meetings(batch, CAT)
+
+# Preserve reviewed wording from the delivered native catalogs. These explicit
+# overrides are source data, not a fallback to another language or build output.
+reviewed = json.loads((ROOT / 'tool/l10n_reviewed_overrides.json').read_text())
+assert set(reviewed) == set(CODES)
+for code in CODES:
+    assert set(reviewed[code]) == set(reviewed['ru'])
+    assert all(isinstance(v, str) and v for v in reviewed[code].values())
+    CAT[code].update(reviewed[code])
+
 # Additional domain batches follow below. No fallback is written into catalogs.
 
 def write():

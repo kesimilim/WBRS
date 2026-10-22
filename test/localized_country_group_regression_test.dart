@@ -182,9 +182,9 @@ void main() {
     await page(tester, screen, 'en', settle: false);
     db.emit('meets/meeting/messages', []);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Participant list'));
+    await tester.ensureVisible(find.byKey(const ValueKey('meeting-participants-action')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Participant list'));
+    await tester.tap(find.byKey(const ValueKey('meeting-participants-action')));
     await tester.pumpAndSettle();
     final sheet = find.byKey(const ValueKey('meeting-participants'));
     expect(sheet, findsOneWidget);

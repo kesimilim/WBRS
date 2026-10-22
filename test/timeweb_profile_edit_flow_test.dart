@@ -445,9 +445,8 @@ void main() {
           find.byKey(const ValueKey('timeweb-profile-about')),
           '  This updated description has twenty characters  ',
         );
-        await tester.ensureVisible(
-          find.byKey(const ValueKey('timeweb-profile-save')),
-        );
+        await tester.scrollUntilVisible(find.byKey(const ValueKey('timeweb-profile-save')), 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.runAsync(() async {
           final button = tester.widget<ElevatedButton>(
             find.byKey(const ValueKey('timeweb-profile-save')),
@@ -479,9 +478,8 @@ void main() {
           find.byKey(const ValueKey('timeweb-profile-about')),
           'Second pending description with enough characters',
         );
-        await tester.ensureVisible(
-          find.byKey(const ValueKey('timeweb-profile-save')),
-        );
+        await tester.scrollUntilVisible(find.byKey(const ValueKey('timeweb-profile-save')), 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.runAsync(() async {
           tester
               .widget<ElevatedButton>(

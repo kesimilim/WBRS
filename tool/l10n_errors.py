@@ -91,10 +91,9 @@ def add_errors(cat):
     }
     sources = set()
     root = Path(__file__).resolve().parents[1]
-    # The reviewed inventory includes errors passed through variables as well as
-    # literal context.tr calls. It is versioned with the source delivery.
-    for record in json.loads((root / 'verification/stage2/ui_string_inventory.json').read_text())['strings']:
-        sources.add(record['text'])
+    # Keep the reviewed source list with the generator. A local, disposable
+    # UI inventory must not be required to reproduce published translations.
+    sources.update(json.loads((root / 'tool/l10n_error_sources.json').read_text()))
     sources.update('''Не удалось загрузить фотографии.|Не удалось загрузить профиль.|Не удалось загрузить публикации.|Не удалось загрузить публикацию.|Не удалось загрузить список.|Не удалось открыть профиль. Попробуйте ещё раз.|Не удалось отправить комментарий. Попробуйте ещё раз.|Не удалось открыть уведомление. Проверьте подключение.'''.split('|'))
     sources.add('Не удалось загрузить страну и регион.')
     ru_verbs = ['загрузить','открыть','сохранить','отправить','удалить']

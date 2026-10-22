@@ -323,8 +323,8 @@ void main() {
       final panel = tester.getRect(
         find.byKey(const ValueKey('timeweb-gift-recipient-panel')),
       );
-      expect(panel.left, 0);
-      expect(panel.width, closeTo((360 - 12) * 2 / 3, .01));
+      expect(panel.left, 12);
+      expect(panel.width, closeTo((360 - 24) * 2 / 3, .01));
       expect(
         tester
             .getTopLeft(

@@ -906,42 +906,57 @@ class _ChatPageState extends State<ChatPage> {
             child: LayoutBuilder(
               builder: (context, constraints) => Column(
                 children: [
-                  if (constraints.maxHeight >= 180 && MediaQuery.viewInsetsOf(this.context).bottom == 0)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(6, 0, 12, 10),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        IconButton(
-                          onPressed: Navigator.of(context).canPop()
-                              ? () => Navigator.pop(context)
-                              : null,
-                          icon: const Icon(Icons.chevron_left),
-                        ),
-                        Expanded(
-                          child: Column(
+                  if (constraints.maxHeight >= 180 &&
+                      MediaQuery.viewInsetsOf(this.context).bottom == 0)
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight:
+                            constraints.maxHeight *
+                            (_membershipNotice != null ||
+                                    _membershipRequest != null
+                                ? .25
+                                : .35),
+                      ),
+                      child: SingleChildScrollView(
+                        key: const ValueKey('meeting-chat-header-scroll'),
+                        primary: false,
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(6, 0, 12, 10),
+                          child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              TranslatableText(
-                                widget.groupName,
-                                showAction: false,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 21),
+                              IconButton(
+                                onPressed: Navigator.of(context).canPop()
+                                    ? () => Navigator.pop(context)
+                                    : null,
+                                icon: const Icon(Icons.chevron_left),
                               ),
-                              Text(
-                                '${context.tr('{count} участников', count: _users.length)}${_meetingDate == null ? '' : ' · ${context.l10n.date(_meetingDate!)}'}',
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  color: LrsTheme.muted,
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    TranslatableText(
+                                      widget.groupName,
+                                      showAction: false,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 21),
+                                    ),
+                                    Text(
+                                      '${context.tr('{count} участников', count: _users.length)}${_meetingDate == null ? '' : ' · ${context.l10n.date(_meetingDate!)}'}',
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        color: LrsTheme.muted,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
                   if (_membershipNotice != null || _membershipRequest != null)
                     ConstrainedBox(
                       constraints: BoxConstraints(

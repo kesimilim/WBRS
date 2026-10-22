@@ -456,9 +456,9 @@ void main() {
         ]);
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
-        await tester.ensureVisible(find.text('Список участников'));
+        await tester.ensureVisible(find.byKey(const ValueKey('meeting-participants-action')));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Список участников'));
+        await tester.tap(find.byKey(const ValueKey('meeting-participants-action')));
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
         expect(
@@ -734,6 +734,10 @@ void main() {
             .descendant(
                 of: find.byType(ListView), matching: find.byType(Scrollable))
             .first);
+    await tester.pumpAndSettle();
+    await Scrollable.ensureVisible(tester.element(find.text('Загрузить ещё')), alignment: .5);
+    await tester.pumpAndSettle();
+    expect(find.text('Загрузить ещё').hitTestable(), findsOneWidget);
     await tester.tap(find.text('Загрузить ещё'));
     await tester.pumpAndSettle();
     final expanded = tester.widget<ListView>(find.byType(ListView));
@@ -807,9 +811,9 @@ void main() {
     await tester.pump();
     db.emit('meets/meeting/messages', []);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Список участников'));
+    await tester.ensureVisible(find.byKey(const ValueKey('meeting-participants-action')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Список участников'));
+    await tester.tap(find.byKey(const ValueKey('meeting-participants-action')));
     await tester.pumpAndSettle();
     expect(find.text('Новый участник'), findsOneWidget);
     expect(db.updates, 1);

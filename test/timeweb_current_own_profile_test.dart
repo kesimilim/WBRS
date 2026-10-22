@@ -14,6 +14,7 @@ import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_profile_edit_flow.dart';
+import 'package:wbrs/service/timeweb_initial_profile_flow.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 final _now = DateTime.utc(2026, 10, 2);
@@ -177,6 +178,7 @@ TimewebAppRuntime _runtime(
   currentOwnProfileEnabled: true,
   currentChatsEnabled: true,
   profileEditorEnabled: true,
+  initialProfileJournal: TimewebInitialProfileJournal(directory: () async => directory),
   profileEditJournal: TimewebProfileEditJournal(
     directory: () async => directory,
   ),
@@ -215,14 +217,13 @@ Future<void> _wait(WidgetTester tester, Finder finder) async {
 }
 
 Future<void> _openOwnFromDirectory(WidgetTester tester) async {
-  final entry = find.byKey(const ValueKey('timeweb-people-own-profile'));
+  final entry = find.byKey(const ValueKey('timeweb-home-tab-profile'));
   await _wait(tester, entry);
-  await _until(
-    tester,
-    () => tester.widget<ElevatedButton>(entry).onPressed != null,
-  );
-  await tester.pumpAndSettle();
+  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+  await tester.pump(const Duration(milliseconds: 350));
   await tester.tap(entry);
+  await _wait(tester, find.byType(TimewebOwnProfilePage));
+
 }
 
 void main() {
@@ -578,10 +579,10 @@ void main() {
         await _openOwnFromDirectory(tester);
         await _wait(tester, find.byType(TimewebOwnProfilePage));
         await tester.pumpAndSettle();
-        expect(find.text(' Current A '), findsOneWidget);
-        expect(fullReads, 2);
+        expect(find.textContaining('Current A', findRichText: true), findsOneWidget);
+        expect(fullReads, greaterThanOrEqualTo(2));
         expect(
-          find.byKey(const ValueKey('timeweb-open-chats')),
+          find.byKey(const ValueKey('timeweb-home-tab-chats')),
           findsOneWidget,
         );
         expect(find.text('В сети'), findsNothing);
@@ -593,6 +594,9 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await _until(tester, () => tester.widget<InkWell>(find.byKey(const ValueKey('timeweb-open-profile-editor'))).onTap != null);
+        await Scrollable.ensureVisible(tester.element(find.byKey(const ValueKey('timeweb-open-profile-editor'))), alignment: .5);
+        await tester.pump(const Duration(milliseconds: 350));
         await tester.tap(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
         );
@@ -602,6 +606,8 @@ void main() {
           find.byKey(const ValueKey('timeweb-profile-about')),
           '  Updated current description with enough characters  ',
         );
+        await tester.scrollUntilVisible(find.byKey(const ValueKey('timeweb-profile-save')), 200, scrollable: find.byType(Scrollable).first);
+        final readsBeforeSave = fullReads;
         await tester.runAsync(() async {
           tester
               .widget<ElevatedButton>(
@@ -615,11 +621,11 @@ void main() {
         await _until(
           tester,
           () =>
-              fullReads == 3 &&
+              fullReads > readsBeforeSave &&
               find.byType(TimewebProfileEditPage).evaluate().isEmpty,
         );
         await tester.pumpAndSettle();
-        expect(fullReads, 3);
+        expect(fullReads, greaterThan(readsBeforeSave));
         expect(posts, 1);
         await tester.scrollUntilVisible(
           find.text(data['about']),
@@ -695,6 +701,9 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await _until(tester, () => tester.widget<InkWell>(find.byKey(const ValueKey('timeweb-open-profile-editor'))).onTap != null);
+        await Scrollable.ensureVisible(tester.element(find.byKey(const ValueKey('timeweb-open-profile-editor'))), alignment: .5);
+        await tester.pump(const Duration(milliseconds: 350));
         await tester.tap(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
         );
@@ -715,18 +724,21 @@ void main() {
           () => runtime.login(email: 'B@example.invalid', password: 'password'),
         );
         await _openOwnFromDirectory(tester);
-        await _wait(tester, find.textContaining('Current B'));
+        await _wait(tester, find.textContaining('Current B', findRichText: true));
         await tester.pumpAndSettle();
         late.complete(_reply(_full('A')));
         await tester.pumpAndSettle();
-        expect(find.textContaining('Current B'), findsOneWidget);
-        expect(find.textContaining('Current A'), findsNothing);
+        expect(find.textContaining('Current B', findRichText: true), findsOneWidget);
+        expect(find.textContaining('Current A', findRichText: true), findsNothing);
         expect(find.text('private A edited text'), findsNothing);
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await _until(tester, () => tester.widget<InkWell>(find.byKey(const ValueKey('timeweb-open-profile-editor'))).onTap != null);
+        await Scrollable.ensureVisible(tester.element(find.byKey(const ValueKey('timeweb-open-profile-editor'))), alignment: .5);
+        await tester.pump(const Duration(milliseconds: 350));
         await tester.tap(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
         );

@@ -199,6 +199,9 @@ void main() {
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await tester.pumpAndSettle();
+        await Scrollable.ensureVisible(tester.element(find.byKey(const ValueKey('timeweb-open-temperament'))), alignment: .5);
+        await tester.pumpAndSettle();
         await tester.tap(
           find.byKey(const ValueKey('timeweb-open-temperament')),
         );

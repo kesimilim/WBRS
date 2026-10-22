@@ -292,7 +292,7 @@ void main() {
       });
       final client = _client(_Store(), wire);
       await client.restore();
-      for (final ignored in groups) {
+      for (var i = 0; i < groups.length; i++) {
         expect((await _read(client)).onboarding, TimewebOnboarding.search);
       }
     },

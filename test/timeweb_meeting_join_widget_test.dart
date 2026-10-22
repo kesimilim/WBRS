@@ -10,6 +10,7 @@ import 'package:wbrs/presentation/screens/list_of_meets/timeweb_meetings_page.da
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_meeting_join_flow.dart';
+import 'package:wbrs/service/timeweb_meeting_membership_flow.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
@@ -32,7 +33,7 @@ Future<void> _tap(WidgetTester tester) async {
 
 Map<String, Object?> _meeting() => {
   'meetingId': 'native-meeting',
-  'organizerUid': 'A',
+  'organizerUid': 'organizer',
   'invitedUid': null,
   'kind': 'group',
   'title': 'Current meeting',
@@ -129,6 +130,7 @@ void main() {
       clearLocal: () async {},
       currentOwnProfileEnabled: true,
       meetingJoinJournal: TimewebMeetingJoinJournal(directory: () async => directory),
+      meetingMembershipJournal: TimewebMeetingMembershipJournal(directory: () async => directory),
     );
     try {
       await tester.runAsync(() => runtime.start(remember: true));

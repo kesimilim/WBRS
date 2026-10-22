@@ -30,10 +30,15 @@ Future<void> _until(WidgetTester tester, bool Function() ready) async {
 }
 
 Future<void> _drawer(WidgetTester tester, String label) async {
+  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+  await tester.pump(const Duration(milliseconds: 350));
   await tester.tap(find.byIcon(Icons.menu).hitTestable().last);
   await tester.pump();
   await tester.pump(const Duration(milliseconds: 350));
-  await tester.tap(find.text(label).hitTestable().last);
+  final entry = find.text(label);
+  await tester.scrollUntilVisible(entry, 200, scrollable: find.descendant(of: find.byType(Drawer), matching: find.byType(Scrollable)).first);
+  await tester.pumpAndSettle();
+  await tester.tap(entry.last);
   await tester.pump();
 }
 

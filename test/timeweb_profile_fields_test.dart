@@ -484,7 +484,8 @@ void main() {
           '301',
         );
         final save = find.byKey(const ValueKey('timeweb-profile-save'));
-        await tester.ensureVisible(save);
+        await tester.scrollUntilVisible(save, 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(save);
         await tester.pump();
         expect(posts, 0);
@@ -506,11 +507,14 @@ void main() {
           '175',
         );
         await tester.ensureVisible(children);
+        await tester.ensureVisible(children);
+        await tester.pumpAndSettle();
         await tester.tap(children);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Нет').last);
         await tester.pumpAndSettle();
-        await tester.ensureVisible(save);
+        await tester.scrollUntilVisible(save, 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(save);
         await _waitFor(tester, () => posts == 1);
         expect(sent!['expectedUpdatedAt'], _stamp);
@@ -662,6 +666,8 @@ void main() {
         }
         final children = find.byKey(const ValueKey('timeweb-profile-children'));
         await tester.ensureVisible(children);
+        await tester.ensureVisible(children);
+        await tester.pumpAndSettle();
         await tester.tap(children);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Нет').last);
@@ -858,13 +864,13 @@ void main() {
         await tester.tap(find.text('Женский').last);
         await tester.pumpAndSettle();
         expect(tester.widget<TextButton>(location).onPressed, isNull);
-        await tester.ensureVisible(save);
+        await tester.scrollUntilVisible(save, 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(save);
         await _waitFor(
           tester,
           () =>
-              posts == 1 &&
-              tester.widget<ElevatedButton>(save).onPressed != null,
+              posts == 1 && opened!.needsCheck,
         );
         expect(opened!.needsCheck, isTrue);
         expect(
@@ -889,7 +895,8 @@ void main() {
           isFalse,
         ); // Fresh canonical value is now fixed.
         expect(gender, findsNothing);
-        await tester.ensureVisible(save);
+        await tester.scrollUntilVisible(save, 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(save);
         await _waitFor(tester, () => routeResult == true);
         await tester.pumpAndSettle();
@@ -905,7 +912,8 @@ void main() {
           find.byKey(const ValueKey('timeweb-profile-name')),
           'Corrected A',
         );
-        await tester.ensureVisible(save);
+        await tester.scrollUntilVisible(save, 250, scrollable: find.byType(Scrollable).first);
+        await tester.pumpAndSettle();
         await tester.tap(save);
         await _waitFor(tester, () => routeResult == true);
         await tester.pumpAndSettle();

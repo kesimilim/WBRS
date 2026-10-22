@@ -98,9 +98,18 @@ Future<void> _until(WidgetTester tester, bool Function() ready) async {
 
 Future<void> _tap(WidgetTester tester, String key) async {
   final target = find.byKey(ValueKey(key));
+  if (target.evaluate().isEmpty) {
+    await tester.scrollUntilVisible(target, key == 'native-meeting-discussion' ? -160 : 160, scrollable: find.byType(Scrollable).first);
+  }
   await Scrollable.ensureVisible(tester.element(target), alignment: .5);
+  await tester.pumpAndSettle();
+  if (tester.widget(target) is InkWell) {
+    await tester.tapAt(tester.getTopLeft(target) + const Offset(15, 15));
+  } else {
+    await tester.tap(target);
+  }
   await tester.pump();
-  await tester.runAsync(() => tester.tap(target));
+  await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
   await tester.pump(const Duration(milliseconds: 350));
 }
 
@@ -316,6 +325,8 @@ void main() {
         findsNothing,
         reason: 'Non-organizer has no kick affordance',
       );
+      expect(find.byKey(const ValueKey('native-meeting-manage-participants')), findsNothing);
+      await _tap(tester, 'native-meeting-participants-back');
       await _tap(tester, 'native-meeting-discussion');
       await _until(
         tester,
@@ -342,7 +353,7 @@ void main() {
       );
       expect(messages, 1);
       expect(find.byKey(const ValueKey('native-meeting-chat-composer')), findsNothing);
-      expect(tester.widget<TextButton>(find.byKey(const ValueKey('native-meeting-discussion'))).onPressed, isNull);
+      expect(find.byWidgetPredicate((widget) => widget is TextButton && widget.key == const ValueKey('native-meeting-discussion') && widget.onPressed != null), findsNothing, reason: 'Pending leave cannot reopen the chat');
       await _tap(tester, 'native-meeting-leave-check');
       await _until(tester, () => afterLeaveRead);
       expect(leavePosts, 1);
@@ -426,6 +437,8 @@ void main() {
       expect(find.text('Private organizer text'), findsOneWidget);
       await tester.enterText(find.byKey(const ValueKey('native-meeting-chat-composer')), 'Organizer private draft');
       await _tap(tester, 'native-meeting-chat-participants');
+      await _until(tester, () => find.byKey(const ValueKey('native-meeting-manage-participants')).evaluate().isNotEmpty);
+      await _tap(tester, 'native-meeting-manage-participants');
       await _until(
         tester,
         () =>
@@ -453,7 +466,7 @@ void main() {
       expect(kickChecks, 1);
       expect(find.text('Private organizer text'), findsNothing);
       expect(find.byKey(const ValueKey('native-meeting-chat-composer')), findsNothing);
-      expect(kickRosters, 3);
+      expect(kickRosters, 4);
       expect(find.text('Участник B'), findsNothing);
       expect(find.text('Участник C'), findsNothing);
       expect(runtime.client.currentUid, 'A');

@@ -593,7 +593,11 @@ void main() {
     await tester.ensureVisible(passwordEntry);
     await tester.tap(passwordEntry);
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byType(TextFormField).first, 150, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).first, 'new-password');
+    await tester.ensureVisible(find.byType(TextFormField).last);
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField).last, 'new-password');
     final action = find.widgetWithText(ElevatedButton, 'Сменить пароль');
     await tester.ensureVisible(action);

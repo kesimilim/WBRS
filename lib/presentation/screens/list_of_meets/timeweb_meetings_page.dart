@@ -764,11 +764,12 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
     meeting.requireCurrent();
     final page = TimewebNavigationScope.wrap(
       context,
-      TimewebMeetingParticipantsPage(runtime: _runtime, meeting: meeting),
+      TimewebMeetingParticipantsPage(runtime: _runtime, meeting: meeting, allowManagement: true),
     );
-    await Navigator.of(
-      context,
-    ).push<void>(MaterialPageRoute(builder: (_) => page));
+    final manage = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => page));
+    if (manage == true && _current && _organizer && !_memberActionsLocked) {
+      await _load(roster: true);
+    }
   }
 
   Future<void> _openArchive() async {

@@ -349,9 +349,15 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
         runtime: _runtime,
         meeting: widget.meeting,
         flow: _flow,
+        allowManagement: true,
       ),
     );
-    await Navigator.of(context).push<void>(MaterialPageRoute(builder: (_) => page));
+    final manage = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => page));
+    if (manage == true && _current && !_memberLocked && widget.meeting.organizerUid == _lease!.identity.uid) {
+      widget.onParticipants();
+      // Close this chat lease and draft before showing mutation controls.
+      _deny();
+    }
   }
 
   Widget _avatar(String name) => Container(
@@ -678,10 +684,12 @@ class TimewebMeetingParticipantsPage extends StatefulWidget {
     required this.runtime,
     required this.meeting,
     this.flow,
+    this.allowManagement = false,
   });
   final TimewebAppRuntime runtime;
   final TimewebMeeting meeting;
   final TimewebMeetingChatFlow? flow;
+  final bool allowManagement;
 
   @override
   State<TimewebMeetingParticipantsPage> createState() => _TimewebMeetingParticipantsPageState();
@@ -887,6 +895,15 @@ class _TimewebMeetingParticipantsPageState extends State<TimewebMeetingParticipa
                     key: const ValueKey('native-meeting-participants-next'),
                     onPressed: () => _load(next: true),
                     child: Text(context.tr('Следующая страница')),
+                  )),
+                if (widget.allowManagement && widget.meeting.organizerUid == _lease?.identity.uid)
+                  _left(ClrsPanel(
+                    child: TextButton.icon(
+                      key: const ValueKey('native-meeting-manage-participants'),
+                      onPressed: _current && !_loading ? () => Navigator.of(context).pop(true) : null,
+                      icon: const Icon(Icons.person_remove_outlined),
+                      label: Text(context.tr('Исключить участника')),
+                    ),
                   )),
                 const SizedBox(height: 16),
                 _left(ClrsPanel(

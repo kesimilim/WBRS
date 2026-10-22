@@ -351,8 +351,10 @@ void main() {
         await tester.pumpWidget(app('first'));
         await _until(tester, () => probes == 1);
         await tester.pumpAndSettle();
+        expect(find.textContaining('Own A'), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
         expect(_entry(), findsNothing);
-        expect(find.text('Own A'), findsOneWidget);
         await tester.pumpWidget(app('second'));
         await tester.pumpAndSettle();
         expect(_entry(), findsNothing);
@@ -416,7 +418,15 @@ void main() {
             home: TimewebOwnProfilePage(runtime: runtime, initialProfile: own),
           ),
         );
-        await _until(tester, () => _entry().evaluate().isNotEmpty);
+        bool? access;
+        unawaited(runtime.probeAdminUsersAccess().then((value) => access = value));
+        await _until(tester, () => access != null);
+        expect(access, isTrue);
+        await tester.pump(const Duration(milliseconds: 350));
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        await _until(tester, () => find.byType(Drawer).evaluate().isNotEmpty);
+        await tester.scrollUntilVisible(_entry(), 200, scrollable: find.descendant(of: find.byType(Drawer), matching: find.byType(Scrollable)).first);
         await _tap(tester, _entry());
         await _until(
           tester,
@@ -534,8 +544,10 @@ void main() {
           await Future<void>.delayed(const Duration(milliseconds: 10));
         });
         await tester.pumpAndSettle();
+        expect(find.textContaining('Own B'), findsOneWidget);
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
         expect(_entry(), findsNothing);
-        expect(find.text('Own B'), findsOneWidget);
         expect(runtime.session.currentUid, 'B');
         expect(
           await tester.runAsync(() => runtime.probeAdminUsersAccess()),

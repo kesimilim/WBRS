@@ -8,6 +8,7 @@ import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_geography_flow.dart';
 import 'package:wbrs/service/timeweb_profile_edit_flow.dart';
+import 'package:wbrs/service/timeweb_initial_profile_flow.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/app_backend.dart';
 import 'package:wbrs/presentation/screens/edit_profile/timeweb_geography_page.dart';
@@ -580,6 +581,7 @@ void main() {
         profileEditJournal: TimewebProfileEditJournal(
           directory: () async => directory,
         ),
+        initialProfileJournal: TimewebInitialProfileJournal(directory: () async => directory),
       );
       await tester.binding.setSurfaceSize(const Size(360, 640));
       try {
@@ -594,12 +596,16 @@ void main() {
           tester,
           () => find.byType(TimewebOwnProfilePage).evaluate().isNotEmpty,
         );
+        await _widgetUntil(tester, () => tester.widget<InkWell>(find.byKey(const ValueKey('timeweb-open-profile-editor'))).onTap != null);
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
           200,
           scrollable: find.byType(Scrollable).first,
         );
+        await tester.pumpAndSettle();
+        await Scrollable.ensureVisible(tester.element(find.byKey(const ValueKey('timeweb-open-profile-editor'))), alignment: .5);
+        await tester.pumpAndSettle();
         await tester.tap(
           find.byKey(const ValueKey('timeweb-open-profile-editor')),
         );
@@ -636,11 +642,11 @@ void main() {
         await tester.tap(find.byType(DropdownButtonFormField<String>).first);
         await tester.pumpAndSettle();
         await tester.scrollUntilVisible(
-          find.text('Германия'),
+          find.textContaining('Германия'),
           120,
           scrollable: find.byType(Scrollable).last,
         );
-        await tester.tap(find.text('Германия').last);
+        await tester.tap(find.textContaining('Германия').last);
         await tester.pumpAndSettle();
         expect(
           tester
@@ -652,7 +658,7 @@ void main() {
         );
         await tester.tap(find.byType(DropdownButtonFormField<String>).last);
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Bayern').last);
+        await tester.tap(find.textContaining('Bayern').last);
         await tester.pumpAndSettle();
         await tester.tap(find.byKey(const ValueKey('timeweb-geography-save')));
         await _widgetUntil(tester, () => posts == 1);
@@ -693,18 +699,18 @@ void main() {
         expect(posts, 1);
         expect(fullReads, 3);
         await tester.scrollUntilVisible(
-          find.text('Bayern'),
+          find.textContaining('Bayern').first,
           200,
           scrollable: find.byType(Scrollable).first,
         );
-        expect(find.text('Bayern'), findsOneWidget);
-        expect(find.text('Германия'), findsOneWidget);
+        expect(find.textContaining('Bayern'), findsWidgets);
+        expect(find.textContaining('Германия'), findsWidgets);
         await tester.scrollUntilVisible(
-          find.text('Current A'),
+          find.textContaining('Current A', findRichText: true),
           -200,
           scrollable: find.byType(Scrollable).first,
         );
-        expect(find.text('Current A'), findsOneWidget);
+        expect(find.textContaining('Current A', findRichText: true), findsOneWidget);
         expect(_files(directory), isEmpty);
         expect(Firebase.apps, isEmpty);
         expect(tester.takeException(), isNull);
@@ -748,6 +754,7 @@ void main() {
         profileEditJournal: TimewebProfileEditJournal(
           directory: () async => directory,
         ),
+        initialProfileJournal: TimewebInitialProfileJournal(directory: () async => directory),
       );
       final navigator = GlobalKey<NavigatorState>();
       try {

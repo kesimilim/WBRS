@@ -20,6 +20,8 @@ class LayoutAuth extends Fake implements FirebaseAuth {
   User? user = LayoutUser();
   @override
   User? get currentUser => user;
+  @override
+  Stream<User?> authStateChanges() => Stream.value(user);
 }
 
 class LayoutMessaging extends Fake implements FirebaseMessaging {
@@ -196,7 +198,11 @@ class LayoutReference extends Fake
   Stream<DocumentSnapshot<Map<String, dynamic>>> snapshots(
           {bool includeMetadataChanges = false,
           ListenSource source = ListenSource.defaultSource}) =>
-      Stream.value(LayoutSnapshot(db, path, db.documents[path]));
+      Stream.multi((controller) {
+        // Firestore permits resubscription when a lazy list remounts its fields.
+        controller.add(LayoutSnapshot(db, path, db.documents[path]));
+        controller.close();
+      }, isBroadcast: true);
   @override
   Future<void> update(Map<Object, Object?> data) async {
     db.updates++;

@@ -28,6 +28,7 @@ timeweb_startup_regression:
   stage: test
   script:
     - python3 -m unittest discover -s tool -p 'test_build_timeweb.py' -v
+    - python3 tool/test_l10n_catalogs.py
     - flutter test --no-pub test/startup_retry_test.dart test/backend_isolation_test.dart test/timeweb_push_test.dart test/timeweb_notifications_test.dart
     - flutter test --no-pub --dart-define-from-file=config/timeweb.production.json test/timeweb_optional_notifications_startup_test.dart
 

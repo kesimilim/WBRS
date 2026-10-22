@@ -61,14 +61,17 @@ void main() {
   test('malformed/unbounded page refused whole; zero cutoff honest empty; no chatRevision/raw/URL or invented archive UUID narrowing', () async {
     for (final invalid in [page([], cursor: 'empty'), page([message(11)]), page([message(9), message(10)]), page([message(10), message(10)]),
         page([{...message(10), 'url': 'https://invalid.example'}]), page([{...message(10), 'createdAt': null}]), page([{...message(10), 'sequence': 10.0}]),
-        page([{...message(10), 'meetingId': 'foreign'}]), page([{...message(10), 'text': ' '}]), {...page([]), 'chatRevision': 10},
+        page([{...message(10), 'meetingId': 'foreign'}]), page([{...message(10), 'text': ''}]), {...page([]), 'chatRevision': 10},
         page([], pin: {...window(), 'operationId': op.toUpperCase()}), page([], pin: {...window(), 'membershipRevision': 0}),
         page([], pin: {...window(), 'capturedAt': '2026-10-02T12:00:00Z'}), page([], pin: {...window(), 'raw': {}}),
         page([message(1)], pin: {...window(), 'throughSequence': 0}), page(List.generate(31, (_) => message(1)))]) {
       final owner = client(PeopleWire((_) async => peopleReply(invalid)));
-      try { await owner.restore(); await expectLater(owner.readMeetingArchive(meeting), throwsA(authError(TimewebAuthError.invalidResponse))); }
+      try { await owner.restore(); await expectLater(owner.readMeetingArchive(meeting), throwsA(authError(TimewebAuthError.invalidResponse)), reason: jsonEncode(invalid)); }
       finally { await owner.stop(); }
     }
+    final retained = client(PeopleWire((_) async => peopleReply(page([{...message(10), 'text': ' '}]))));
+    try { await retained.restore(); expect((await retained.readMeetingArchive(meeting)).items.single.text, ' '); }
+    finally { await retained.stop(); }
     final zero = client(PeopleWire((_) async => peopleReply(page([], pin: {...window(), 'throughSequence': 0}))));
     try { await zero.restore(); final empty = await zero.readMeetingArchive(meeting); expect(empty.items, isEmpty); expect(empty.nextCursor, isNull); expect(empty.window.throughSequence, 0); }
     finally { await zero.stop(); }

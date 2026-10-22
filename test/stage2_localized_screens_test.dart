@@ -24,7 +24,8 @@ class _CatalogDelegate extends LocalizationsDelegate<ClrsLocalizations> {
   bool isSupported(Locale locale) => catalogs.containsKey(locale.languageCode);
   @override
   Future<ClrsLocalizations> load(Locale locale) => SynchronousFuture(
-      ClrsLocalizations(locale, catalogs[locale.languageCode]!));
+    ClrsLocalizations(locale, catalogs[locale.languageCode]!),
+  );
   @override
   bool shouldReload(_CatalogDelegate old) => false;
 }
@@ -34,7 +35,8 @@ void main() {
   final catalogs = <String, Map<String, dynamic>>{
     for (final code in ClrsLocalizations.codes)
       code: Map<String, dynamic>.from(
-          jsonDecode(File('assets/l10n/$code.json').readAsStringSync()) as Map),
+        jsonDecode(File('assets/l10n/$code.json').readAsStringSync()) as Map,
+      ),
   };
   setUpAll(() async {
     setupFirebaseCoreMocks();
@@ -59,20 +61,24 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(
-      theme: LrsTheme.theme,
-      locale: ClrsLocalizations.localeFor(code),
-      supportedLocales: ClrsLocalizations.supportedLocales,
-      localizationsDelegates: [
-        _CatalogDelegate(catalogs),
-        ...ClrsLocalizations.delegates.skip(1),
-      ],
-      builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context)
-              .copyWith(textScaler: const TextScaler.linear(2)),
-          child: child!),
-      home: page,
-    ));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: LrsTheme.theme,
+        locale: ClrsLocalizations.localeFor(code),
+        supportedLocales: ClrsLocalizations.supportedLocales,
+        localizationsDelegates: [
+          _CatalogDelegate(catalogs),
+          ...ClrsLocalizations.delegates.skip(1),
+        ],
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: child!,
+        ),
+        home: page,
+      ),
+    );
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull, reason: '$code initial layout');
   }
@@ -85,53 +91,129 @@ void main() {
   }
 
   for (final code in ClrsLocalizations.codes) {
-    testWidgets('Actual $code login: 320px/2x, validation and lower actions',
-        (tester) async {
+    testWidgets('Actual $code login: 320px/2x, validation and lower actions', (
+      tester,
+    ) async {
       await pump(tester, code, const LoginPage());
-      final submit =
-          find.widgetWithText(ElevatedButton, catalogs[code]!['Вход']);
+      final submit = find.widgetWithText(
+        ElevatedButton,
+        catalogs[code]!['Вход'],
+      );
       expect(find.byType(TextFormField), findsNWidgets(2));
       await reach(tester, submit);
       await tester.tap(submit);
       await tester.pumpAndSettle();
-      expect(find.text(catalogs[code]!['Введите корректный email']),
-          findsOneWidget);
-      expect(find.text(catalogs[code]!['Пароль должен содержать 6 символов']),
-          findsOneWidget);
+      expect(
+        find.text(catalogs[code]!['Введите корректный email']),
+        findsOneWidget,
+      );
+      expect(
+        find.text(catalogs[code]!['Пароль должен содержать 6 символов']),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull, reason: '$code validation layout');
-      await reach(tester,
-          find.widgetWithText(TextButton, catalogs[code]!['Регистрация']));
-      await reach(tester,
-          find.widgetWithText(TextButton, catalogs[code]!['Забыли пароль?']));
+      await reach(
+        tester,
+        find.widgetWithText(TextButton, catalogs[code]!['Регистрация']),
+      );
+      await reach(
+        tester,
+        find.widgetWithText(TextButton, catalogs[code]!['Забыли пароль?']),
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
-    testWidgets('Actual $code meeting guide: 320px/2x, complete scroll',
-        (tester) async {
+    testWidgets('Actual $code meeting guide: 320px/2x, complete scroll', (
+      tester,
+    ) async {
       await pump(tester, code, const MeetingGuidePage());
-      // These are the full instruction paragraphs from the real page. Checking
-      // them through the scroll catches clipping in long localized sections.
-      for (final key in [
-        'Вы один(одна) и хотите пригласить кого-то. Создавайте индивидуальную встречу, укажите в описании куда идёте, что будете делать.',
-        'Вас, например, двое. Один создаёт коллективную встречу и пишет: ждём двух девушек, и что вы предлагаете. (К примеру, пьём кофе на набережной и т.п.)',
-        'Вы — компания и хотите устроить что-то масштабное. Один пусть создаёт коллективную встречу, опишите кратко предложение.',
-        'Когда кто-нибудь вступит, придёт уведомление как создателю.',
-      ]) {
-        final text = find.text(catalogs[code]![key]);
-        await tester.scrollUntilVisible(text, 220,
-            scrollable: find.byType(Scrollable).first);
+      // Approved compact cards open the full paragraphs in a detail dialog.
+      // Verify both levels at large text instead of looking for removed inline copy.
+      const details = [
+        [
+          'Вы один(одна) и хотите пригласить кого-то. Создавайте индивидуальную встречу, укажите в описании куда идёте, что будете делать.',
+        ],
+        [
+          'Вас, например, двое. Один создаёт коллективную встречу и пишет: ждём двух девушек, и что вы предлагаете. (К примеру, пьём кофе на набережной и т.п.)',
+          'Вы — компания и хотите устроить что-то масштабное. Один пусть создаёт коллективную встречу, опишите кратко предложение.',
+        ],
+        ['Выберите страну и регион, укажите дату и время.'],
+        ['Когда кто-нибудь вступит, придёт уведомление как создателю.'],
+      ];
+      for (var i = 0; i < details.length; i++) {
+        final card = find.byKey(ValueKey('meeting-guide-step-${i + 1}'));
+        await tester.scrollUntilVisible(
+          card,
+          220,
+          scrollable: find.descendant(
+            of: find.byKey(const ValueKey('meeting-guide-scroll')),
+            matching: find.byType(Scrollable),
+          ),
+        );
+        await reach(tester, card);
+        expect(tester.getSize(card).width, lessThanOrEqualTo(320 * 2 / 3));
+        await tester.tap(card);
         await tester.pumpAndSettle();
-        await reach(tester, text);
+        for (final key in details[i]) {
+          final paragraph = find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.text(catalogs[code]![key]),
+          );
+          expect(paragraph, findsOneWidget);
+          // A paragraph may be taller than the dialog at 2x. Verify that both
+          // ends can be scrolled into the viewport instead of tapping its center.
+          final scrollable = find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.byType(Scrollable),
+          );
+          final position = tester.state<ScrollableState>(scrollable).position;
+          await Scrollable.ensureVisible(
+            tester.element(paragraph),
+            alignment: 0,
+          );
+          await tester.pumpAndSettle();
+          final viewport = tester.getRect(scrollable);
+          expect(
+            tester.getTopLeft(paragraph).dy,
+            greaterThanOrEqualTo(viewport.top - 1),
+          );
+          await Scrollable.ensureVisible(
+            tester.element(paragraph),
+            alignment: 1,
+          );
+          await tester.pumpAndSettle();
+          expect(
+            tester.getBottomLeft(paragraph).dy,
+            lessThanOrEqualTo(viewport.bottom + 1),
+          );
+          expect(position.outOfRange, isFalse);
+          expect(tester.takeException(), isNull);
+        }
+        await tester.tap(
+          find.descendant(
+            of: find.byType(AlertDialog),
+            matching: find.widgetWithText(
+              TextButton,
+              catalogs[code]!['Понятно'],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
       }
-      final done =
-          find.widgetWithText(ElevatedButton, catalogs[code]!['Понятно']);
-      await tester.scrollUntilVisible(done, 220,
-          scrollable: find.byType(Scrollable).first);
+      final done = find.byKey(const ValueKey('meeting-guide-done'));
+      await tester.scrollUntilVisible(
+        done,
+        220,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.pumpAndSettle();
       await reach(tester, done);
-      expect(tester.takeException(), isNull,
-          reason: '$code guide final layout');
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: '$code guide final layout',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);

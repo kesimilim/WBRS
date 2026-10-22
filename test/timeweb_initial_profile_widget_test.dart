@@ -298,7 +298,7 @@ void main() {
       );
       await _wait(tester, () => key('timeweb-open-initial-profile').evaluate().isNotEmpty);
       expect(Firebase.apps, isEmpty);
-      expect(key('timeweb-open-profile-editor'), findsNothing);
+      expect(tester.widget<InkWell>(key('timeweb-open-profile-editor')).onTap, isNull);
       await _tap(tester, 'timeweb-open-initial-profile');
       await _wait(
         tester,
@@ -388,7 +388,7 @@ void main() {
       await _wait(tester, () => key('timeweb-open-initial-profile').evaluate().isNotEmpty);
       await tester.pump();
       await _wait(tester, () => key('timeweb-open-initial-profile').evaluate().isNotEmpty);
-      expect(key('timeweb-open-profile-editor'), findsNothing);
+      expect(tester.widget<InkWell>(key('timeweb-open-profile-editor')).onTap, isNull);
       await _tap(tester, 'timeweb-open-initial-profile');
       await _wait(
         tester,

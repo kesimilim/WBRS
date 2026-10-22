@@ -143,6 +143,8 @@ class RuntimeMutationHttp:
                                       read_factory=read_factory, meetings_factory=meetings_factory)
         from runtime_social_http import RuntimeSocialHttp
         self._social = RuntimeSocialHttp(env, self._services[0] if self._services else None)
+        from runtime_contacts_http import RuntimeContactsHttp
+        self._contacts = RuntimeContactsHttp(env, self._services[0] if self._services else None)
         from runtime_gifts_http import RuntimeGiftsHttp
         self._gifts = RuntimeGiftsHttp(env, self._services[0] if self._services else None)
         from runtime_post_media import create_post_media_http
@@ -188,6 +190,10 @@ class RuntimeMutationHttp:
             self._services = None
 
     def dispatch(self, environ, *, native_service=None, native_configured=False):
+        contact_reply = self._contacts.dispatch(environ, native_service=native_service,
+                                               native_configured=native_configured)
+        if contact_reply is not None:
+            return contact_reply
         push_reply = self._push.handle(environ, native_service=native_service,
                                        native_configured=native_configured)
         if push_reply is not None:

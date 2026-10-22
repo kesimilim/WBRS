@@ -26,6 +26,7 @@ part 'timeweb_post_media.dart';
 part 'timeweb_preferences.dart';
 part 'timeweb_push.dart';
 part 'timeweb_notifications.dart';
+part 'timeweb_contacts.dart';
 
 /// Public routing only. This is intentionally not wired to AppBackend or UI.
 class TimewebAuthConfiguration {

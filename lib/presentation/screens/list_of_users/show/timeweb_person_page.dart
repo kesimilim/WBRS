@@ -1,3 +1,4 @@
+import 'package:wbrs/presentation/screens/contacts/timeweb_contacts_page.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -39,6 +40,7 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
   TimewebPublicPerson? _person;
   TimewebPersonalChatFlow? _chatAction;
   bool _chatPreparing = false, _chatBusy = false;
+  bool _visitRecorded = false;
   String? _chatNotice;
   String? _target;
   int _generation = 0;
@@ -127,6 +129,10 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
       if (!_current || generation != _generation) return;
       person.requireCurrent();
       setState(() => _person = person);
+      if (!_visitRecorded) {
+        _visitRecorded = true;
+        unawaited(widget.runtime.recordProfileVisit(uid));
+      }
     } on TimewebPersonNotFound {
       if (_current && generation == _generation) {
         setState(() => _missing = true);
@@ -265,6 +271,13 @@ class _TimewebPersonPageState extends State<TimewebPersonPage> {
           spacing: 8,
           runSpacing: 4,
           children: [
+            if (widget.runtime.peopleEnabled)
+              OutlinedButton.icon(key: const ValueKey('timeweb-person-friends'),
+                onPressed: _current && _person != null ? () => Navigator.of(context).push(
+                  MaterialPageRoute<void>(builder: (_) => TimewebContactsPageView(runtime: widget.runtime,
+                    targetUid: widget.uid, targetName: _person!.fullName))) : null,
+                icon: const Icon(Icons.person_add_alt_1_outlined, size: 18),
+                label: Text(context.tr('Друзья'))),
             if (widget.runtime.giftsEnabled)
               OutlinedButton.icon(
                 key: const ValueKey('timeweb-person-gift'),

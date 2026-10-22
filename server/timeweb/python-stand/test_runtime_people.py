@@ -176,7 +176,11 @@ class RuntimePeopleTests(unittest.TestCase):
         encoded = json.dumps(page) + json.dumps(person)
         for secret in ("private", "email", "balance", "legacy", "role", "token", "profile_details_saved"):
             self.assertNotIn(secret, encoded)
-        self.assertTrue(all(c.closed and c.readonly and c.commits == 0 for c in self.db.connections))
+        # Successful reads may keep an idle TLS connection; no transaction or
+        # locks survive the read. Explicit shutdown must close the cached socket.
+        self.assertTrue(all(not c.held and c.readonly and c.commits == 0 for c in self.db.connections))
+        self.store.close()
+        self.assertTrue(all(c.closed for c in self.db.connections))
         self.assertTrue(all(not sql.startswith(("INSERT", "UPDATE", "DELETE")) for sql, _ in self.db.calls))
 
     def test_account_source_status_deleted_and_both_visibility_spellings_gate_both_reads(self):

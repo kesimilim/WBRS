@@ -22,6 +22,7 @@ import 'timeweb_initial_profile_flow.dart';
 import 'timeweb_social_flow.dart';
 import 'timeweb_gift_flow.dart';
 import 'timeweb_preferences_flow.dart';
+import 'timeweb_contacts_flow.dart';
 import 'timeweb_push_flow.dart';
 
 /// One native runtime owner. No Firebase identity, profile hydration or token
@@ -50,6 +51,8 @@ final class TimewebAppRuntime {
     TimewebSocialJournal? socialJournal,
     TimewebGiftJournal? giftJournal,
     TimewebPreferencesJournal? preferencesJournal,
+    TimewebContactsJournal? contactsJournal,
+    TimewebContactsJournal? visitsJournal,
     TimewebPushJournal? pushJournal,
     bool? profileEditorEnabled,
     this.currentChatsEnabled = false,
@@ -77,6 +80,8 @@ final class TimewebAppRuntime {
     _socialJournal = socialJournal ?? TimewebSocialJournal();
     _giftJournal = giftJournal ?? TimewebGiftJournal();
     _preferencesJournal = preferencesJournal ?? TimewebPreferencesJournal();
+    _contactsJournal = contactsJournal ?? TimewebContactsJournal();
+    _visitsJournal = visitsJournal ?? TimewebContactsJournal(visitsOnly: true);
     _pushJournal = pushJournal ?? TimewebPushJournal();
     _temperamentJournal = temperamentJournal ?? TimewebTemperamentJournal();
     _geographyJournal = geographyJournal ?? TimewebGeographyJournal();
@@ -112,6 +117,8 @@ final class TimewebAppRuntime {
   late final TimewebSocialJournal _socialJournal;
   late final TimewebGiftJournal _giftJournal;
   late final TimewebPreferencesJournal _preferencesJournal;
+  late final TimewebContactsJournal _contactsJournal, _visitsJournal;
+  bool _visitBusy = false;
   late final TimewebPushJournal _pushJournal;
   late final TimewebTemperamentJournal _temperamentJournal;
   late final TimewebGeographyJournal _geographyJournal;
@@ -343,6 +350,55 @@ final class TimewebAppRuntime {
     if (!ownProfileEnabled) throw StateError('Current preferences are unavailable.');
     return TimewebPreferencesFlow.open(client: client, session: session, lease: lease, journal: _preferencesJournal);
   }).timeout(session.waitTimeout);
+
+  Future<TimewebContactsPage> readContacts(String kind, {TimewebContactsPage? after}) =>
+      session.runAuthenticated((lease) async {
+        if (!peopleEnabled) throw StateError('Contacts are unavailable.');
+        final value = await client.readContacts(kind, after: after);
+        lease.requireCurrent();
+        return value.bindSessionGuard(lease.requireCurrent);
+      }).timeout(session.waitTimeout);
+
+  Future<TimewebContactReceipt> readRelationship(String uid) =>
+      session.runAuthenticated((lease) async {
+        if (!peopleEnabled) throw StateError('Contacts are unavailable.');
+        final value = await client.readRelationship(uid);
+        lease.requireCurrent();
+        return value.bindSessionGuard(lease.requireCurrent);
+      }).timeout(session.waitTimeout);
+
+  Future<TimewebContactsFlow> openContacts() => session.runAuthenticated((lease) {
+    if (!peopleEnabled) throw StateError('Contacts are unavailable.');
+    return TimewebContactsFlow.open(client: client, session: session,
+      lease: lease, journal: _contactsJournal);
+  }).timeout(session.waitTimeout);
+
+  /// Best effort background recording. Its durable receipt is separate from
+  /// friend actions, so a slow visit cannot block a profile or friend request.
+  Future<void> recordProfileVisit(String uid) async {
+    if (_visitBusy || !peopleEnabled) return;
+    _visitBusy = true;
+    TimewebContactsFlow? flow;
+    try {
+      await session.runAuthenticated((lease) async {
+        if (lease.identity.uid == uid) return;
+        flow = await TimewebContactsFlow.open(client: client, session: session,
+          lease: lease, journal: _visitsJournal);
+        lease.requireCurrent();
+        if (flow!.needsCheck) {
+          await flow!.check();
+          if (flow!.needsCheck) return;
+        }
+        await flow!.submit(TimewebContactAction(kind: 'visit', targetUid: uid,
+          expectedRevision: 0));
+      }).timeout(session.waitTimeout);
+    } catch (_) {
+      // No UI failure and no automatic POST retry after an uncertain commit.
+    } finally {
+      flow?.close();
+      _visitBusy = false;
+    }
+  }
 
   Future<TimewebPreferences> readPreferences() => session.runAuthenticated((lease) async {
     if (!ownProfileEnabled) throw StateError('Current preferences are unavailable.');
@@ -638,6 +694,8 @@ final class TimewebAppRuntime {
     await _socialJournal.drain();
     await _giftJournal.drain();
     await _preferencesJournal.drain();
+    await _contactsJournal.drain();
+    await _visitsJournal.drain();
     await _pushJournal.drain();
     await _meetingMembershipJournal.drain();
     return result.confirmed && !_policyUnsafe;

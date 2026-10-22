@@ -1,3 +1,4 @@
+import 'package:wbrs/presentation/screens/contacts/timeweb_contacts_page.dart';
 import 'dart:async';
 import 'dart:ui' as ui;
 
@@ -1188,7 +1189,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                     available ? _openChats : null,
                     key: const ValueKey('timeweb-open-chats'),
                   ),
-                _menu('Гости', Icons.visibility_outlined, null),
+                _menu('Гости', Icons.visibility_outlined, available && widget.runtime.peopleEnabled ? () => _openNativePage(TimewebContactsPageView(runtime: widget.runtime, guests: true), selectedIndex: 4) : null),
                 _menu(
                   'Список пользователей',
                   Icons.people_outline,
@@ -1196,7 +1197,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                       ? _openPeople
                       : null,
                 ),
-                _menu('Друзья', Icons.person_add_alt_1_outlined, null),
+                _menu('Друзья', Icons.person_add_alt_1_outlined, available && widget.runtime.peopleEnabled ? () => _openNativePage(TimewebContactsPageView(runtime: widget.runtime), selectedIndex: 4) : null),
                 if (widget.runtime.ownProfileEnabled)
                   _menu(
                     'Уведомления',

@@ -36,6 +36,8 @@ MAX_PAGE = 30
 MAX_PUBLIC_BYTES = 65_536
 REFERENCE_SECONDS = 60
 DOWNLOAD_SECONDS = 50
+PHOTO_QUEUE_SECONDS = 5
+MAX_WAITING_PHOTOS = 4
 MAX_TOKEN_CHARS = 4096
 GALLERY_ORDER_POLICY = "reviewed-source-document-id-binary-asc-v1"
 GALLERY_AVAILABLE_ORDER_POLICY = "reviewed-source-document-id-binary-asc-available-originals-v2"
@@ -242,6 +244,36 @@ class RuntimeProfilePhotosService:
         except Exception:
             raise RuntimeUnavailable() from None
 
+    def _reserve_slot(self, cancel, deadline, *, may_wait):
+        if self._slots.acquire(blocking=False):
+            return
+        # HTTP requests already have an absolute budget and cancellation event.
+        # A short burst must wait for a spool rather than immediately lose its
+        # photo. Keep both concurrent spools and queued callers strictly bounded.
+        if not may_wait:
+            raise RuntimeUnavailable()
+        with self._lock:
+            if self._closed or getattr(self, '_waiting_photos', 0) >= MAX_WAITING_PHOTOS:
+                raise RuntimeUnavailable()
+            self._waiting_photos = getattr(self, '_waiting_photos', 0) + 1
+        wait_until = min(deadline, self._monotonic() + PHOTO_QUEUE_SECONDS)
+        try:
+            while True:
+                with self._lock:
+                    if self._closed:
+                        raise RuntimeUnavailable()
+                remaining = wait_until - self._monotonic()
+                if cancel.is_set() or remaining <= 0:
+                    raise RuntimeUnavailable()
+                if self._slots.acquire(timeout=min(0.05, remaining)):
+                    if cancel.is_set() or self._monotonic() >= wait_until:
+                        self._slots.release()
+                        raise RuntimeUnavailable()
+                    return
+        finally:
+            with self._lock:
+                self._waiting_photos -= 1
+
     def _context(self, cursor, execute, actor_uid, target_uid):
         self._check()
         actor = _account(_rows(cursor, execute, ACTOR_SQL, (actor_uid, actor_uid)), actor_uid)
@@ -414,7 +446,7 @@ class RuntimeProfilePhotosService:
             raise RuntimeInvalidRequest()
         cancel = request_cancel if request_cancel is not None else threading.Event()
         deadline = min(now + REFERENCE_SECONDS, request_deadline) if request_deadline is not None else now + REFERENCE_SECONDS
-        if not self._slots.acquire(blocking=False): raise RuntimeUnavailable()
+        self._reserve_slot(cancel, deadline, may_wait=request_deadline is not None)
         with self._lock:
             if self._closed:
                 self._slots.release(); raise RuntimeUnavailable()

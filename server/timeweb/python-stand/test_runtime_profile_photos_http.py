@@ -6,6 +6,7 @@ import json
 import os
 import tempfile
 import threading
+import time
 import unittest
 from urllib.parse import urlencode
 
@@ -19,13 +20,14 @@ from runtime_profile_photos import RuntimeProfilePhotosService, GALLERY_ORDER_PO
 from runtime_profile_photos_http import (RuntimeProfilePhotosHttp, RuntimeProfilePhotoMediaReply,
     RuntimeProfilePhotosHttpReply)
 from test_runtime_profile_photos import PhotoDatabase, KEY, BODY
-from test_private_media_s3 import Port, BUCKET, OWNER
+from test_private_media_s3 import Port, Reply, BUCKET, OWNER
 from test_profile_photo_projector import source_verifier, PROOF
 from test_runtime_mutations import ENV, NOW, STAMP
 
 
 PATH = "/v1/runtime/people/peer/photos"
 ENABLED = {"CLRS_RUNTIME_WRITES_ENABLED": "1", "CLRS_RUNTIME_MEMBERSHIP_AUTHORITY": "canonical-current-v1"}
+PREVIEW_PROOF = base64.b64encode(bytes(range(32))).decode()
 
 
 class ForbiddenInput:
@@ -80,6 +82,7 @@ class ProfilePhotoHttpTests(unittest.TestCase):
     def request(self, **changes):
         return {"PATH_INFO": PATH, "REQUEST_METHOD": "GET", "QUERY_STRING": "",
             "HTTP_AUTHORIZATION": "Bearer " + self.db.access, "REMOTE_ADDR": "socket-peer",
+            "HTTP_X_CLRS_PREVIEW_PROOF": PREVIEW_PROOF,
             "CONTENT_LENGTH": "0", "wsgi.input": ForbiddenInput(),
             "clrs.media_request_budget": self.begin, **changes}
 
@@ -95,7 +98,11 @@ class ProfilePhotoHttpTests(unittest.TestCase):
     def app(self, *, injected=True, env=None):
         self.other = Unmatched()
         return create_app(env=env or {**ENABLED, "CLRS_API_DRAFT_ENABLED": "1",
-            "CLRS_NATIVE_AUTH_ENABLED": "1", "CLRS_NATIVE_AUTH_WRITES_ENABLED": "1"},
+            "CLRS_NATIVE_AUTH_ENABLED": "1", "CLRS_NATIVE_AUTH_WRITES_ENABLED": "1",
+            # Route integration uses the authorized preview fixture. Production
+            # cutover acceptance is exercised separately by readiness tests.
+            "CLRS_PREVIEW_GUARD_ENABLED": "1",
+            "CLRS_PREVIEW_ACCESS_KEY_B64": PREVIEW_PROOF},
             native_service_factory=lambda _: self.native, legacy_http_factory=lambda _: self.other,
             media_http_factory=lambda _: self.other, runtime_http_factory=lambda _: self.other,
             lifecycle_http_factory=lambda *_: self.other,
@@ -207,6 +214,48 @@ class ProfilePhotoHttpTests(unittest.TestCase):
         self.assertEqual(("401 Unauthorized", True), (result.status, result.authenticate))
         self.assertEqual([], starts); self.assertEqual(set(), self.core._leases)
 
+    def test_four_concurrent_http_photos_wait_and_all_finish_without_503(self):
+        reference = self.reference(); application = self.app()
+        self.core._monotonic = self.http._monotonic = time.monotonic
+        self.begin = lambda: (time.monotonic()+5, threading.Event())
+        gate = threading.Event(); entered = threading.Event(); lock = threading.Lock()
+        active = 0; results = []; errors = []; workers = []
+        def hold_download():
+            nonlocal active
+            with lock:
+                active += 1
+                if active == 2: entered.set()
+            gate.wait(2)
+        def override(operation):
+            return Reply(BODY, content_type='image/jpeg', hook=hold_download) if operation == 'GetObject' else None
+        self.port.override = override
+        def request_photo():
+            try:
+                starts, _, body = self.call_app(application, self.request(
+                    PATH_INFO=PATH+'/content', QUERY_STRING=urlencode({'reference': reference})))
+                results.append((starts[0][0], body))
+            except Exception as error:
+                errors.append(error)
+        try:
+            for _ in range(4):
+                worker = threading.Thread(target=request_photo)
+                workers.append(worker); worker.start()
+            self.assertTrue(entered.wait(1))
+            until = time.monotonic()+1
+            while time.monotonic() < until:
+                with self.core._lock:
+                    if getattr(self.core, '_waiting_photos', 0) == 2: break
+                time.sleep(.005)
+            self.assertEqual(2, getattr(self.core, '_waiting_photos', 0))
+        finally:
+            gate.set()
+            for worker in workers: worker.join(2)
+        self.assertTrue(all(not worker.is_alive() for worker in workers))
+        self.assertEqual([], errors)
+        self.assertEqual([('200 OK', BODY)]*4, results)
+        self.assertEqual(set(), self.core._leases)
+        self.assertEqual(0, self.core._waiting_photos)
+
     def test_valid_B_session_cannot_redeem_A_reference_without_logout_challenge(self):
         reference = self.reference()
         session, access = self.db.tokens.mint("peer", "other-device", 0, NOW)
@@ -289,7 +338,7 @@ class ProfilePhotoHttpTests(unittest.TestCase):
             "CLRS_NATIVE_AUTH_WRITES_ENABLED": "1", "CLRS_PREVIEW_GUARD_ENABLED": "1",
             "CLRS_PREVIEW_ACCESS_KEY_B64": base64.b64encode(proof).decode()}
         application = self.app(env=env)
-        starts, _, _ = self.call_app(application)
+        starts, _, _ = self.call_app(application, self.request(HTTP_X_CLRS_PREVIEW_PROOF=""))
         self.assertEqual("404 Not Found", starts[0][0]); self.assertEqual([], self.native.calls)
         starts, _, raw = self.call_app(application, self.request(HTTP_X_CLRS_PREVIEW_PROOF=base64.b64encode(proof).decode()))
         self.assertEqual("200 OK", starts[0][0]); self.assertIn("items", json.loads(raw))

@@ -8,6 +8,7 @@ import os
 import ssl
 import tempfile
 import threading
+import time
 import unittest
 from unittest.mock import patch
 
@@ -363,6 +364,119 @@ class CurrentProfilePhotoTests(unittest.TestCase):
             with self.assertRaises(RuntimeUnavailable): next(lease.iter_bytes())
             self.assertTrue(lease._closed)
         with self.assertRaises(RuntimeUnavailable): self.page()
+
+    def _wait_for_queued_photo(self, count=1):
+        until = time.monotonic() + 1
+        while time.monotonic() < until:
+            with self.service._lock:
+                if getattr(self.service, '_waiting_photos', 0) == count:
+                    return
+            time.sleep(0.005)
+        self.fail('photo did not enter the bounded queue')
+
+    def test_http_photo_burst_waits_for_slot_then_reads_current_authority(self):
+        reference = self.reference()
+        first, second = self.open(reference), self.open(reference)
+        self.addCleanup(first.close); self.addCleanup(second.close)
+        self.service._monotonic = time.monotonic
+        results, errors = [], []
+        def run():
+            try:
+                results.append(self.open(reference, request_deadline=time.monotonic()+2,
+                    request_cancel=threading.Event()))
+            except Exception as error:
+                errors.append(error)
+        before = len(self.db.calls)
+        worker = threading.Thread(target=run); worker.start()
+        self._wait_for_queued_photo()
+        self.assertEqual(before, len(self.db.calls))
+        first.close(); worker.join(2)
+        self.assertFalse(worker.is_alive()); self.assertEqual([], errors)
+        self.assertEqual(1, len(results))
+        with results[0] as lease:
+            self.assertEqual(BODY, b''.join(lease.iter_bytes()))
+        self.assertGreater(len(self.db.calls), before)
+        self.assertEqual(0, self.service._waiting_photos)
+
+    def test_photo_queue_is_bounded_and_releases_cancelled_waiters(self):
+        reference = self.reference()
+        first, second = self.open(reference), self.open(reference)
+        self.addCleanup(first.close); self.addCleanup(second.close)
+        self.service._monotonic = time.monotonic
+        cancel = threading.Event(); errors = []; workers = []
+        def run():
+            try:
+                self.open(reference, request_cancel=cancel,
+                    request_deadline=time.monotonic()+3)
+            except Exception as error:
+                errors.append(error)
+        before_sql, before_s3 = len(self.db.calls), len(self.port.calls)
+        try:
+            for count in range(1, photos.MAX_WAITING_PHOTOS+1):
+                worker = threading.Thread(target=run)
+                workers.append(worker); worker.start()
+                self._wait_for_queued_photo(count)
+            with self.assertRaises(RuntimeUnavailable):
+                self.open(reference, request_deadline=time.monotonic()+3)
+            self.assertEqual(before_sql, len(self.db.calls))
+            self.assertEqual(before_s3, len(self.port.calls))
+        finally:
+            cancel.set()
+            for worker in workers: worker.join(1)
+        self.assertTrue(all(not worker.is_alive() for worker in workers))
+        self.assertEqual(photos.MAX_WAITING_PHOTOS, len(errors))
+        self.assertTrue(all(isinstance(error, RuntimeUnavailable) for error in errors))
+        self.assertEqual(0, self.service._waiting_photos)
+        first.close(); second.close()
+        with self.open(reference, request_deadline=time.monotonic()+2) as lease:
+            self.assertEqual(BODY, b''.join(lease.iter_bytes()))
+
+    def test_waiting_photo_cancellation_deadline_and_shutdown_do_not_start_reads(self):
+        for reason in ('cancel', 'deadline', 'close'):
+            with self.subTest(reason=reason):
+                if reason != 'cancel':
+                    self.service = photos.RuntimeProfilePhotosService(self.store, KEY, **self.options)
+                    self.addCleanup(self.service.close)
+                reference = self.reference()
+                first, second = self.open(reference), self.open(reference)
+                self.service._monotonic = time.monotonic
+                cancel = threading.Event(); errors = []
+                before_sql, before_s3 = len(self.db.calls), len(self.port.calls)
+                def run():
+                    try:
+                        self.open(reference, request_cancel=cancel,
+                            request_deadline=time.monotonic()+(0.1 if reason == 'deadline' else 2))
+                    except Exception as error:
+                        errors.append(error)
+                worker = threading.Thread(target=run); worker.start()
+                self._wait_for_queued_photo()
+                if reason == 'cancel': cancel.set()
+                if reason == 'close': self.service.close()
+                worker.join(1)
+                self.assertFalse(worker.is_alive())
+                self.assertEqual(1, len(errors)); self.assertIsInstance(errors[0], RuntimeUnavailable)
+                self.assertEqual(before_sql, len(self.db.calls)); self.assertEqual(before_s3, len(self.port.calls))
+                self.assertEqual(0, self.service._waiting_photos)
+                first.close(); second.close(); self.service.close()
+
+    def test_waiting_photo_rechecks_account_after_capacity_returns(self):
+        reference = self.reference()
+        first, second = self.open(reference), self.open(reference)
+        self.addCleanup(first.close); self.addCleanup(second.close)
+        self.service._monotonic = time.monotonic
+        errors = []
+        def run():
+            try: self.open(reference, request_deadline=time.monotonic()+2)
+            except Exception as error: errors.append(error)
+        before = len(self.port.calls)
+        worker = threading.Thread(target=run); worker.start()
+        self._wait_for_queued_photo()
+        self.db.state['accounts']['actor'][0] = 1
+        first.close(); worker.join(2)
+        self.assertFalse(worker.is_alive()); self.assertEqual(1, len(errors))
+        self.assertIsInstance(errors[0], (RuntimeRejected, RuntimeUnavailable))
+        self.assertEqual(before, len(self.port.calls))
+        self.assertEqual(0, self.service._waiting_photos)
 
 
 if __name__ == "__main__":

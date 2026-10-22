@@ -24,6 +24,34 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0.3'
 }
 
+// Store signing is opt-in. Never silently substitute a debug key for it.
+def clrsSigningMode = System.getenv('CLRS_ANDROID_SIGNING_MODE') ?: 'qa'
+if (!(clrsSigningMode in ['qa', 'store'])) {
+    throw new GradleException('CLRS_ANDROID_SIGNING_MODE must be qa or store.')
+}
+def clrsStoreSigning = new Properties()
+def clrsStoreFile = null
+if (clrsSigningMode == 'store') {
+    def propertiesPath = System.getenv('CLRS_ANDROID_SIGNING_PROPERTIES')
+    if (!propertiesPath || !new File(propertiesPath).isFile()) {
+        throw new GradleException('Store signing requires CLRS_ANDROID_SIGNING_PROPERTIES outside Git.')
+    }
+    def signingFile = new File(propertiesPath).canonicalFile
+    signingFile.withInputStream { clrsStoreSigning.load(it) }
+    ['storeFile', 'storePassword', 'keyAlias', 'keyPassword'].each { name ->
+        if (!clrsStoreSigning.getProperty(name)) {
+            throw new GradleException("Missing store signing setting: ${name}")
+        }
+    }
+    clrsStoreFile = new File(clrsStoreSigning.getProperty('storeFile'))
+    if (!clrsStoreFile.isAbsolute()) {
+        clrsStoreFile = new File(signingFile.parentFile, clrsStoreSigning.getProperty('storeFile'))
+    }
+    if (!clrsStoreFile.isFile()) {
+        throw new GradleException('The original store keystore was not found.')
+    }
+}
+
 android {
     namespace "com.lrs"
     compileSdk 35
@@ -67,14 +95,21 @@ android {
         }
     }
 
+    signingConfigs {
+        if (clrsSigningMode == 'store') {
+            storeRelease {
+                storeFile clrsStoreFile
+                storePassword clrsStoreSigning.getProperty('storePassword')
+                keyAlias clrsStoreSigning.getProperty('keyAlias')
+                keyPassword clrsStoreSigning.getProperty('keyPassword')
+            }
+        }
+    }
+
     buildTypes {
         release {
             shrinkResources false
-            // Review build: sign with the local Android debug key so the APK can
-            // be installed and sent for client testing without the production key.
-            // Before publishing/updating the store app, restore the original
-            // production keystore/signing configuration from the client.
-            signingConfig signingConfigs.debug
+            signingConfig = clrsSigningMode == 'store' ? signingConfigs.storeRelease : signingConfigs.debug
         }
     }
 }

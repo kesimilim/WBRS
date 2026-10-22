@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import zipfile
 from unittest.mock import patch
 
 import build_timeweb as build
@@ -71,6 +72,24 @@ class TimewebReleaseTests(unittest.TestCase):
 
     def test_matching_apk_package_and_version_are_accepted(self):
         build.verify_package("package: name='com.lrs' versionCode='69' versionName='1.0.25'", '69', '1.0.25')
+
+    def test_arm64_is_explicitly_qa_only(self):
+        command, _ = build.build_command('qa', '70', '1.0.25', {}, 'android-arm64')
+        self.assertIn('--target-platform=android-arm64', command)
+        with self.assertRaises(ValueError):
+            build.build_command('store', '70', '1.0.25', {}, 'android-arm64')
+
+    def test_plugin_only_abi_cannot_be_delivered(self):
+        with tempfile.TemporaryDirectory() as folder:
+            apk = Path(folder) / 'synthetic.apk'
+            with zipfile.ZipFile(apk, 'w') as archive:
+                archive.writestr('lib/arm64-v8a/libapp.so', b'fixture')
+                archive.writestr('lib/arm64-v8a/libflutter.so', b'fixture')
+            self.assertEqual(build.verify_native_libraries(apk), ['arm64-v8a'])
+            with zipfile.ZipFile(apk, 'a') as archive:
+                archive.writestr('lib/x86/libplugin.so', b'fixture')
+            with self.assertRaisesRegex(ValueError, 'without the Flutter runtime'):
+                build.verify_native_libraries(apk)
 
 
 if __name__ == '__main__':

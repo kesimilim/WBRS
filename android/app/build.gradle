@@ -52,6 +52,19 @@ if (clrsSigningMode == 'store') {
     }
 }
 
+// JNI libraries from plugins must not advertise an ABI without Flutter's
+// own libapp/libflutter. Follow the same target-platform property as Flutter.
+def clrsAbiByPlatform = ['android-arm': 'armeabi-v7a', 'android-arm64': 'arm64-v8a',
+                        'android-x64': 'x86_64', 'android-x86': 'x86']
+def clrsPlatforms = (project.findProperty('target-platform') ?:
+        'android-arm,android-arm64,android-x64').toString().split(',')
+def clrsAbis = clrsPlatforms.collect { platform ->
+    if (!clrsAbiByPlatform.containsKey(platform)) {
+        throw new GradleException('Unsupported Flutter target platform.')
+    }
+    clrsAbiByPlatform[platform]
+}
+
 android {
     namespace "com.lrs"
     compileSdk 35
@@ -80,6 +93,9 @@ android {
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
+        if (!(project.findProperty('split-per-abi') ?: 'false').toString().toBoolean()) {
+            ndk { abiFilters.addAll(clrsAbis) }
+        }
         multiDexEnabled true
         manifestPlaceholders = [applicationName: "android.app.Application"]
     }

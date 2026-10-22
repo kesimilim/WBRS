@@ -9,12 +9,15 @@ import re
 import shutil
 import subprocess
 import sys
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / 'config/timeweb.production.json'
 
 
-def build_command(mode, number, version, environ):
+def build_command(mode, number, version, environ, target_platform=None):
+    if target_platform is not None and (mode != "qa" or target_platform != "android-arm64"):
+        raise ValueError("A restricted architecture is supported only for the ARM64 QA build.")
     if not re.fullmatch(r'[1-9][0-9]*', number) or int(number) > 2100000000:
         raise ValueError('Use a positive Android build number, at most 2100000000.')
     if not re.fullmatch(r'[0-9]+\.[0-9]+\.[0-9]+', version):
@@ -43,6 +46,8 @@ def build_command(mode, number, version, environ):
     command = [flutter, 'build', 'apk', '--release', '--flavor', 'production',
                '--build-name=' + version, '--build-number=' + number,
                '--dart-define-from-file=' + str(CONFIG)]
+    if target_platform:
+        command.append("--target-platform=" + target_platform)
     return command, env
 
 
@@ -65,16 +70,28 @@ def verify_package(output, number, version):
         raise ValueError('APK package or version differs from the requested CLRS build.')
 
 
+def verify_native_libraries(apk):
+    with zipfile.ZipFile(apk) as archive:
+        names = archive.namelist()
+    abis = sorted({name.split('/')[1] for name in names
+                   if name.startswith('lib/') and name.endswith('.so') and len(name.split('/')) == 3})
+    if not abis or any('lib/' + abi + '/' + library not in names
+                       for abi in abis for library in ('libapp.so', 'libflutter.so')):
+        raise ValueError('APK advertises a native architecture without the Flutter runtime.')
+    return abis
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=('qa', 'store'), default='qa')
     parser.add_argument('--build-number', default=os.environ.get('CLRS_BUILD_NUMBER'))
     parser.add_argument('--version', default='1.0.25')
     parser.add_argument('--dry-run', action='store_true')
+    parser.add_argument('--target-platform', choices=('android-arm64',), help='Optional ARM64-only QA build.')
     args = parser.parse_args(argv)
     if not args.build_number:
         parser.error('Set --build-number (greater than the previous release) or CLRS_BUILD_NUMBER.')
-    command, env = build_command(args.mode, args.build_number, args.version, os.environ)
+    command, env = build_command(args.mode, args.build_number, args.version, os.environ, args.target_platform)
     if args.dry_run:
         print(json.dumps({'command': command, 'signingMode': args.mode}, indent=2))
         return
@@ -97,9 +114,14 @@ def main(argv=None):
     package = subprocess.check_output([str(aapt), 'dump', 'badging', str(source)],
                                       cwd=ROOT, env=env, text=True)
     verify_package(package, args.build_number, args.version)
+    abis = verify_native_libraries(source)
+    if args.target_platform and abis != ["arm64-v8a"]:
+        raise ValueError("ARM64 QA build contains unexpected native architectures.")
     destination = ROOT / 'build/delivery' / args.mode
     destination.mkdir(parents=True, exist_ok=True)
     name = 'CLRS-{}-{}-Timeweb-{}.apk'.format(args.version, args.build_number, args.mode.upper())
+    if args.target_platform:
+        name = name.replace('.apk', '-ARM64.apk')
     apk = destination / name
     shutil.copy2(source, apk)
     manifest = {
@@ -108,6 +130,7 @@ def main(argv=None):
         'sourceDirty': bool(tracked_changes), 'backend': 'timeweb', 'signingMode': args.mode,
         'certificateSha256': certificate, 'sha256': hashlib.sha256(apk.read_bytes()).hexdigest(),
         'configurationSha256': hashlib.sha256(CONFIG.read_bytes()).hexdigest(),
+        'nativeAbis': abis,
         'storePublished': False, 'releaseAcceptanceComplete': False,
     }
     apk.with_suffix('.json').write_text(json.dumps(manifest, indent=2) + '\n')

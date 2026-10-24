@@ -17,7 +17,8 @@ class _RequestBudget:
         self.server = server; self.request = request
         self.cancel = threading.Event(); self._finished = threading.Event()
         self._lock = threading.RLock(); self._timer = None
-        self._media = False; self._closed = False; self._generation = 0
+        self._media = False; self._media_requested = False
+        self._closed = False; self._generation = 0
         self._started = time.monotonic()
         self.deadline = self._started + server.REQUEST_DEADLINE_SECONDS
 
@@ -44,25 +45,58 @@ class _RequestBudget:
         self.cancel.set()
         self.server._expire(self.request)
 
+    def _acquire_media_slot(self):
+        if self.server._media_slots.acquire(blocking=False):
+            return
+        if not self.server._media_waiting_slots.acquire(blocking=False):
+            raise RuntimeError("Media unavailable")
+        until = min(self.deadline, time.monotonic() + self.server.MEDIA_QUEUE_SECONDS)
+        try:
+            while True:
+                remaining = until - time.monotonic()
+                if self.cancel.is_set() or self.server._stopping.is_set() or remaining <= 0:
+                    raise RuntimeError("Media unavailable")
+                if self.server._media_slots.acquire(timeout=min(.05, remaining)):
+                    if self.cancel.is_set() or self.server._stopping.is_set() or time.monotonic() >= until:
+                        self.server._media_slots.release()
+                        raise RuntimeError("Media unavailable")
+                    return
+        finally:
+            self.server._media_waiting_slots.release()
+
     def media(self):
         with self._lock:
-            if (self._closed or self.cancel.is_set() or self._media
-                    or time.monotonic() >= self.deadline
-                    or not self.server._media_slots.acquire(blocking=False)):
+            if (self._closed or self.cancel.is_set() or self._media_requested
+                    or self.server._stopping.is_set() or time.monotonic() >= self.deadline):
                 raise RuntimeError("Media unavailable")
-            self._media = True
-            try:
-                self._timer.cancel()
-                self.deadline = self._started + self.server.MEDIA_DEADLINE_SECONDS
-                if time.monotonic() >= self.deadline:
+            self._media_requested = True
+        acquired = False
+        try:
+            # Observe disconnects while queued, too. Waiting never holds the
+            # budget lock, so shutdown/deadline cancellation remains immediate.
+            monitor = threading.Thread(target=self._monitor_disconnect, daemon=True)
+            monitor.start()
+            self._acquire_media_slot()
+            acquired = True
+            with self._lock:
+                if (self._closed or self.cancel.is_set() or self.server._stopping.is_set()
+                        or time.monotonic() >= self.deadline):
                     raise RuntimeError("Media unavailable")
-                self._arm()
-                monitor = threading.Thread(target=self._monitor_disconnect, daemon=True)
-                monitor.start()
-                return self.deadline, self.cancel
-            except Exception:
-                self.abort()
-                raise
+                self._media = True
+                acquired = False  # The handler owns this slot until close().
+                try:
+                    self._timer.cancel()
+                    self.deadline = self._started + self.server.MEDIA_DEADLINE_SECONDS
+                    if time.monotonic() >= self.deadline:
+                        raise RuntimeError("Media unavailable")
+                    self._arm()
+                    return self.deadline, self.cancel
+                except Exception:
+                    self.abort()
+                    raise
+        finally:
+            if acquired:
+                self.server._media_slots.release()
 
     def _monitor_disconnect(self):
         # GET has no body. Peek never consumes a caller byte or a pipelined
@@ -131,10 +165,13 @@ class BoundedWSGIServer(ThreadingMixIn, WSGIServer):
     REQUEST_DEADLINE_SECONDS = 10
     MEDIA_DEADLINE_SECONDS = 60
     MAX_MEDIA_WORKERS = 2
+    MAX_WAITING_MEDIA_REQUESTS = 4
+    MEDIA_QUEUE_SECONDS = 5
 
     def __init__(self, *args, **kwargs):
         self._slots = threading.BoundedSemaphore(self.MAX_WORKERS)
         self._media_slots = threading.BoundedSemaphore(self.MAX_MEDIA_WORKERS)
+        self._media_waiting_slots = threading.BoundedSemaphore(self.MAX_WAITING_MEDIA_REQUESTS)
         self._stopping = threading.Event()
         self._budget_lock = threading.Lock(); self._budgets = {}
         super().__init__(*args, **kwargs)

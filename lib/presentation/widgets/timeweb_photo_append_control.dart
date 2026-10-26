@@ -71,6 +71,7 @@ class _TimewebPhotoAppendControlState extends State<TimewebPhotoAppendControl> {
     availability.requireCurrent();
     _allowed = availability.canAppend;
     _retry = false;
+    _notice = null;
   }
 
   Future<void> _open() async {
@@ -91,6 +92,7 @@ class _TimewebPhotoAppendControlState extends State<TimewebPhotoAppendControl> {
       if (_current) {
         _allowed = false;
         _retry = false;
+        _notice = null;
       }
     } catch (_) {
       if (_current) {

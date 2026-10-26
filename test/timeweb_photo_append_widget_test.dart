@@ -11,6 +11,7 @@ import 'package:http/http.dart' as http;
 // ignore: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:wbrs/presentation/screens/profile/timeweb_own_profile_page.dart';
+import 'package:wbrs/presentation/widgets/timeweb_photo_append_control.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_initial_profile_flow.dart';
@@ -299,7 +300,6 @@ void main() {
           throwsA(isA<TimewebAuthException>()),
         ),
       );
-      server.badAvailability = false;
       Future<void> showOwn() async {
         final snapshot = (await tester.runAsync(
           () => app.readCurrentOwnProfile(),
@@ -319,10 +319,22 @@ void main() {
       await showOwn();
       await _wait(
         tester,
+        () => _key('timeweb-photo-append-retry').evaluate().isNotEmpty,
+      );
+      final unavailableNotice = find.descendant(
+        of: find.byType(TimewebPhotoAppendControl),
+        matching: find.text('Сервис пока недоступен. Попробуйте позднее.'),
+      );
+      expect(unavailableNotice, findsOneWidget);
+      server.badAvailability = false;
+      await _tap(tester, 'timeweb-photo-append-retry');
+      await _wait(
+        tester,
         () =>
             _key('timeweb-photo-append-add').evaluate().isNotEmpty &&
             _key('timeweb-photo-primary').evaluate().isNotEmpty,
       );
+      expect(unavailableNotice, findsNothing);
       final initialOwn = server.ownReads, initialGallery = server.galleryReads;
       failNextJournal = true;
       await _tap(tester, 'timeweb-photo-append-add');

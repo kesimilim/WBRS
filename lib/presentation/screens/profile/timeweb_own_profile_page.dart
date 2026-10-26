@@ -745,7 +745,17 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         Row(
           children: [
             Expanded(
-              child: _quickAction(Icons.visibility_outlined, 'Гости', null),
+              child: _quickAction(
+                Icons.visibility_outlined,
+                'Гости',
+                available && widget.runtime.peopleEnabled
+                    ? () => _openNativePage(
+                        TimewebContactsPageView(runtime: widget.runtime, guests: true),
+                        selectedIndex: 4,
+                      )
+                    : null,
+                key: const ValueKey('timeweb-open-guests'),
+              ),
             ),
             const SizedBox(width: 6),
             Expanded(

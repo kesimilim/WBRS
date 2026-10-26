@@ -255,6 +255,7 @@ final class _PeopleFlight {
   void abort(TimewebAuthError error) {
     reason ??= error;
     timer.cancel();
+    owner._wakeRequestCapacity();
     for (final abort in aborts.toList()) {
       if (!abort.isCompleted) abort.complete();
     }

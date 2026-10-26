@@ -48,6 +48,64 @@ class _ClearGateStore extends PeopleStore {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   test(
+    'photo upload availability waits for a busy profile transport slot',
+    () async {
+      final releases = List.generate(4, (_) => Completer<void>());
+      var started = 0, availabilityRequests = 0;
+      final wire = PeopleWire((request) async {
+        if (request.url.path.endsWith('/upload-availability')) {
+          availabilityRequests++;
+          return peopleReply({
+            'canAppend': true,
+            'photoCount': 3,
+            'photoLimit': 20,
+            'profileAuthority': 'canonical-current-v1',
+          });
+        }
+        await releases[started++].future;
+        return peopleReply(photoPage(request.url.pathSegments[3], []));
+      });
+      final client = _client(wire);
+      await client.restore();
+      final holders = [
+        for (var i = 0; i < 4; i++) client.openProfilePhotos('P$i').photos(),
+      ];
+      addTearDown(() async {
+        for (final gate in releases) {
+          if (!gate.isCompleted) gate.complete();
+        }
+        await Future.wait(holders);
+        await client.close();
+      });
+      await _until(() => started == 4);
+      Object? failure;
+      TimewebPhotoUploadAvailability? result;
+      var settled = false;
+      final pending = client.readPhotoUploadAvailability().then<void>(
+        (value) {
+          result = value;
+          settled = true;
+        },
+        onError: (Object error) {
+          failure = error;
+          settled = true;
+        },
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        settled,
+        isFalse,
+        reason: 'Busy photos must not disable adding a photo',
+      );
+      expect(availabilityRequests, 0);
+      releases.first.complete();
+      await pending;
+      expect(failure, isNull);
+      expect(result!.canAppend, isTrue);
+      expect(availabilityRequests, 1);
+    },
+  );
+  test(
     'opt-in photo wait rechecks a single released slot; closing remaining waiter sends no GET',
     () async {
       final releases = List.generate(4, (_) => Completer<void>());

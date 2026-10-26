@@ -391,6 +391,15 @@ Future<void> _executeUploadLease(
             : ['v1', 'runtime', 'profile', 'photos', 'uploads', prepared.mediaId, 'lease'],
         queryParameters: prepared == null ? const {} : {'prepareOperationId': prepared.prepareOperationId},
       );
+  Future<_Reply> attempt(String bearer) async {
+    // Profile photos may occupy every HTTP slot while this read-only check opens.
+    // Wait within the original flight deadline instead of disabling photo upload.
+    while (prepared == null && owner._inflightRequests >= 4) {
+      await owner._waitForRequestCapacity(f.check);
+      f.check();
+    }
+    return _meetingAttempt(f, uri, bearer);
+  }
   try {
     f.check();
     var session = owner._session!;
@@ -401,7 +410,7 @@ Future<void> _executeUploadLease(
       session = await owner.refresh();
       f.check();
     }
-    var reply = await _meetingAttempt(f, uri, session.accessToken);
+    var reply = await attempt(session.accessToken);
     f.check();
     if (reply.status == 401) {
       if (owner._session?.accessToken == session.accessToken) {
@@ -409,7 +418,7 @@ Future<void> _executeUploadLease(
       }
       f.check();
       session = owner._session!;
-      reply = await _meetingAttempt(f, uri, session.accessToken);
+      reply = await attempt(session.accessToken);
       f.check();
     }
     if (reply.status != 200) {

@@ -238,6 +238,51 @@ void main() {
     },
   );
   test(
+    'contacts accept unfilled optional profile fields from Timeweb',
+    () async {
+      final folder = await Directory.systemTemp.createTemp('clrs-contacts-');
+      Object? profileText = '';
+      final app = runtime(
+        PeopleWire((r) async {
+          final kind = r.url.queryParameters['kind']!;
+          return peopleReply(
+            page(kind, [
+              {
+                ...item('B', status: kind == 'guests' ? 'guest' : kind),
+                'fullName': profileText,
+                'primaryGroup': profileText,
+                'city': profileText,
+              },
+            ]),
+          );
+        }),
+        folder,
+      );
+      await app.start(remember: true);
+      addTearDown(() async {
+        await app.stop();
+        await folder.delete(recursive: true);
+      });
+      for (final value in ['', null]) {
+        profileText = value;
+        for (final kind in ['friends', 'incoming', 'outgoing', 'guests']) {
+          final contact = (await app.readContacts(kind)).items.single;
+          expect(contact.uid, 'B');
+          expect(contact.fullName, '');
+          expect(contact.group, value);
+          expect(contact.city, value);
+        }
+      }
+      for (final invalid in [42, 'bad\u0000value', 'x' * 192]) {
+        profileText = invalid;
+        await expectLater(
+          app.readContacts('incoming'),
+          throwsA(isA<TimewebAuthException>()),
+        );
+      }
+    },
+  );
+  test(
     'cursor belongs to its kind and stale result is invalid after logout',
     () async {
       final folder = await Directory.systemTemp.createTemp('clrs-contacts-');

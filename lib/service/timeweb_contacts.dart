@@ -378,12 +378,12 @@ Future<void> _executeContactRead(
                 (raw['age'] is! int || raw['age'] < 0 || raw['age'] > 130))
           _mutationInvalidReply();
         for (final field in ['fullName', 'primaryGroup', 'city']) {
-          if (raw[field] != null &&
-              !_mutationText(
-                raw[field],
-                maximum: field == 'fullName' ? 1000 : 191,
-                multiline: false,
-              ))
+          // Contact summaries use the same optional text contract as profiles.
+          // A person without a group or city must not invalidate the whole page.
+          if (!_currentNullableText(
+            raw[field],
+            field == 'fullName' ? 1000 : 191,
+          ))
             _mutationInvalidReply();
         }
         items.add(TimewebContactItem._(Map.unmodifiable(raw), f.checkSession));

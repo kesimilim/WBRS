@@ -11,7 +11,9 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
+import 'post_editor_page.dart';
 
 /// Native feed, author wall and comments use the same current actor runtime.
 class TimewebFeedPage extends StatefulWidget {
@@ -350,7 +352,16 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               tooltip: context.tr('Новая публикация'),
               onPressed: _locked
                   ? null
-                  : () => setState(() => _composing = true),
+                  : () async {
+                      final ok = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                          builder: (_) => const PostEditorPage(),
+                        ),
+                      );
+                      if (ok == true && mounted) {
+                        await _open();
+                      }
+                    },
               icon: const Icon(Icons.add_box_outlined),
             ),
         ],
@@ -550,6 +561,95 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
     ),
   );
 
+  void _showPostMenu(BuildContext context, TimewebSocialItem item) {
+    final isAuthor = item.authorUid == _owner;
+    final canEdit = isAuthor || _moderate;
+    final canDelete = isAuthor || _moderate;
+    final translated = _originals.contains(item.id)
+        ? null
+        : _translations[item.id];
+
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: LrsTheme.surface,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (item.text != null && item.text!.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.translate, color: LrsTheme.peach),
+                title: Text(
+                  context.tr(translated == null ? 'Перевести' : 'Показать оригинал'),
+                  style: const TextStyle(color: LrsTheme.text),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _translate(item);
+                },
+              ),
+            if (canEdit)
+              ListTile(
+                leading: const Icon(Icons.edit_outlined, color: LrsTheme.peach),
+                title: Text(
+                  context.tr('Редактировать'),
+                  style: const TextStyle(color: LrsTheme.text),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PostEditorPage(
+                        postId: item.id,
+                        initialText: item.text,
+                        initialImages: item.mediaId != null ? [item.mediaId!] : const [],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            if (canDelete)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: LrsTheme.danger),
+                title: Text(
+                  context.tr('Удалить'),
+                  style: const TextStyle(color: LrsTheme.danger),
+                ),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  showSnackbar(
+                    context,
+                    LrsTheme.peach,
+                    context.tr('Функционал удаления постов находится в разработке'),
+                  );
+                },
+              ),
+            ListTile(
+              leading: const Icon(Icons.flag_outlined, color: LrsTheme.peach),
+              title: Text(
+                context.tr('Пожаловаться'),
+                style: const TextStyle(color: LrsTheme.text),
+              ),
+              subtitle: Text(
+                context.tr('Жалоба попадёт в очередь модерации'),
+                style: const TextStyle(color: LrsTheme.muted),
+              ),
+              onTap: () {
+                Navigator.pop(ctx);
+                _action(
+                  TimewebSocialAction.report(
+                    _comments ? widget.post!.id : item.id,
+                    commentId: _comments ? item.id : null,
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _card(TimewebSocialItem item) {
     item.requireCurrent();
     final translated = _originals.contains(item.id)
@@ -559,33 +659,33 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SocialAuthor(
-            runtime: widget.runtime,
-            uid: item.authorUid,
-            onTap: _locked
-                ? null
-                : () => _navigate(
-                    TimewebFeedPage(
-                      runtime: widget.runtime,
-                      wallUid: item.authorUid,
-                    ),
-                  ),
+          Row(
+            children: [
+              Expanded(
+                child: _SocialAuthor(
+                  runtime: widget.runtime,
+                  uid: item.authorUid,
+                  onTap: _locked
+                      ? null
+                      : () => _navigate(
+                          TimewebFeedPage(
+                            runtime: widget.runtime,
+                            wallUid: item.authorUid,
+                          ),
+                        ),
+                ),
+              ),
+              IconButton(
+                key: ValueKey('timeweb-social-menu-${item.id}'),
+                icon: const Icon(Icons.more_horiz, color: LrsTheme.muted),
+                onPressed: _locked ? null : () => _showPostMenu(context, item),
+              ),
+            ],
           ),
           if (item.text != null && item.text!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: Text(translated?.text ?? item.text!),
-            ),
-          if (item.text?.isNotEmpty == true)
-            TextButton(
-              onPressed: _locked || _translating
-                  ? null
-                  : () => _translate(item),
-              child: Text(
-                context.tr(
-                  translated == null ? 'Перевести' : 'Показать оригинал',
-                ),
-              ),
             ),
           if (translated?.googlePowered == true)
             Image.asset(
@@ -668,31 +768,6 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
                     item.liked! ? Icons.favorite : Icons.favorite_border,
                   ),
                   label: Text(context.tr('Реакции')),
-                ),
-              IconButton(
-                tooltip: context.tr('Пожаловаться'),
-                onPressed: _locked
-                    ? null
-                    : () => _action(
-                        TimewebSocialAction.report(
-                          _comments ? widget.post!.id : item.id,
-                          commentId: _comments ? item.id : null,
-                        ),
-                      ),
-                icon: const Icon(Icons.flag_outlined),
-              ),
-              if (_comments && _moderate)
-                IconButton(
-                  tooltip: context.tr('Удалить'),
-                  onPressed: _locked
-                      ? null
-                      : () => _action(
-                          TimewebSocialAction.hideComment(
-                            widget.post!.id,
-                            item.id,
-                          ),
-                        ),
-                  icon: const Icon(Icons.delete_outline),
                 ),
             ],
           ),

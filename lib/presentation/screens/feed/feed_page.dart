@@ -16,6 +16,7 @@ import 'package:wbrs/app/widgets/bottom_nav_bar.dart';
 import 'package:wbrs/app/widgets/drawer.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/screens/feed/post_detail_page.dart';
+import 'package:wbrs/presentation/screens/feed/post_editor_page.dart';
 import 'package:wbrs/presentation/screens/feed/post_author_wall.dart';
 import 'package:wbrs/presentation/screens/feed/share_to_chat_sheet.dart';
 import 'package:wbrs/service/social_service.dart';
@@ -285,14 +286,19 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
-  Future<void> _createPost() => showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: LrsTheme.surface,
-        builder: (_) => _CreatePostSheet(
-            submissions: widget.postSubmissions ??
-                PostSubmissionService(social: _social)),
-      );
+  Future<void> _createPost() async {
+    final ok = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => PostEditorPage(
+          social: _social,
+          postSubmissions: widget.postSubmissions,
+        ),
+      ),
+    );
+    if (ok == true && mounted) {
+      setState(() => _feed = _loadFeed());
+    }
+  }
 }
 
 class _CreatePostSheet extends StatefulWidget {

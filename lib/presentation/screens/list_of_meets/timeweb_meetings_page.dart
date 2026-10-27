@@ -1001,7 +1001,6 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/family_front.png',
     appBar: _bar(
       context,
       widget.meetingId == null ? 'Встречи' : 'О встрече',
@@ -1551,7 +1550,6 @@ class _TimewebMeetingCreationViewState
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/family_front.png',
     appBar: _bar(context, 'Создать встречу'),
     body: !_current
         ? Center(child: Text(context.tr('Сеанс завершён')))

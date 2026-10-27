@@ -580,7 +580,6 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
   );
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/family_main.jpg',
     backgroundScale: 1.42,
     bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
         ? const TimewebBottomNavigationBar()
@@ -804,7 +803,6 @@ class _TimewebMeetingParticipantsPageState extends State<TimewebMeetingParticipa
         ? _people.where((person) => query.isEmpty || (person.name ?? '').toLowerCase().contains(query)).toList()
         : <_ParticipantDisplay>[];
     return ClrsScaffold(
-      backgroundAsset: 'assets/final_design/family_front.png',
       bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
           ? const TimewebBottomNavigationBar()
           : null,

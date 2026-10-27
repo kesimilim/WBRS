@@ -67,7 +67,6 @@ class _GreenPageState extends State<GreenPage> {
   @override
   Widget build(BuildContext context) {
     return ClrsScaffold(
-        backgroundAsset: 'assets/final_design/family_back.png',
         appBar: AppBar(
             title: Text(context.tr('Ответьте на вопросы'),
                 maxLines: 2, style: const TextStyle(fontSize: 18)),

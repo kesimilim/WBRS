@@ -240,7 +240,6 @@ class _TimewebMeetingArchivePageViewState extends State<TimewebMeetingArchivePag
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/family_back.png',
     appBar: AppBar(title: const ClrsLogo(size: 34), automaticallyImplyLeading: false),
     body: !_current
         ? Center(child: Text(context.tr('Сохранённая история недоступна')))

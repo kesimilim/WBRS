@@ -49,7 +49,7 @@ class ClrsBackgroundController extends ChangeNotifier {
 
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
       _currentIndex = (_currentIndex + 1) % defaultImages.length;
       notifyListeners();
     });

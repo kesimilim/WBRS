@@ -172,7 +172,6 @@ class _FirstGroupRedState extends State<FirstGroupRed> {
     ];
 
     return ClrsScaffold(
-        backgroundAsset: 'assets/final_design/family_back.png',
         appBar: AppBar(
             title: Text(context.tr('Ответьте на вопросы'),
                 maxLines: 2, style: const TextStyle(fontSize: 18)),

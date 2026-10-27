@@ -832,7 +832,6 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/family_main.jpg',
     bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom == 0
         ? const MyBottomNavigationBar()
         : null,

@@ -512,7 +512,6 @@ class _TimewebInitialProfilePageState extends State<TimewebInitialProfilePage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/family_main.jpg',
     appBar: AppBar(backgroundColor: Colors.transparent, title: const ClrsLogo(size: 34)),
     body: SafeArea(
       child: Navigator(

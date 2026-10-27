@@ -917,11 +917,6 @@ class _TimewebAccountPageState extends State<TimewebAccountPage> {
     final settings = widget._view == _View.settings;
     final about = widget._view == _View.about;
     return ClrsScaffold(
-      backgroundAsset: about
-          ? 'assets/family_main.jpg'
-          : settings
-          ? 'assets/final_design/house.png'
-          : 'assets/final_design/family_right.png',
       bottomNavigationBar: const TimewebBottomNavigationBar(),
       appBar: settings
           ? null

@@ -113,7 +113,9 @@ def _hash(value):
 def _rows(cursor, execute, sql, params=()):
     try:
         execute(sql, params)
-        return cursor.fetchall()
+        # DB-API permits tuple or list containers; PyMySQL uses tuples. Keep
+        # field/row values exact while normalizing only the outer collection.
+        return list(cursor.fetchall())
     except (RuntimeRejected, RuntimeUnavailable):
         raise
     except Exception:
@@ -191,6 +193,23 @@ def _source_document(row, collection):
         raise RuntimeProfilePhotoNotFound()
     _identifier(row[2])
     return SourcePhotoDocument(row[0], document(row[3]), _sha(row[4]))
+
+
+def _photo_review_source(raw, root):
+    """Presence updates do not change photo ownership or retained references.
+
+    Keep the current raw document in the live authorization/context hash. Only
+    the historical photo planner uses the exact retained root after proving
+    that no field except lastOnlineTS and its updateTime changed.
+    """
+    current = document(raw)
+    historical = document(root.encoded_payload)
+    def projection(value):
+        return {**{k: v for k, v in value.items() if k not in {'fields', 'updateTime'}},
+                'fields': {k: v for k, v in value['fields'].items() if k != 'lastOnlineTS'}}
+    if projection(current) != projection(historical):
+        raise RuntimeProfilePhotoNotFound()
+    return historical
 
 
 class _PhotoLease(VerifiedMediaLease):
@@ -322,7 +341,7 @@ class RuntimeProfilePhotosService:
             order = [row[2] for row in gallery_rows]
             if order != sorted(order, key=lambda value: value.encode("utf-8")):
                 raise RuntimeProfilePhotoNotFound()
-            plan = prepare_profile_photo_review(account=account, canonical_legacy_raw=raw,
+            plan = prepare_profile_photo_review(account=account, canonical_legacy_raw=_photo_review_source(raw, root),
                 root_document=root, gallery_documents=gallery, gallery_complete=True,
                 ready_evidence=evidence, existing_rows=[],
                 source_archive_sha256=self._source.archive_sha256, reviewed_gallery_order=order,

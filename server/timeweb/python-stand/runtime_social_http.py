@@ -33,15 +33,17 @@ class RuntimeSocialHttp:
             if self.service is None: raise RuntimeUnavailable()
             match=re.fullmatch(r'/v1/runtime/social/posts/([^/]+)/comments',path)
             lookup=re.fullmatch(r'/v1/runtime/social/operations/([^/]+)/([0-9a-f-]{36})',path)
+            lease=re.fullmatch(r'/v1/runtime/social/media/(tw-post-media-[a-f0-9]{64})/lease',path)
+            donation=path=='/v1/runtime/social/donation-checkout'
             feed=path=='/v1/runtime/social/feed'; action=path=='/v1/runtime/social/actions'
-            if not (feed or action or match or lookup and lookup[1] in OPS):
+            if not (feed or action or lease or donation or match or lookup and lookup[1] in OPS):
                 return SocialReply('404 Not Found',{'error':'not_found'})
             expected='POST' if action else 'GET'
             if environ.get('REQUEST_METHOD')!=expected:
                 return SocialReply('405 Method Not Allowed',{'error':'method_not_allowed'})
             raw=environ.get('QUERY_STRING','')
             if type(raw) is not str or len(raw)>8192 or re.search(r'%(?![0-9a-fA-F]{2})',raw): raise RuntimeInvalidRequest()
-            try: pairs=parse_qsl(raw,keep_blank_values=True,strict_parsing=True,encoding='utf8',errors='strict',max_num_fields=3)
+            try: pairs=parse_qsl(raw,keep_blank_values=True,strict_parsing=True,encoding='utf8',errors='strict',max_num_fields=4)
             except (ValueError,UnicodeError): raise RuntimeInvalidRequest() from None
             options=dict(pairs)
             if len(options)!=len(pairs): raise RuntimeInvalidRequest()
@@ -51,11 +53,18 @@ class RuntimeSocialHttp:
             if type(header) is not str or not header.startswith('Bearer na1.') or len(header)>135 or any(c.isspace() for c in header[7:]): raise NativeRejected()
             if not native_configured or native_service is None: raise RuntimeUnavailable()
             token=header[7:]; identity=native_service.authorize(token, peer=environ.get('REMOTE_ADDR',''))
-            if feed:
-                if set(options)-{'limit','cursor','wallUid'}: raise RuntimeInvalidRequest()
+            if donation:
+                from runtime_donations import donation_checkout
+                if set(options)!={'amountMinor'} or not re.fullmatch(r'[1-9][0-9]{2,7}',options['amountMinor']): raise RuntimeInvalidRequest()
+                result=self.store.read_authenticated(identity,lambda c,ex,uid: donation_checkout(self.env,int(options['amountMinor'])),access_token=token)
+            elif lease:
+                if set(options)!={'prepareOperationId'}: raise RuntimeInvalidRequest()
+                result=self.service.media.lease(identity,lease[1],options['prepareOperationId'],access_token=token)
+            elif feed:
+                if set(options)-{'limit','cursor','wallUid','media'} or options.get('media','all')!='all': raise RuntimeInvalidRequest()
                 limit=options.get('limit','10')
                 if not re.fullmatch(r'[1-9]|10',limit): raise RuntimeInvalidRequest()
-                result=self.service.feed(identity,access_token=token,limit=int(limit),cursor=options.get('cursor'),wall_uid=options.get('wallUid'))
+                result=self.service.feed(identity,access_token=token,limit=int(limit),cursor=options.get('cursor'),wall_uid=options.get('wallUid'),all_media=options.get('media')=='all')
             elif match:
                 if set(options)-{'cursor'}: raise RuntimeInvalidRequest()
                 resource=match[1].encode('latin1').decode('utf8'); ident(resource)
@@ -70,7 +79,7 @@ class RuntimeSocialHttp:
                 value=_body(environ)
                 if type(value) is not dict or set(value)!={'operationId','payload'} or not isinstance(value['operationId'],str) or not _UUID.fullmatch(value['operationId']): raise RuntimeInvalidRequest()
                 outcome=self.service.perform(identity,value['operationId'],value['payload'],access_token=token)
-                return SocialReply('201 Created' if outcome.status==201 else '200 OK',outcome.payload)
+                return SocialReply(f'{outcome.status} '+{200:'OK',201:'Created',409:'Conflict',404:'Not Found'}.get(outcome.status,'Error'),outcome.payload)
             return SocialReply('200 OK',result)
         except SocialAccessDenied: return SocialReply('403 Forbidden',{'error':'social_access_denied'})
         except (NativeRejected,RuntimeRejected): return SocialReply('401 Unauthorized',{'error':'unauthorized'},authenticate=True)

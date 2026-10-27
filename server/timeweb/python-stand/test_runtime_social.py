@@ -17,14 +17,27 @@ UUID = lambda n: f"12345678-1234-4234-8234-{n:012d}"
 class SocialCursor(FakeCursor):
     def execute(self, statement, params=()):
         sql = " ".join(statement.split()); state = self.c.state; db = self.c.db
-        tables = ("role_grants", "posts", "post_comments", "social_reaction_state", "post_likes", "comment_likes", "moderation_reports", "admin_audit")
+        tables = ("role_grants", "posts", "post_comments", "social_reaction_state", "post_likes", "comment_likes", "moderation_reports", "admin_audit", "social_post_content", "media_objects")
         if not any("clrs_staging." + table in sql for table in tables):
             return super().execute(statement, params)
         assert self.c.held; db.calls.append((sql, params)); self.rows = []; self.rowcount = 0
         if sql.startswith("SELECT"):
             assert self.c.readonly or "FOR SHARE" in sql or "FOR UPDATE" in sql
         else: assert not self.c.readonly
-        if "FROM clrs_staging.role_grants" in sql:
+        if sql.startswith('SELECT media_id FROM clrs_staging.media_objects'):
+            self.rows=[(r[0],) for r in state['postUploads'].values() if r[1]==params[0] and r[7]=='pending'][:100]
+        elif sql.startswith('SELECT media_id, owner_uid, purpose'):
+            row=state['postUploads'].get(params[0]); self.rows=[] if row is None else [tuple(row)]
+        elif sql.startswith('SELECT media_ids'):
+            ids=state['content'].get(params[0]); self.rows=[] if ids is None else [(json.dumps(ids),)]
+        elif sql.startswith('INSERT INTO clrs_staging.social_post_content'):
+            state['content'][params[0]]=json.loads(params[1]); self.rowcount=1
+        elif sql.startswith('INSERT INTO clrs_staging.media_objects'):
+            mid,uid,key,mime,size,sha=params
+            state['postUploads'][mid]=[mid,uid,'post',key,mime,size,sha.hex(),'pending',1,1,1];self.rowcount=1
+        elif sql.startswith('UPDATE clrs_staging.media_objects'):
+            state['postUploads'][params[0]][7]='ready';self.rowcount=1
+        elif "FROM clrs_staging.role_grants" in sql:
             rows = state["roles"].get(params[0], [])
             self.rows = [tuple(row) if "granted_by" in sql.split(" FROM ")[0] else tuple(row[:3]) for row in rows]
         elif sql.startswith("SELECT p.post_id"):
@@ -39,7 +52,7 @@ class SocialCursor(FakeCursor):
                     posts = [row for row in posts if row["stamp"] is None and row["id"].encode() < params[-2].encode()]
                 posts.sort(key=lambda row: (row["stamp"] is not None, row["stamp"] or "", row["id"].encode()), reverse=True)
                 posts = posts[:params[-1]]
-            self.rows = [(row["id"], row["uid"], row["text"], None, row["status"], row["stamp"], row["likes"], row["comments"],
+            self.rows = [(row["id"], row["uid"], row["text"], (state["content"].get(row["id"]) or [None])[0], row["status"], row["stamp"], row["likes"], row["comments"],
                 *state["accounts"][row["uid"]][:2]) for row in posts]
         elif sql.startswith("SELECT active"):
             row = state["reactions"].get(tuple(params[:3])); self.rows = [] if row is None else [(row,)]
@@ -80,7 +93,9 @@ class SocialCursor(FakeCursor):
             state["audit"].append(tuple(params)); self.rowcount = 1
         elif sql.startswith("UPDATE clrs_staging.posts"):
             row = state["posts"][params[-1]]
-            if "like_count" in sql: row["likes"] = max(0, row["likes"] + params[0])
+            if "SET body=" in sql: row["text"]=params[0]
+            elif "SET status='deleted'" in sql: row["status"]='deleted'
+            elif "like_count" in sql: row["likes"] = max(0, row["likes"] + params[0])
             elif "comment_count=comment_count+1" in sql: row["comments"] += 1
             else: row["comments"] = max(0, row["comments"] - 1)
             self.rowcount = 1
@@ -95,7 +110,7 @@ class SocialDatabase(FakeDatabase):
     def __init__(self):
         super().__init__()
         self.state.update(posts={}, comments={}, reactions={}, legacy_likes=set(), legacy_comment_likes=set(), reports={}, audit=[],
-            roles={"actor": [["author", "approved_uid", None, None], ["admin", "approved_uid", None, None]]})
+            content={}, postUploads={}, roles={"actor": [["author", "approved_uid", None, None], ["admin", "approved_uid", None, None]]})
         self.grant_rows = [("GRANT USAGE ON *.* TO 'fixture'@'%' REQUIRE SSL",),
             ("GRANT SELECT, INSERT, UPDATE ON `clrs_staging`.* TO 'fixture'@'%'",)]
         session, access = self.tokens.mint("peer", "device-peer", 0, NOW)
@@ -173,7 +188,7 @@ class SocialTests(unittest.TestCase):
         db.state["roles"]["actor"] = [["author", "approved_uid", STAMP, None], ["admin", "approved_uid", STAMP, None]]
         denied = lookup("social.hide-comment.v1", UUID(6), hide)
         self.assertEqual((denied.status.split()[0], denied.authenticate), ("403", False))
-        self.assertEqual(action(UUID(7), {"kind": "publish", "text": "Нет роли"}).status.split()[0], "403")
+        self.assertEqual(action(UUID(7), {"kind": "publish", "text": "Нет роли"}).status.split()[0], "409")
         # Two pages after the first are needed to prove TTL cannot slide.
         for n in range(8):
             ident = f"retained-{n}"
@@ -192,6 +207,57 @@ class SocialTests(unittest.TestCase):
         db.state["accounts"]["peer"][0] = 1
         denied = call("/v1/runtime/social/feed", token=db.peer_token)
         self.assertEqual((denied.status.split()[0], denied.authenticate), ("401", True))
+
+
+    def test_native_images_edit_delete_roles_cas_and_original_receipts(self):
+        from runtime_social import RuntimeSocialService
+        from runtime_mutations import RuntimeUnavailable
+        class Writer:
+            def verify_ready(self,record,**kwargs): return ('verified',record)
+            def require_verified(self,evidence,record):
+                if evidence!=('verified',record): raise RuntimeUnavailable()
+        db=SocialDatabase()
+        config={**ENV,'CLRS_RUNTIME_PERMISSION_MODEL':'provider-database-v1'}
+        store=RuntimeMutationStore(config,db.tokens,connect=db.connect,clock=lambda:NOW)
+        self.addCleanup(store.close)
+        service=RuntimeSocialService(store,KEY,clock=lambda:NOW,writer=Writer())
+        def perform(n,p,peer=False):
+            return service.perform(db.peer if peer else db.identity,UUID(n),p,access_token=db.peer_token if peer else db.access)
+        ids=[]
+        for i in range(2):
+            prepared={'kind':'prepare-media','byteSize':5,'sha256':str(i)*64,'mimeType':'image/jpeg'}
+            result=perform(20+i*2,prepared)
+            self.assertEqual(result.status,201)
+            mid=result.payload['result']['mediaId']; ids.append(mid)
+            commit={'kind':'commit-media','mediaId':mid,'prepareOperationId':UUID(20+i*2)}
+            ready=perform(21+i*2,commit)
+            self.assertTrue(ready.payload['result']['ready'])
+            self.assertTrue(perform(21+i*2,commit).payload['replayed'])
+        publish={'kind':'publish','text':'With two photos','mediaIds':ids}
+        published=perform(30,publish);post=published.payload['result']['postId']
+        def feed(): return service.feed(db.identity,access_token=db.access,all_media=True)['items']
+        item=feed()[0];self.assertEqual(item['mediaIds'],ids)
+        edit={'kind':'update-post','postId':post,'text':'Edited','mediaIds':ids[1:],'expectedContentHash':item['contentHash']}
+        denied=perform(31,edit,peer=True)
+        self.assertEqual((denied.status,denied.payload['result']),(409,{'error':'social_access_denied'}))
+        self.assertEqual(feed()[0]['text'],'With two photos')
+        db.commit_unknown_once=True
+        from runtime_mutations import RuntimeCommitUnknown
+        with self.assertRaises(RuntimeCommitUnknown): perform(32,edit)
+        recovered=perform(32,edit);self.assertTrue(recovered.payload['replayed'])
+        self.assertEqual((feed()[0]['text'],feed()[0]['mediaIds']),('Edited',ids[1:]))
+        self.assertEqual(perform(33,edit).payload['result'],{'error':'post_changed'})
+        # The original publish still reconciles after its content was edited.
+        self.assertTrue(perform(30,publish).payload['replayed'])
+        delete={'kind':'delete-post','postId':post,'expectedContentHash':feed()[0]['contentHash']}
+        self.assertEqual(perform(34,delete).payload['result'],{'postId':post,'deleted':True})
+        self.assertEqual(feed(),[])
+        self.assertTrue(perform(34,delete).payload['replayed'])
+        self.assertTrue(perform(32,edit).payload['replayed'])
+        self.assertTrue(perform(30,publish).payload['replayed'])
+        self.assertEqual(len(db.state['posts']),1)
+        self.assertEqual(len(db.state['postUploads']),2)
+        self.assertEqual(len(db.state['audit']),2)
 
 
 if __name__ == "__main__": unittest.main()

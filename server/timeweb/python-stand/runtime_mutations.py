@@ -52,7 +52,7 @@ class MutationOutcome:
 MAX_INTEGER = 2 ** 63 - 1
 MAX_JSON_BYTES = 65536
 MAX_RECEIPT_BYTES = 131072
-OPERATIONS = frozenset({"contacts.change.v1", "profile.finish-registration.v1", "profile.photo.prepare.v1", "profile.photo.commit.v1", "chat.send-text.v1", "chat.mark-read.v1", "chat.open-personal.v1", "meeting.create.v1", "meeting.join.v1", "meeting.leave.v1", "meeting.kick.v1", "meeting.send-text.v1", "profile.edit.v1", "profile.complete-test.v1", "profile.edit-geography.v1", "social.publish.v1", "social.comment.v1", "social.react.v1", "social.report.v1", "social.hide-comment.v1", "gift.buy.v1", "gift.send.v1", "profile.preferences.v1", "push.register.v1", "push.revoke.v1"})
+OPERATIONS = frozenset({"contacts.change.v1", "profile.finish-registration.v1", "profile.photo.prepare.v1", "profile.photo.commit.v1", "chat.send-text.v1", "chat.mark-read.v1", "chat.open-personal.v1", "meeting.create.v1", "meeting.join.v1", "meeting.leave.v1", "meeting.kick.v1", "meeting.send-text.v1", "profile.edit.v1", "profile.complete-test.v1", "profile.edit-geography.v1", "social.publish.v1", "social.comment.v1", "social.react.v1", "social.report.v1", "social.hide-comment.v1", "social.update-post.v1", "social.delete-post.v1", "social.prepare-media.v1", "social.commit-media.v1", "gift.buy.v1", "gift.send.v1", "profile.preferences.v1", "push.register.v1", "push.revoke.v1"})
 RECEIPT_QUERY = """SELECT request_hash, state, response_status, result, entity_revision,
  completed_at FROM clrs_staging.idempotency_receipts
  WHERE actor_uid = %s AND operation = %s AND idempotency_key = %s LIMIT 1"""

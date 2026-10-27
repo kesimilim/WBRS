@@ -35,6 +35,8 @@ class TimewebHomePage extends StatefulWidget {
 }
 
 class _TimewebHomePageState extends State<TimewebHomePage> {
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  bool _drawerOpen = false;
   StreamSubscription<AppSessionState>? _states;
   late final TimewebAppRuntime _runtime;
   late final int _epoch;
@@ -184,6 +186,9 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
       selectedIndex: _selected.index,
       availableIndices: {for (final section in sections) section.index},
       showBar: false,
+      openDrawer: () {
+        if (_current) _scaffoldKey.currentState?.openDrawer();
+      },
       onSelect: (routeContext, index) async {
         if (!_current || homeRoute == null || !homeRoute.isActive) return;
         _lease.requireCurrent();
@@ -194,8 +199,27 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
       },
     );
     return Scaffold(
-      key: const ValueKey('timeweb-native-home'),
+      key: _scaffoldKey,
+      extendBody: true,
+      backgroundColor: Colors.transparent,
+      // Keep the menu owner mounted after closing: its async navigation and
+      // session-bound flows must not be disposed while opening a destination.
+      onDrawerChanged: (open) {
+        if (open && !_drawerOpen) setState(() => _drawerOpen = true);
+      },
+      drawer: _drawerOpen
+          ? TimewebNavigationScope(
+              navigation: navigation,
+              child: TimewebOwnProfilePage(
+                runtime: widget.runtime,
+                initialProfile: widget.initialOwnProfile,
+                menuOnly: true,
+                onOpenPeople: () => unawaited(_select(_Section.people)),
+              ),
+            )
+          : const Drawer(child: SizedBox.shrink()),
       body: Stack(
+        key: const ValueKey('timeweb-native-home'),
         fit: StackFit.expand,
         children: [
           Positioned.fill(
@@ -223,6 +247,7 @@ class _TimewebHomePageState extends State<TimewebHomePage> {
       ),
       bottomNavigationBar: SafeArea(
         top: false,
+        minimum: const EdgeInsets.only(bottom: 10),
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xD92A1E12),

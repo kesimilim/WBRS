@@ -30,6 +30,7 @@ AppBar _bar(
   Widget? action,
   bool mainList = false,
 }) => AppBar(
+  leading: mainList ? TimewebMenuButton.forRoot(context) : null,
   automaticallyImplyLeading: !mainList,
   title: Row(
     children: [
@@ -312,10 +313,7 @@ Widget _meetingCard(
         const SizedBox(height: 5),
         ContentTranslationScope(
           service: translator,
-          child: TranslatableText(
-            meeting.description,
-            autoTranslate: false,
-          ),
+          child: TranslatableText(meeting.description, autoTranslate: false),
         ),
       ],
     ],
@@ -764,9 +762,15 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
     meeting.requireCurrent();
     final page = TimewebNavigationScope.wrap(
       context,
-      TimewebMeetingParticipantsPage(runtime: _runtime, meeting: meeting, allowManagement: true),
+      TimewebMeetingParticipantsPage(
+        runtime: _runtime,
+        meeting: meeting,
+        allowManagement: true,
+      ),
     );
-    final manage = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => page));
+    final manage = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => page));
     if (manage == true && _current && _organizer && !_memberActionsLocked) {
       await _load(roster: true);
     }
@@ -1011,7 +1015,7 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
               key: const ValueKey('native-meeting-scope'),
               tooltip: context.tr('Тип встречи'),
               onPressed: _current && !_loading ? _selectScope : null,
-              icon: const Icon(Icons.menu),
+              icon: const Icon(Icons.tune),
             )
           : null,
       action: widget.meetingId == null
@@ -1021,13 +1025,18 @@ class _TimewebMeetingsPageViewState extends State<TimewebMeetingsPageView> {
                 backgroundColor: LrsTheme.peach.withValues(alpha: .25),
                 foregroundColor: LrsTheme.text,
                 minimumSize: const Size(0, 36),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 textStyle: const TextStyle(
                   fontFamily: 'Lato',
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               onPressed:
                   !_current || !_runtime.meetingCreationEnabled || _loading

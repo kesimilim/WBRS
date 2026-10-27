@@ -331,8 +331,9 @@ class RuntimeProfileService:
             before = _full_profile(row)
             if before["updatedAt"] != checked["expectedUpdatedAt"]:
                 return 409, {"error": "profile_changed", "updatedAt": before["updatedAt"]}, None
-            if _full_onboarding(before) == "search":
-                return 409, {"error": "test_already_completed", "updatedAt": before["updatedAt"]}, None
+            # Members can explicitly retake the questionnaire. The exact
+            # profile timestamp and original operation ID still prevent a
+            # stale or retried submission from replacing a newer result.
             if not _has_profile_details(before):
                 return 409, {"error": "profile_incomplete"}, None
             if before["profileDetailsSaved"] is not True:

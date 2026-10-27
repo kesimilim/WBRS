@@ -19,6 +19,7 @@ import time
 from legacy_conversation_payload import document, media_reference, payload_digest
 from legacy_private_media import _metadata, CHUNK_BYTES
 from private_media_s3 import PrivateMediaS3, _key
+from native_photo_upload_s3 import NativePhotoUploadS3
 from runtime_mutations import RuntimeInvalidRequest, RuntimeUnavailable, canonical_json
 from runtime_profile_photos import _PhotoLease, RuntimeProfilePhotoNotFound
 from runtime_profile_photos_http import (RuntimeProfilePhotoMediaReply,
@@ -40,7 +41,8 @@ SQL = """SELECT p.post_id,p.author_uid,p.status,p.legacy_raw,
  JOIN clrs_staging.post_media m ON m.post_id=p.post_id
  JOIN clrs_staging.legacy_source l ON l.singleton=1 AND l.source_bucket=m.source_bucket
  JOIN clrs_staging.clrs_final_generations g ON g.generation_id=m.source_generation_id AND g.state='verified'
- WHERE p.post_id=%s AND m.media_id=%s LIMIT 1 FOR SHARE OF p,a,m,l,g"""
+ WHERE p.post_id=%s AND m.media_id=%s AND (NOT EXISTS(SELECT 1 FROM clrs_staging.social_post_content pc WHERE pc.post_id=p.post_id)
+ OR EXISTS(SELECT 1 FROM clrs_staging.social_post_content pc WHERE pc.post_id=p.post_id AND JSON_CONTAINS(pc.media_ids,JSON_QUOTE(m.media_id)))) LIMIT 1 FOR SHARE OF p,a,m,l,g"""
 
 
 def _sha(value):
@@ -100,7 +102,7 @@ def _raster(file,record,deadline,cancel,clock):
 
 class RuntimePostMediaService:
     def __init__(self,store,*,private_s3,spool_directory,monotonic=time.monotonic):
-        if type(private_s3) is not PrivateMediaS3 or not callable(getattr(store,'read_authenticated',None)):
+        if type(private_s3) not in (PrivateMediaS3,NativePhotoUploadS3) or not callable(getattr(store,'read_authenticated',None)):
             raise RuntimeUnavailable()
         self.store=store; self.s3=private_s3; self.directory=spool_directory; self.clock=monotonic
         self.lock=threading.Lock(); self.leases=set(); self.active=set(); self.closed=False
@@ -197,6 +199,44 @@ class RuntimePostMediaService:
         for lease in leases: lease.close()
 
 
+class _NativePostMediaService(RuntimePostMediaService):
+    def _proof(self,identity,token,post_id,media_id):
+        def read(c,ex,uid):
+            ex("""SELECT m.object_key,m.byte_size,LOWER(HEX(m.sha256)),m.mime_type,
+ p.author_uid,m.owner_uid FROM clrs_staging.posts p
+ JOIN clrs_staging.accounts a ON a.uid=p.author_uid
+ JOIN clrs_staging.social_post_content pc ON pc.post_id=p.post_id
+ JOIN clrs_staging.media_objects m ON JSON_CONTAINS(pc.media_ids,JSON_QUOTE(m.media_id))
+ WHERE p.post_id=%s AND m.media_id=%s AND p.status='published' AND a.disabled=0
+ AND a.lifecycle='active' AND m.purpose='post' AND m.status='ready'
+ AND m.legacy_storage_path IS NULL LIMIT 1 FOR SHARE OF p,a,pc,m""",(post_id,media_id))
+            row=c.fetchone()
+            if row is None: raise RuntimeProfilePhotoNotFound()
+            if len(row)!=6 or row[0]!='clrs-native-profile/'+media_id[len('tw-post-media-'):]: raise RuntimeUnavailable()
+            from runtime_profile_photo_uploads import validate_prepare
+            validate_prepare({'byteSize':row[1],'sha256':row[2],'mimeType':row[3]})
+            return {'record':{'key':row[0],'size':row[1],'sha256':row[2],'content_type':row[3]},'context':list(row[4:])}
+        return self.store.read_authenticated(identity,read,access_token=token)
+
+
+class _PostMediaReaders:
+    def __init__(self,legacy,native): self.legacy=legacy; self.native=native
+    def _check(self): self.legacy._check()
+    def open_media(self,identity,post_id,media_id,*,access_token,**kwargs):
+        def read(c,ex,uid):
+            ex('SELECT purpose FROM clrs_staging.media_objects WHERE media_id=%s LIMIT 1 FOR SHARE',(media_id,))
+            row=c.fetchone()
+            if row is not None and row[0]!='post': raise RuntimeProfilePhotoNotFound()
+            return {'native':row is not None}
+        native=self.legacy.store.read_authenticated(identity,read,access_token=access_token)['native']
+        reader=self.native if native else self.legacy
+        if reader is None: raise RuntimeUnavailable()
+        return reader.open_media(identity,post_id,media_id,access_token=access_token,**kwargs)
+    def close(self):
+        self.legacy.close()
+        if self.native is not None: self.native.close()
+
+
 class RuntimePostMediaHttp:
     def __init__(self,env,service):
         self.enabled=(env.get('CLRS_RUNTIME_WRITES_ENABLED')=='1'
@@ -255,7 +295,11 @@ def create_post_media_http(env,store):
         state=TimewebPrivateBucketState(int(bucket_id),bucket,env.get('CLRS_LEGACY_MEDIA_CONTROL_TOKEN'))
         s3=PrivateMediaS3(bucket,env.get('CLRS_LEGACY_MEDIA_EXPECTED_OWNER'),transport,state)
         directory=tempfile.TemporaryDirectory(prefix='clrs-post-media-'); os.chmod(directory.name,0o700)
-        http=RuntimePostMediaHttp(env,RuntimePostMediaService(store,private_s3=s3,spool_directory=directory.name))
+        from native_profile_photo_factory import create_native_photo_writer
+        writer=create_native_photo_writer(env)
+        legacy=RuntimePostMediaService(store,private_s3=s3,spool_directory=directory.name)
+        native=None if writer is None else _NativePostMediaService(store,private_s3=writer,spool_directory=directory.name)
+        http=RuntimePostMediaHttp(env,_PostMediaReaders(legacy,native))
         http._owned_directory=directory
         return http
     except Exception:

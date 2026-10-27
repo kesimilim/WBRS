@@ -1,3 +1,4 @@
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -11,7 +12,6 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
-import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
 import 'post_editor_page.dart';
 
@@ -268,6 +268,13 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
         _replyTo = null;
         _composing = false;
         await _load(generation: ++_generation);
+      } else if (result == TimewebSocialOutcome.rejected) {
+        setState(
+          () => _notice = flow.failure == TimewebMutationFailure.conflict
+              ? 'Публикация уже изменена. Обновите ленту.'
+              : 'Нет доступа к этому действию.',
+        );
+        await _load(generation: ++_generation);
       } else {
         setState(
           () => _notice =
@@ -333,6 +340,7 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
           ? 'assets/final_design/family_right.png'
           : 'assets/final_design/feed_family.png',
       appBar: AppBar(
+        leading: TimewebMenuButton.forRoot(context),
         backgroundColor: Colors.transparent,
         title: _comments || widget.wallUid != null
             ? Text(
@@ -353,12 +361,13 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               onPressed: _locked
                   ? null
                   : () async {
-                      final ok = await Navigator.of(context).push<bool>(
+                      await Navigator.of(context).push<bool>(
                         MaterialPageRoute(
-                          builder: (_) => const PostEditorPage(),
+                          builder: (_) =>
+                              PostEditorPage(runtime: widget.runtime),
                         ),
                       );
-                      if (ok == true && mounted) {
+                      if (_current) {
                         await _open();
                       }
                     },
@@ -563,8 +572,8 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
 
   void _showPostMenu(BuildContext context, TimewebSocialItem item) {
     final isAuthor = item.authorUid == _owner;
-    final canEdit = isAuthor || _moderate;
-    final canDelete = isAuthor || _moderate;
+    final canEdit = !_comments && (isAuthor || _moderate);
+    final canDelete = !_comments && (isAuthor || _moderate);
     final translated = _originals.contains(item.id)
         ? null
         : _translations[item.id];
@@ -580,7 +589,9 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               ListTile(
                 leading: const Icon(Icons.translate, color: LrsTheme.peach),
                 title: Text(
-                  context.tr(translated == null ? 'Перевести' : 'Показать оригинал'),
+                  context.tr(
+                    translated == null ? 'Перевести' : 'Показать оригинал',
+                  ),
                   style: const TextStyle(color: LrsTheme.text),
                 ),
                 onTap: () {
@@ -597,30 +608,37 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => PostEditorPage(
-                        postId: item.id,
-                        initialText: item.text,
-                        initialImages: item.mediaId != null ? [item.mediaId!] : const [],
-                      ),
-                    ),
+                  _navigate(
+                    PostEditorPage(runtime: widget.runtime, post: item),
                   );
                 },
               ),
             if (canDelete)
               ListTile(
-                leading: const Icon(Icons.delete_outline, color: LrsTheme.danger),
+                leading: const Icon(
+                  Icons.delete_outline,
+                  color: LrsTheme.danger,
+                ),
                 title: Text(
                   context.tr('Удалить'),
                   style: const TextStyle(color: LrsTheme.danger),
                 ),
                 onTap: () {
                   Navigator.pop(ctx);
-                  showSnackbar(
-                    context,
-                    LrsTheme.peach,
-                    context.tr('Функционал удаления постов находится в разработке'),
+                  _deletePost(item);
+                },
+              ),
+            if (_comments && _moderate)
+              ListTile(
+                leading: const Icon(
+                  Icons.visibility_off_outlined,
+                  color: LrsTheme.peach,
+                ),
+                title: Text(context.tr('Скрыть комментарий')),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _action(
+                    TimewebSocialAction.hideComment(widget.post!.id, item.id),
                   );
                 },
               ),
@@ -648,6 +666,28 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _deletePost(TimewebSocialItem item) async {
+    if (_locked) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(context.tr('Удалить публикацию?')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.tr('Отмена')),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(context.tr('Удалить')),
+          ),
+        ],
+      ),
+    );
+    if (_current && confirmed == true && !_locked)
+      await _action(TimewebSocialAction.deletePost(item));
   }
 
   Widget _card(TimewebSocialItem item) {
@@ -692,14 +732,14 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               'assets/attribution/translated-by-google.png',
               height: 14,
             ),
-          if (item.mediaId != null)
+          for (final mediaId in item.mediaIds)
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: TimewebPostImage(
-                key: ValueKey('$_generation/${item.id}/${item.mediaId}'),
+                key: ValueKey('$_generation/${item.id}/$mediaId'),
                 runtime: widget.runtime,
                 postId: item.id,
-                mediaId: item.mediaId!,
+                mediaId: mediaId,
               ),
             ),
           if (item.createdAt != null)

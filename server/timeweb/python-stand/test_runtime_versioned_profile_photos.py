@@ -87,6 +87,10 @@ class VersionedTests(unittest.TestCase):
     def page(self, uid='peer'):
         return self.reader.photos(self.db.identity,uid,access_token=self.db.access)
 
+    def test_real_driver_tuple_container_keeps_valid_photos_and_visibility(self):
+        with patch.object(Cursor, 'fetchall', lambda cursor: tuple(cursor.rows)):
+            self.test_actual_session_versioned_original_stream_disconnect_and_current_guard()
+
     def test_actual_session_versioned_original_stream_disconnect_and_current_guard(self):
         page=self.page();ref=page['items'][0]['reference']
         self.assertNotIn('quarantine',json.dumps(page));self.assertNotIn('sha256',json.dumps(page))

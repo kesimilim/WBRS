@@ -1,5 +1,6 @@
 """Native test completion through existing isolated transaction/store fixtures."""
 import copy
+from datetime import datetime, timedelta
 import io
 import json
 import ssl
@@ -90,7 +91,7 @@ class TestCursor(ProfileCursor):
             self.rowcount = 0
             if source and source["updated_at"][:-1].replace("T", " ") == expected:
                 source["primary_group"] = primary; source["test_result"] = json.loads(result)
-                source["registration_complete"] = 1; source["updated_at"] = NEXT
+                source["registration_complete"] = 1; source["updated_at"] = (datetime.strptime(source["updated_at"], "%Y-%m-%dT%H:%M:%S.%fZ") + timedelta(microseconds=1)).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
                 self.rowcount = 1
             return self.rowcount
         if sql.startswith("SELECT JSON_TYPE(test_result)"):
@@ -245,26 +246,29 @@ class NativeTemperamentTests(unittest.TestCase):
         self.assertEqual((refused.status, refused.payload["state"], refused.payload["result"]),
             ("409 Conflict", "committed", {"error": "profile_incomplete"}))
 
-    def test_cas_and_already_completed_never_override_previous_or_other_device_result(self):
+    def test_explicit_retake_preserves_profile_and_rejects_stale_device(self):
         reply = self.post({"operationId": OP, **payload(stamp="2027-01-15T08:00:00.000000Z")})
-        self.assertEqual((reply.status, reply.payload["result"]),
-            ("409 Conflict", {"error": "profile_changed", "updatedAt": STAMP}))
-        self.assertEqual(self.profile_updates(), [])
-        self.db.state["profiles"]["actor"] = profile(primary_group=" КРАСНАЯ ", registration_complete=0)
-        existing = copy.deepcopy(self.db.state["profiles"]["actor"])
-        reply = self.post({"operationId": SECOND_OP, **payload()})
-        self.assertEqual(reply.payload["result"], {"error": "test_already_completed", "updatedAt": STAMP})
-        self.assertEqual(self.db.state["profiles"]["actor"], existing)
-        self.db.state["profiles"]["actor"] = profile(legacy_raw=retained_details())
-        third = "12345678-1234-4234-8234-123456789abe"
-        self.post({"operationId": third, **payload()})
-        source = copy.deepcopy(self.db.state["profiles"]["actor"])
-        reply = self.post({"operationId": "12345678-1234-4234-8234-123456789abf", **payload([0,20,0,0])})
         self.assertEqual(reply.payload["result"]["error"], "profile_changed")
-        reply = self.post({"operationId": "12345678-1234-4234-8234-123456789ac0", **payload([0,20,0,0], NEXT)})
-        self.assertEqual(reply.payload["result"]["error"], "test_already_completed")
+        self.assertEqual(self.profile_updates(), [])
+        original = copy.deepcopy(self.db.state["profiles"]["actor"])
+        first = self.post({"operationId": SECOND_OP, **payload()})
+        self.assertEqual(first.status, "200 OK")
+        source = copy.deepcopy(self.db.state["profiles"]["actor"])
+        third = "12345678-1234-4234-8234-123456789abe"
+        stale = self.post({"operationId": third, **payload([0,20,0,0])})
+        self.assertEqual(stale.payload["result"]["error"], "profile_changed")
         self.assertEqual(self.db.state["profiles"]["actor"], source)
-        self.assertEqual(len(self.profile_updates()), 1)
+        fourth = "12345678-1234-4234-8234-123456789abf"
+        retake = self.post({"operationId": fourth, **payload([0,20,0,0], NEXT)})
+        self.assertEqual(retake.status, "200 OK")
+        self.assertNotEqual(retake.payload["result"]["primaryGroup"], first.payload["result"]["primaryGroup"])
+        current = self.db.state["profiles"]["actor"]
+        for key in original.keys() - {'primary_group','secondary_group','test_result','registration_complete','updated_at'}:
+            self.assertEqual(current[key], original[key], key)
+        replay = self.post({"operationId": SECOND_OP, **payload()})
+        self.assertTrue(replay.payload["replayed"])
+        self.assertEqual(replay.payload["result"], first.payload["result"])
+        self.assertEqual(len(self.profile_updates()), 2)
 
     def test_unknown_commit_lookup_replay_and_payload_conflict_keep_one_original_mutation(self):
         self.db.commit_unknown_once = True

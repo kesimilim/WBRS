@@ -6,11 +6,17 @@ class ClrsBackgroundController extends ChangeNotifier {
 
   static final ClrsBackgroundController instance = ClrsBackgroundController._();
   static const List<String> defaultImages = [
-    'assets/final_design/family_right.png',
-    'assets/final_design/family_back.png',
-    'assets/final_design/family_front.png',
-    'assets/family_main.jpg',
-    'assets/family_forms.jpg',
+    'assets/wallpaper/1.jpg',
+    'assets/wallpaper/2.jpg',
+    'assets/wallpaper/3.jpg',
+    'assets/wallpaper/4.jpg',
+    'assets/wallpaper/5.jpg',
+    'assets/wallpaper/6.jpg',
+    'assets/wallpaper/7.jpg',
+    'assets/wallpaper/8.jpg',
+    'assets/wallpaper/9.jpg',
+    'assets/wallpaper/10.jpg',
+    'assets/wallpaper/11.jpg',
   ];
 
   int _currentIndex = 0;
@@ -49,7 +55,7 @@ class ClrsBackgroundController extends ChangeNotifier {
 
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       _currentIndex = (_currentIndex + 1) % defaultImages.length;
       notifyListeners();
     });

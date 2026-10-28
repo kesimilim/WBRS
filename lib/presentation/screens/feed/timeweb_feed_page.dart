@@ -1,6 +1,8 @@
 import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'dart:async';
+import 'dart:ui' as ui;
 
+import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/service/app_session.dart';
@@ -381,7 +383,7 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
             const LinearProgressIndicator(key: ValueKey('timeweb-social-busy')),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 80),
               children: [
                 if (_comments) ...[
                   const ClrsBrandHeader(),
@@ -686,8 +688,9 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
         ],
       ),
     );
-    if (_current && confirmed == true && !_locked)
+    if (_current && confirmed == true && !_locked) {
       await _action(TimewebSocialAction.deletePost(item));
+    }
   }
 
   Widget _card(TimewebSocialItem item) {
@@ -732,15 +735,22 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               'assets/attribution/translated-by-google.png',
               height: 14,
             ),
-          for (final mediaId in item.mediaIds)
+          if (item.mediaIds.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
-              child: TimewebPostImage(
-                key: ValueKey('$_generation/${item.id}/$mediaId'),
-                runtime: widget.runtime,
-                postId: item.id,
-                mediaId: mediaId,
-              ),
+              child: item.mediaIds.length == 1
+                  ? TimewebPostImage(
+                      key: ValueKey('$_generation/${item.id}/${item.mediaIds.first}'),
+                      runtime: widget.runtime,
+                      postId: item.id,
+                      mediaId: item.mediaIds.first,
+                    )
+                  : _PostCarousel(
+                      runtime: widget.runtime,
+                      postId: item.id,
+                      mediaIds: item.mediaIds,
+                      generation: _generation,
+                    ),
             ),
           if (item.createdAt != null)
             Padding(
@@ -879,4 +889,120 @@ class _SocialAuthorState extends State<_SocialAuthor> {
       );
     },
   );
+}
+
+class _PostCarousel extends StatefulWidget {
+  const _PostCarousel({
+    required this.runtime,
+    required this.postId,
+    required this.mediaIds,
+    required this.generation,
+  });
+
+  final TimewebAppRuntime runtime;
+  final String postId;
+  final List<String> mediaIds;
+  final int generation;
+
+  @override
+  State<_PostCarousel> createState() => _PostCarouselState();
+}
+
+class _PostCarouselState extends State<_PostCarousel> {
+  int _currentIndex = 0;
+  double? _aspectRatio;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFirstImageAspectRatio();
+  }
+
+  Future<void> _loadFirstImageAspectRatio() async {
+    if (widget.mediaIds.isEmpty) return;
+    try {
+      final reader = await widget.runtime.openPostMedia(widget.postId, widget.mediaIds.first);
+      final result = await reader.read();
+      await reader.close();
+      result.requireCurrent();
+      final bytes = result.bytes;
+      final codec = await ui.instantiateImageCodec(bytes);
+      final frame = await codec.getNextFrame();
+      final img = frame.image;
+      if (mounted && img.height > 0) {
+        setState(() {
+          _aspectRatio = img.width / img.height;
+        });
+      }
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final ar = _aspectRatio ?? (4 / 3);
+        final height = (width / ar).clamp(200.0, 480.0);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              height: height,
+              child: CarouselSlider(
+                options: CarouselOptions(
+                  height: height,
+                  viewportFraction: 1.0,
+                  enableInfiniteScroll: false,
+                  enlargeCenterPage: false,
+                  onPageChanged: (index, reason) {
+                    setState(() => _currentIndex = index);
+                  },
+                ),
+                items: widget.mediaIds.map((mediaId) {
+                  return Builder(
+                    builder: (BuildContext context) {
+                      return Container(
+                        width: width,
+                        margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: TimewebPostImage(
+                            key: ValueKey('${widget.generation}/${widget.postId}/$mediaId'),
+                            runtime: widget.runtime,
+                            postId: widget.postId,
+                            mediaId: mediaId,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }).toList(),
+              ),
+            ),
+            if (widget.mediaIds.length > 1) ...[
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: widget.mediaIds.asMap().entries.map((entry) {
+                  return Container(
+                    width: 6.0,
+                    height: 6.0,
+                    margin: const EdgeInsets.symmetric(horizontal: 3.0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: LrsTheme.peach.withValues(
+                        alpha: _currentIndex == entry.key ? 0.9 : 0.3,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
 }

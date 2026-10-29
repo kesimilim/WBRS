@@ -1,6 +1,5 @@
 import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'dart:async';
-import 'dart:ui' as ui;
 
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
@@ -740,12 +739,17 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
               padding: const EdgeInsets.only(top: 10),
               child: item.mediaIds.length == 1
                   ? TimewebPostImage(
-                      key: ValueKey('$_generation/${item.id}/${item.mediaIds.first}'),
+                      key: ValueKey(
+                        '$_generation/${item.id}/${item.mediaIds.first}',
+                      ),
                       runtime: widget.runtime,
                       postId: item.id,
                       mediaId: item.mediaIds.first,
                     )
                   : _PostCarousel(
+                      key: ValueKey(
+                        '$_generation/${item.id}/${item.mediaIds.join(',')}',
+                      ),
                       runtime: widget.runtime,
                       postId: item.id,
                       mediaIds: item.mediaIds,
@@ -893,6 +897,7 @@ class _SocialAuthorState extends State<_SocialAuthor> {
 
 class _PostCarousel extends StatefulWidget {
   const _PostCarousel({
+    super.key,
     required this.runtime,
     required this.postId,
     required this.mediaIds,
@@ -913,31 +918,6 @@ class _PostCarouselState extends State<_PostCarousel> {
   double? _aspectRatio;
 
   @override
-  void initState() {
-    super.initState();
-    _loadFirstImageAspectRatio();
-  }
-
-  Future<void> _loadFirstImageAspectRatio() async {
-    if (widget.mediaIds.isEmpty) return;
-    try {
-      final reader = await widget.runtime.openPostMedia(widget.postId, widget.mediaIds.first);
-      final result = await reader.read();
-      await reader.close();
-      result.requireCurrent();
-      final bytes = result.bytes;
-      final codec = await ui.instantiateImageCodec(bytes);
-      final frame = await codec.getNextFrame();
-      final img = frame.image;
-      if (mounted && img.height > 0) {
-        setState(() {
-          _aspectRatio = img.width / img.height;
-        });
-      }
-    } catch (_) {}
-  }
-
-  @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -950,7 +930,8 @@ class _PostCarouselState extends State<_PostCarousel> {
           children: [
             SizedBox(
               height: height,
-              child: CarouselSlider(
+              child: CarouselSlider.builder(
+                itemCount: widget.mediaIds.length,
                 options: CarouselOptions(
                   height: height,
                   viewportFraction: 1.0,
@@ -960,25 +941,31 @@ class _PostCarouselState extends State<_PostCarousel> {
                     setState(() => _currentIndex = index);
                   },
                 ),
-                items: widget.mediaIds.map((mediaId) {
-                  return Builder(
-                    builder: (BuildContext context) {
-                      return Container(
-                        width: width,
-                        margin: const EdgeInsets.symmetric(horizontal: 2.0),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: TimewebPostImage(
-                            key: ValueKey('${widget.generation}/${widget.postId}/$mediaId'),
-                            runtime: widget.runtime,
-                            postId: widget.postId,
-                            mediaId: mediaId,
-                          ),
+                itemBuilder: (context, index, realIndex) {
+                  final mediaId = widget.mediaIds[index];
+                  return Container(
+                    width: width,
+                    margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: TimewebPostImage(
+                        key: ValueKey(
+                          '${widget.generation}/${widget.postId}/$mediaId',
                         ),
-                      );
-                    },
+                        runtime: widget.runtime,
+                        postId: widget.postId,
+                        mediaId: mediaId,
+                        onAspectRatio: index == 0
+                            ? (ratio) {
+                                if (mounted && _aspectRatio != ratio) {
+                                  setState(() => _aspectRatio = ratio);
+                                }
+                              }
+                            : null,
+                      ),
+                    ),
                   );
-                }).toList(),
+                },
               ),
             ),
             if (widget.mediaIds.length > 1) ...[

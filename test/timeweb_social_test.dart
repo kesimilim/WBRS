@@ -13,6 +13,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_social_flow.dart';
 import 'package:wbrs/presentation/screens/feed/timeweb_feed_page.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
 
 import 'support/timeweb_people_fixtures.dart';
 import 'timeweb_photo_upload_test.dart' as photos;
@@ -474,6 +475,78 @@ String _postMedia(String uid, String operation) =>
     'tw-post-media-${sha256.convert(utf8.encode('clrs-native-post-photo-v1\u0000${jsonEncode([uid, operation])}'))}';
 
 void main() {
+  testWidgets(
+    'carousel dimensions reuse the protected image request and clear on logout',
+    (tester) async {
+      final folder = (await tester.runAsync(
+        () => Directory.systemTemp.createTemp('post-size-'),
+      ))!;
+      final binary = base64Decode(
+        'iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAIAAABt+uBvAAAA10lEQVR4nO3SMRHAIAAEQYhRvCAHlVEAZ2C3/e7m59lrcPc9NgRqHhQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJAQaAgUBAoCBQECgIFgYJA4+0HUeUCSzfoBukAAAAASUVORK5CYII=',
+      );
+      var reads = 0;
+      double? ratio;
+      final mediaId = _postMedia('A', photos.op);
+      final wire = PeopleWire((r) async {
+        if (r.url.path.endsWith('/me/full-profile')) {
+          return peopleReply(peopleOwn('A'));
+        }
+        if (r.url.path.endsWith('/auth/logout')) {
+          return peopleReply({'loggedOut': true});
+        }
+        if (r.url.path.endsWith('/media/$mediaId/content')) {
+          reads++;
+          return peopleReply(
+            {},
+            stream: Stream.value(binary),
+            length: binary.length,
+            headers: {'content-type': 'image/png'},
+          );
+        }
+        return peopleReply({'error': 'not_found'}, status: 404);
+      });
+      final app = _app(wire, PeopleStore(), folder);
+      addTearDown(() async {
+        await tester.pumpWidget(const SizedBox.shrink());
+        var done = false;
+        final stop = app.stop().then((_) => done = true);
+        await _untilWidget(tester, () => done);
+        await stop;
+        await tester.runAsync(() => folder.delete(recursive: true));
+      });
+      await tester.runAsync(() => app.start(remember: true));
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: TimewebPostImage(
+              runtime: app,
+              postId: 'post-A',
+              mediaId: mediaId,
+              onAspectRatio: (value) => ratio = value,
+            ),
+          ),
+        ),
+      );
+      await _untilWidget(tester, () => ratio != null);
+      expect(ratio, 1);
+      expect(reads, 1);
+      expect(
+        find.byKey(const ValueKey('timeweb-post-image-post-A')),
+        findsOneWidget,
+      );
+      var loggedOut = false;
+      final logout = app.session.logout().then((_) => loggedOut = true);
+      await _untilWidget(tester, () => loggedOut);
+      await logout;
+      await tester.pump();
+      expect(
+        find.byKey(const ValueKey('timeweb-post-image-post-A')),
+        findsNothing,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   test(
     'post photo uses private upload, verified commit, attached feed and edit/delete receipts',
     () async {

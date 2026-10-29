@@ -14,10 +14,12 @@ class TimewebPostImage extends StatefulWidget {
     required this.postId,
     required this.mediaId,
     this.compact = false,
+    this.onAspectRatio,
   });
   final TimewebAppRuntime runtime;
   final String postId, mediaId;
   final bool compact;
+  final ValueChanged<double>? onAspectRatio;
   @override
   State<TimewebPostImage> createState() => _TimewebPostImageState();
 }
@@ -28,6 +30,8 @@ class _TimewebPostImageState extends State<TimewebPostImage> {
   TimewebPostMediaReader? _reader;
   Uint8List? _bytes;
   MemoryImage? _image;
+  ImageStream? _sizeStream;
+  ImageStreamListener? _sizeListener;
   bool _busy = true;
   bool get _current => mounted && _lease.isCurrent;
   @override
@@ -45,6 +49,9 @@ class _TimewebPostImageState extends State<TimewebPostImage> {
   }
 
   void _clear() {
+    if (_sizeListener != null) _sizeStream?.removeListener(_sizeListener!);
+    _sizeListener = null;
+    _sizeStream = null;
     final image = _image;
     _image = null;
     if (image != null) {
@@ -79,6 +86,20 @@ class _TimewebPostImageState extends State<TimewebPostImage> {
         _bytes = bytes;
         _image = MemoryImage(bytes);
       });
+      if (widget.onAspectRatio != null) {
+        final image = _image!;
+        _sizeStream = image.resolve(const ImageConfiguration());
+        _sizeListener = ImageStreamListener((info, synchronousCall) {
+          final ratio = info.image.width / info.image.height;
+          info.dispose();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_current && identical(_image, image)) {
+              widget.onAspectRatio?.call(ratio);
+            }
+          });
+        }, onError: (Object error, StackTrace? stack) {});
+        _sizeStream!.addListener(_sizeListener!);
+      }
     } catch (_) {
       if (_current) {
         _clear();

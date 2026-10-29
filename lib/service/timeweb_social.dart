@@ -1,12 +1,149 @@
 part of 'timeweb_auth_client.dart';
 
+extension TimewebDonationClient on TimewebAuthClient {
+  Future<Uri> donationCheckout(int amountMinor) {
+    try {
+      _checkEnabled(_peopleOperation);
+      if (!configuration.runtimeWritesEnabled ||
+          _session == null ||
+          _secureStoreUnsafe ||
+          amountMinor < 100 ||
+          amountMinor > 10000000) {
+        throw const TimewebAuthException(
+          _peopleOperation,
+          TimewebAuthError.invalidRequest,
+        );
+      }
+      final key = 'donation:$_epoch:$amountMinor';
+      final prior = _peopleFlights[key];
+      if (prior != null) return prior.result.future.then((v) => v as Uri);
+      if (_peopleFlights.length >= 4)
+        throw const TimewebAuthException(
+          _peopleOperation,
+          TimewebAuthError.unavailable,
+        );
+      final f = _PeopleFlight(
+        this,
+        null,
+        null,
+        null,
+        _epoch,
+        _session!.uid,
+        key,
+      );
+      _peopleFlights[key] = f;
+      unawaited(_executeDonation(f, amountMinor));
+      return f.result.future.then((v) => v as Uri);
+    } catch (e) {
+      return Future.error(e);
+    }
+  }
+}
+
+Future<void> _executeDonation(_PeopleFlight f, int amountMinor) async {
+  final owner = f.owner;
+  try {
+    f.check();
+    var session = owner._session!;
+    if (!owner
+        ._clock()
+        .add(owner.accessExpirySkew)
+        .isBefore(session.accessExpiresAt)) {
+      session = await owner.refresh();
+      f.check();
+    }
+    final uri = owner.configuration.endpoint.replace(
+      path: '/v1/runtime/social/donation-checkout',
+      queryParameters: {'amountMinor': '$amountMinor'},
+    );
+    var reply = await _meetingAttempt(f, uri, session.accessToken);
+    f.check();
+    if (reply.status == 401) {
+      if (owner._session?.accessToken == session.accessToken)
+        await owner.refresh();
+      f.check();
+      session = owner._session!;
+      reply = await _meetingAttempt(f, uri, session.accessToken);
+      f.check();
+    }
+    if (reply.status != 200)
+      throw owner._statusError(_peopleOperation, reply.status);
+    final data = reply.body!;
+    if (!_mutationExact(data, {'url', 'amountMinor', 'test'}) ||
+        data['amountMinor'] != amountMinor ||
+        data['test'] is! bool ||
+        data['url'] is! String ||
+        data['url'].length > 2048)
+      _peopleInvalid();
+    final target = Uri.tryParse(data['url']);
+    if (target == null ||
+        target.scheme != 'https' ||
+        target.host != 'auth.robokassa.ru' ||
+        target.hasPort ||
+        target.userInfo.isNotEmpty ||
+        target.hasFragment ||
+        target.path != '/Merchant/Index.aspx')
+      _peopleInvalid();
+    final params = target.queryParameters;
+    if (params['MerchantLogin'] != 'WBRS' ||
+        params['InvId'] != '0' ||
+        params['OutSum'] !=
+            '${amountMinor ~/ 100}.${(amountMinor % 100).toString().padLeft(2, '0')}' ||
+        !RegExp(r'^[a-f0-9]{32}$').hasMatch(params['SignatureValue'] ?? '') ||
+        (params['IsTest'] == '1') != data['test']) {
+      _peopleInvalid();
+    }
+    if (!f.result.isCompleted) f.result.complete(target);
+  } catch (e) {
+    if (!f.result.isCompleted) f.result.completeError(e);
+  } finally {
+    f.timer.cancel();
+    if (identical(owner._peopleFlights[f.key], f))
+      owner._peopleFlights.remove(f.key);
+    f.settled.complete();
+  }
+}
+
 /// Exact original action. Text is retained for hashing; the server owns display
 /// normalization, role checks and the affected rows.
 final class TimewebSocialAction {
   TimewebSocialAction._(this.payload);
   final Map<String, dynamic> payload;
-  factory TimewebSocialAction.publish(String text) =>
-      TimewebSocialAction.fromPayload({'kind': 'publish', 'text': text});
+  factory TimewebSocialAction.publish(String text, {List<String>? mediaIds}) =>
+      TimewebSocialAction.fromPayload({
+        'kind': 'publish',
+        'text': text,
+        if (mediaIds != null) 'mediaIds': mediaIds,
+      });
+  factory TimewebSocialAction.updatePost(
+    TimewebSocialItem post,
+    String text,
+    List<String> mediaIds,
+  ) => TimewebSocialAction.fromPayload({
+    'kind': 'update-post',
+    'postId': post.id,
+    'text': text,
+    'mediaIds': mediaIds,
+    'expectedContentHash': post.contentHash,
+  });
+  factory TimewebSocialAction.deletePost(TimewebSocialItem post) =>
+      TimewebSocialAction.fromPayload({
+        'kind': 'delete-post',
+        'postId': post.id,
+        'expectedContentHash': post.contentHash,
+      });
+  factory TimewebSocialAction.prepareMedia(TimewebPhotoMetadata metadata) =>
+      TimewebSocialAction.fromPayload({
+        'kind': 'prepare-media',
+        ...metadata.fields,
+      });
+  factory TimewebSocialAction.commitMedia(
+    TimewebPreparedPhotoReceipt prepared,
+  ) => TimewebSocialAction.fromPayload({
+    'kind': 'commit-media',
+    'mediaId': prepared.mediaId,
+    'prepareOperationId': prepared.prepareOperationId,
+  });
   factory TimewebSocialAction.comment(
     String postId,
     String text, {
@@ -41,7 +178,21 @@ final class TimewebSocialAction {
       });
   factory TimewebSocialAction.fromPayload(Map<String, dynamic> value) {
     final keys = switch (value['kind']) {
-      'publish' => {'kind', 'text'},
+      'publish' => {
+        'kind',
+        'text',
+        if (value.containsKey('mediaIds')) 'mediaIds',
+      },
+      'update-post' => {
+        'kind',
+        'postId',
+        'text',
+        'mediaIds',
+        'expectedContentHash',
+      },
+      'delete-post' => {'kind', 'postId', 'expectedContentHash'},
+      'prepare-media' => {'kind', 'sha256', 'byteSize', 'mimeType'},
+      'commit-media' => {'kind', 'mediaId', 'prepareOperationId'},
       'comment' => {'kind', 'postId', 'text', 'parentId'},
       'react' => {'kind', 'postId', 'commentId', 'active'},
       'report' || 'hide-comment' => {'kind', 'postId', 'commentId'},
@@ -49,9 +200,19 @@ final class TimewebSocialAction {
     };
     if (keys.isEmpty ||
         !_mutationExact(value, keys) ||
-        value['kind'] != 'publish' && !_mutationId(value['postId']) ||
-        const {'publish', 'comment'}.contains(value['kind']) &&
-            !_socialText(value['text'], input: true) ||
+        !const {
+              'publish',
+              'prepare-media',
+              'commit-media',
+            }.contains(value['kind']) &&
+            !_mutationId(value['postId']) ||
+        const {'publish', 'comment', 'update-post'}.contains(value['kind']) &&
+            !_socialText(
+              value['text'],
+              input:
+                  value['mediaIds'] is! List ||
+                  (value['mediaIds'] as List).isEmpty,
+            ) ||
         value.containsKey('parentId') &&
             value['parentId'] != null &&
             !_mutationId(value['parentId']) ||
@@ -62,13 +223,50 @@ final class TimewebSocialAction {
         value['kind'] == 'react' && value['active'] is! bool) {
       throw ArgumentError('Invalid native social action.');
     }
-    return TimewebSocialAction._(Map<String, dynamic>.unmodifiable(value));
+    if (value.containsKey('mediaIds') && !_socialMediaIds(value['mediaIds']) ||
+        value.containsKey('expectedContentHash') &&
+            (value['expectedContentHash'] is! String ||
+                !RegExp(
+                  r'^[a-f0-9]{64}$',
+                ).hasMatch(value['expectedContentHash'])) ||
+        value['kind'] == 'commit-media' &&
+            (!_uploadUuid(value['prepareOperationId']) ||
+                !_socialMid(value['mediaId']))) {
+      throw ArgumentError('Invalid post content.');
+    }
+    if (value['kind'] == 'prepare-media') {
+      TimewebPhotoMetadata(
+        sha256: value['sha256'],
+        byteSize: value['byteSize'],
+        mimeType: value['mimeType'],
+      );
+    }
+    return TimewebSocialAction._(
+      Map<String, dynamic>.unmodifiable({
+        ...value,
+        if (value.containsKey('mediaIds'))
+          'mediaIds': List<String>.unmodifiable(value['mediaIds']),
+      }),
+    );
   }
   String get kind => payload['kind'];
   String get operation => 'social.$kind.v1';
   @override
   String toString() => 'TimewebSocialAction(<redacted>)';
 }
+
+bool _socialMid(Object? v) =>
+    v is String && RegExp(r'^tw-post-media-[a-f0-9]{64}$').hasMatch(v);
+bool _socialMediaIds(Object? v) =>
+    v is List &&
+    v.length <= 10 &&
+    v.every(_mutationId) &&
+    v.toSet().length == v.length;
+String _socialContentHash(String? text, List<String> ids) => crypto.sha256
+    .convert(utf8.encode(_mutationCanonical({'text': text, 'mediaIds': ids})))
+    .toString();
+String _socialMediaId(String uid, String operation) =>
+    'tw-post-media-${crypto.sha256.convert(utf8.encode('clrs-native-post-photo-v1\u0000${_mutationCanonical([uid, operation])}'))}';
 
 bool _socialText(Object? value, {bool input = false}) =>
     value is String &&
@@ -79,7 +277,19 @@ bool _socialText(Object? value, {bool input = false}) =>
     utf8.decode(utf8.encode(value)) == value;
 
 final class TimewebSocialReceipt {
-  TimewebSocialReceipt._(this._data, this._kind, this._check);
+  TimewebSocialReceipt._(this._data, this._kind, this._check, this._reference);
+  final TimewebMutationReference _reference;
+  TimewebPreparedPhotoReceipt get preparedMedia {
+    requireCurrent();
+    if (_kind != 'prepare-media') throw StateError('Not a post image receipt.');
+    return TimewebPreparedPhotoReceipt._(_data, _reference, _check);
+  }
+
+  String? get mediaId {
+    requireCurrent();
+    return _data['mediaId'];
+  }
+
   final Map<String, dynamic> _data;
   final String _kind;
   final void Function() _check;
@@ -108,7 +318,7 @@ final class TimewebSocialReceipt {
       TimewebSocialReceipt._(_data, _kind, () {
         requireCurrent();
         guard();
-      });
+      }, _reference);
   @override
   String toString() => 'TimewebSocialReceipt(<redacted>)';
 }
@@ -125,8 +335,70 @@ TimewebMutationResult _decodeSocialReceipt(
 ) {
   final action = ref._request._payload;
   final kind = action['kind'];
+  if (reply.status == 409 &&
+      _mutationExact(data, {'error'}) &&
+      revision == null &&
+      const {
+        'post_changed',
+        'social_access_denied',
+        'media_not_verified',
+      }.contains(data['error'])) {
+    return TimewebMutationResult._(
+      ref,
+      TimewebMutationState.declaredFailure,
+      409,
+      replayed: replayed,
+      receiptConfirmed: true,
+      failure: data['error'] == 'post_changed'
+          ? TimewebMutationFailure.conflict
+          : data['error'] == 'media_not_verified'
+          ? TimewebMutationFailure.photoVerificationFailed
+          : TimewebMutationFailure.socialAccessDenied,
+    );
+  }
+  if (kind == 'prepare-media' || kind == 'commit-media') {
+    final prepare = kind == 'prepare-media';
+    final expected = _socialMediaId(
+      ref._uid,
+      prepare ? ref._request.operationId : action['prepareOperationId'],
+    );
+    if (revision != null ||
+        reply.status != (prepare ? 201 : 200) ||
+        !_mutationExact(
+          data,
+          prepare
+              ? {'mediaId', 'status', 'sha256', 'byteSize', 'mimeType'}
+              : {'mediaId', 'ready'},
+        ) ||
+        data['mediaId'] != expected ||
+        (!prepare &&
+            (action['mediaId'] != expected || data['ready'] != true)) ||
+        prepare &&
+            (data['status'] != 'pending' ||
+                data['byteSize'] is! int ||
+                data['byteSize'] != action['byteSize'] ||
+                data['mimeType'] != action['mimeType'] ||
+                data['sha256'] != action['sha256'])) {
+      _mutationInvalidReply();
+    }
+    return TimewebMutationResult._(
+      ref,
+      TimewebMutationState.confirmed,
+      reply.status,
+      replayed: replayed,
+      receiptConfirmed: true,
+      social: TimewebSocialReceipt._(
+        Map.unmodifiable(data),
+        kind,
+        ref.requireCurrent,
+        ref,
+      ),
+    );
+  }
   final keys = switch (kind) {
     'publish' => {'postId'},
+    'update-post' => {'postId', 'updated'},
+    'delete-post' => {'postId', 'deleted'},
     'comment' => {'postId', 'commentId'},
     'react' => {'postId', 'commentId', 'active'},
     'report' => {'postId', 'commentId', 'reported'},
@@ -149,7 +421,9 @@ TimewebMutationResult _decodeSocialReceipt(
           data['commentId'] != action['commentId'] ||
       kind == 'react' && data['active'] != action['active'] ||
       kind == 'report' && data['reported'] != true ||
-      kind == 'hide-comment' && data['hidden'] != true) {
+      kind == 'hide-comment' && data['hidden'] != true ||
+      kind == 'update-post' && data['updated'] != true ||
+      kind == 'delete-post' && data['deleted'] != true) {
     _mutationInvalidReply();
   }
   return TimewebMutationResult._(
@@ -162,6 +436,7 @@ TimewebMutationResult _decodeSocialReceipt(
       Map.unmodifiable(data),
       kind,
       ref.requireCurrent,
+      ref,
     ),
   );
 }
@@ -181,6 +456,18 @@ final class TimewebSocialItem {
   String get authorUid => _read<String>('authorUid')!;
   String? get text => _read<String>('text');
   String? get mediaId => _read<String>('mediaId');
+  List<String> get mediaIds {
+    requireCurrent();
+    return List<String>.unmodifiable(
+      _data['mediaIds'] ?? (mediaId == null ? <String>[] : [mediaId!]),
+    );
+  }
+
+  String get contentHash {
+    requireCurrent();
+    return _data['contentHash'] ?? _socialContentHash(text, mediaIds);
+  }
+
   String? get createdAt => _read<String>('createdAt');
   String? get parentId => _read<String>('parentId');
   int? get likeCount => _read<int>('likeCount');
@@ -412,6 +699,7 @@ Future<void> _executeSocialRead(
       ],
       queryParameters: {
         if (postId == null) 'limit': '$limit',
+        if (postId == null) 'media': 'all',
         if (wallUid != null) 'wallUid': wallUid,
         if (cursor != null) 'cursor': cursor._value,
       },
@@ -539,9 +827,22 @@ TimewebSocialPage _decodeSocialPage(
                   'likeCount',
                   'commentCount',
                   'liked',
+                  if (value.containsKey('mediaIds')) 'mediaIds',
+                  if (value.containsKey('contentHash')) 'contentHash',
                 },
         ) ||
         !_mutationId(value['id']) ||
+        value.containsKey('mediaIds') &&
+            (!_socialMediaIds(value['mediaIds']) ||
+                value['contentHash'] !=
+                    _socialContentHash(
+                      value['text'],
+                      List<String>.from(value['mediaIds']),
+                    ) ||
+                value['mediaId'] !=
+                    ((value['mediaIds'] as List).isEmpty
+                        ? null
+                        : value['mediaIds'][0])) ||
         !_mutationId(value['authorUid']) ||
         !ids.add(value['id']) ||
         value['text'] != null && !_socialText(value['text']) ||
@@ -605,4 +906,20 @@ int _socialCompare(
       : aDate.compareTo(bDate);
   final compared = date != 0 ? date : _currentCompareIds(aId, bId);
   return comments ? compared : -compared;
+}
+
+extension TimewebSocialRetry on TimewebAuthClient {
+  Future<TimewebMutationResult> retryOriginalSocialAction(
+    TimewebMutationReference reference,
+  ) {
+    _checkMutationOwner(this, reference);
+    if (reference._request.kind != TimewebMutationKind.socialAction ||
+        reference._settledResult?.state != TimewebMutationState.notFound) {
+      throw StateError(
+        'Check the original social operation before retrying it.',
+      );
+    }
+    reference._postFlight = null;
+    return _mutate(this, reference);
+  }
 }

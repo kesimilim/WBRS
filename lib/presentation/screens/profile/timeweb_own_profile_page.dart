@@ -10,9 +10,9 @@ import 'package:wbrs/presentation/screens/settings/timeweb_account_page.dart';
 import 'package:wbrs/presentation/screens/list_of_users/timeweb_people_page.dart';
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chats_page.dart';
+import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/presentation/screens/edit_profile/timeweb_profile_edit_page.dart';
 import 'package:wbrs/service/app_session.dart';
 import 'package:wbrs/service/timeweb_app_runtime.dart';
@@ -74,11 +74,13 @@ class TimewebOwnProfilePage extends StatefulWidget {
     this.initialProfile,
     this.initialError = false,
     this.onOpenPeople,
+    this.menuOnly = false,
   });
   final TimewebAppRuntime runtime;
   final TimewebCurrentOwnProfile? initialProfile;
   final bool initialError;
   final VoidCallback? onOpenPeople;
+  final bool menuOnly;
   @override
   State<TimewebOwnProfilePage> createState() => _TimewebOwnProfilePageState();
 }
@@ -114,7 +116,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
     _error = widget.initialError;
     unawaited(_prepareInitialAndTemperament());
     unawaited(_probeAdmin());
-    unawaited(_loadGifts());
+    if (!widget.menuOnly) unawaited(_loadGifts());
     _subscription = widget.runtime.session.states.listen((_) {
       if (!_current) _invalidate();
     });
@@ -729,6 +731,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
         !_initialPending &&
         !initialRequired;
     final available = current && !_loading && !_opening;
+    if (widget.menuOnly) return _drawer(available);
     TimewebTemperamentFlow? temperament;
     if (current) {
       try {
@@ -751,7 +754,10 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                 'Гости',
                 available && widget.runtime.peopleEnabled
                     ? () => _openNativePage(
-                        TimewebContactsPageView(runtime: widget.runtime, guests: true),
+                        TimewebContactsPageView(
+                          runtime: widget.runtime,
+                          guests: true,
+                        ),
                         selectedIndex: 4,
                       )
                     : null,
@@ -1106,7 +1112,14 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                             fit: StackFit.expand,
                             children: [
                               ClipOval(
-                                child: _drawerImage == null
+                                child: widget.menuOnly
+                                    ? TimewebChatAvatar(
+                                        runtime: widget.runtime,
+                                        uid: _profile!.uid,
+                                        size: 68,
+                                        readGroup: false,
+                                      )
+                                    : _drawerImage == null
                                     ? const ColoredBox(
                                         color: Color(0x4431241D),
                                         child: Icon(
@@ -1186,6 +1199,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                   'Пройти тест',
                   Icons.quiz_outlined,
                   available && _temperament != null ? _openTemperament : null,
+                  key: const ValueKey('timeweb-menu-temperament'),
                 ),
                 _menu(
                   'Поддержать проект',
@@ -1200,7 +1214,19 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                     available ? _openChats : null,
                     key: const ValueKey('timeweb-open-chats'),
                   ),
-                _menu('Гости', Icons.visibility_outlined, available && widget.runtime.peopleEnabled ? () => _openNativePage(TimewebContactsPageView(runtime: widget.runtime, guests: true), selectedIndex: 4) : null),
+                _menu(
+                  'Гости',
+                  Icons.visibility_outlined,
+                  available && widget.runtime.peopleEnabled
+                      ? () => _openNativePage(
+                          TimewebContactsPageView(
+                            runtime: widget.runtime,
+                            guests: true,
+                          ),
+                          selectedIndex: 4,
+                        )
+                      : null,
+                ),
                 _menu(
                   'Список пользователей',
                   Icons.people_outline,
@@ -1208,7 +1234,16 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
                       ? _openPeople
                       : null,
                 ),
-                _menu('Друзья', Icons.person_add_alt_1_outlined, available && widget.runtime.peopleEnabled ? () => _openNativePage(TimewebContactsPageView(runtime: widget.runtime), selectedIndex: 4) : null),
+                _menu(
+                  'Друзья',
+                  Icons.person_add_alt_1_outlined,
+                  available && widget.runtime.peopleEnabled
+                      ? () => _openNativePage(
+                          TimewebContactsPageView(runtime: widget.runtime),
+                          selectedIndex: 4,
+                        )
+                      : null,
+                ),
                 if (widget.runtime.ownProfileEnabled)
                   _menu(
                     'Уведомления',
@@ -1280,7 +1315,7 @@ class _TimewebOwnProfilePageState extends State<TimewebOwnProfilePage> {
 
   Future<void> _supportProject() async {
     if (!_current) return;
-    DonateButton.show(context);
+    DonateButton.show(context, runtime: widget.runtime);
   }
 
   Widget _menu(

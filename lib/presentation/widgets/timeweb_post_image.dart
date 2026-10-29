@@ -13,9 +13,11 @@ class TimewebPostImage extends StatefulWidget {
     required this.runtime,
     required this.postId,
     required this.mediaId,
+    this.compact = false,
   });
   final TimewebAppRuntime runtime;
   final String postId, mediaId;
+  final bool compact;
   @override
   State<TimewebPostImage> createState() => _TimewebPostImageState();
 }
@@ -108,6 +110,7 @@ class _TimewebPostImageState extends State<TimewebPostImage> {
       );
     }
     if (_image == null) {
+      if (widget.compact) return const Icon(Icons.image_not_supported_outlined);
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [

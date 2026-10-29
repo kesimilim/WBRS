@@ -150,6 +150,10 @@ class CurrentProfilePhotoTests(unittest.TestCase):
     def reference(self):
         return self.page()["items"][0]["reference"]
 
+    def test_real_driver_tuple_container_keeps_valid_photos_and_visibility(self):
+        with patch.object(PhotoCursor, 'fetchall', lambda cursor: tuple(cursor.rows)):
+            self.test_public_descriptors_and_full_verified_private_bytes_no_writes()
+
     def test_public_descriptors_and_full_verified_private_bytes_no_writes(self):
         before = copy.deepcopy(self.db.state)
         page = self.page(); item = page["items"][0]
@@ -166,6 +170,15 @@ class CurrentProfilePhotoTests(unittest.TestCase):
         self.assertTrue(all(c.closed for c in self.db.connections))
         self.assertTrue(all(not sql.startswith(("INSERT", "UPDATE", "DELETE")) for sql, _ in self.db.calls))
         self.assertEqual([], os.listdir(self.temp.name))
+
+    def test_presence_only_change_keeps_photo_but_owner_and_reference_change_refuse(self):
+        raw = copy.deepcopy(self.db.state['profiles']['peer'][3])
+        self.db.state['profiles']['peer'][3] = raw
+        raw['fields']['lastOnlineTS'] = {'timestampValue':'2027-01-15T08:00:00Z'}
+        raw['updateTime'] = '2027-01-15T08:00:00Z'
+        self.assertEqual(len(self.page()['items']), 1)
+        raw['fields']['profilePic'] = {'stringValue':'https://example.org/other.jpg'}
+        with self.assertRaises(photos.RuntimeProfilePhotoNotFound): self.page()
 
     def test_own_hidden_profile_allowed_public_hidden_disabled_or_missing_rejected(self):
         self.db.state["profiles"]["actor"][2] = "2030-01-01T00:00:00.000000Z"

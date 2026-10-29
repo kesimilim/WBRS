@@ -1,3 +1,4 @@
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -258,6 +259,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
     return ClrsScaffold(
       backgroundAsset: 'assets/wallpaper/8.jpg',
       appBar: AppBar(
+        leading: TimewebMenuButton.forRoot(context),
         backgroundColor: Colors.transparent,
         title: const ClrsLogo(size: 33),
         actions: [
@@ -541,7 +543,7 @@ class TimewebChatPage extends StatefulWidget {
   final TimewebChatFlow flow;
   final TimewebAppRuntime? runtime;
   final ContentTranslationService Function(String? Function())?
-      translationFactory;
+  translationFactory;
   @override
   State<TimewebChatPage> createState() => _TimewebChatPageState();
 }
@@ -559,7 +561,8 @@ class _TimewebChatPageState extends State<TimewebChatPage>
   void initState() {
     super.initState();
     String? owner() => _current ? widget.flow.ownerUid : null;
-    _translator = widget.translationFactory?.call(owner) ??
+    _translator =
+        widget.translationFactory?.call(owner) ??
         ContentTranslationService(
           endpoint: null,
           currentUserId: owner,

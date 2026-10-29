@@ -13,6 +13,7 @@ import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/geo_catalog.dart';
 import 'package:wbrs/presentation/screens/chat_screen/timeweb_chat_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
+import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
 
 import 'show/timeweb_person_page.dart';
 
@@ -46,7 +47,7 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
   List<GeoCountry>? _countries;
   String? _countryCode, _region, _pol;
   RangeValues _ages = const RangeValues(18, 100);
-  bool _compatible = false, _showFilters = true;
+  bool _compatible = false, _showFilters = false;
   bool _loading = false, _opening = false, _error = false, _invalidated = false;
   int _generation = 0, _pageNumber = 1;
   final _pageCursors = <TimewebPeopleCursor?>[null];
@@ -298,6 +299,7 @@ class _TimewebPeoplePageViewState extends State<TimewebPeoplePageView> {
   Widget build(BuildContext context) => ClrsScaffold(
     key: const ValueKey('timeweb-people-directory'),
     appBar: AppBar(
+      leading: TimewebMenuButton.forRoot(context),
       title: Text(context.tr('Люди')),
       actions: [
         IconButton(

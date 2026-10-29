@@ -64,13 +64,10 @@ final class TimewebTemperamentFlow {
     );
     final intent = await journal._load(flow._origin, snapshot.uid);
     flow.requireCurrent();
-    // After a lost ACK a committed profile may already be complete. Recovery
-    // can only look up that original operation; it cannot post a second test.
-    if (snapshot.onboarding == TimewebOnboarding.search && intent == null) {
-      throw TimewebNoPendingTemperament();
-    }
+    // A completed member may explicitly retake the test. An unresolved journal
+    // still restores only its original operation; submit cannot replace it.
     if (snapshot.onboarding != TimewebOnboarding.test &&
-        !(intent != null && snapshot.onboarding == TimewebOnboarding.search)) {
+        snapshot.onboarding != TimewebOnboarding.search) {
       throw StateError('Current profile is not ready for the questionnaire.');
     }
     if (intent != null) {

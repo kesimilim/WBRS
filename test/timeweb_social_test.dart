@@ -15,6 +15,7 @@ import 'package:wbrs/presentation/screens/feed/timeweb_feed_page.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
+import 'timeweb_photo_upload_test.dart' as photos;
 
 String _hash(Object value) {
   Object? canonical(Object? v) {
@@ -159,11 +160,19 @@ void _socialWidgetCase() {
                 .isEmpty,
       );
       await tester.tap(find.byKey(const ValueKey('timeweb-social-new-post')));
-      await tester.pump();
-      await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('timeweb-social-text')),
-        300,
-        scrollable: find.byType(Scrollable).hitTestable().first,
+      await tester.pump(const Duration(milliseconds: 350));
+      await _untilWidget(
+        tester,
+        () =>
+            find
+                .byKey(const ValueKey('timeweb-social-text'))
+                .evaluate()
+                .isNotEmpty &&
+            !tester
+                .widget<TextField>(
+                  find.byKey(const ValueKey('timeweb-social-text')),
+                )
+                .readOnly,
       );
       await tester.enterText(
         find.byKey(const ValueKey('timeweb-social-text')),
@@ -270,7 +279,9 @@ void _socialWidgetCase() {
                 .evaluate()
                 .isEmpty,
       );
-      final hide = find.byTooltip('Удалить');
+      await tester.tap(find.byIcon(Icons.more_horiz).last);
+      await tester.pumpAndSettle();
+      final hide = find.text('Скрыть комментарий');
       await tester.ensureVisible(hide);
       await tester.pump();
       await tester.tap(hide);
@@ -309,11 +320,19 @@ void _socialWidgetCase() {
       );
       hold = true;
       await tester.tap(find.byKey(const ValueKey('timeweb-social-new-post')));
-      await tester.pump();
-      await tester.scrollUntilVisible(
-        find.byKey(const ValueKey('timeweb-social-text')),
-        300,
-        scrollable: find.byType(Scrollable).hitTestable().first,
+      await tester.pump(const Duration(milliseconds: 350));
+      await _untilWidget(
+        tester,
+        () =>
+            find
+                .byKey(const ValueKey('timeweb-social-text'))
+                .evaluate()
+                .isNotEmpty &&
+            !tester
+                .widget<TextField>(
+                  find.byKey(const ValueKey('timeweb-social-text')),
+                )
+                .readOnly,
       );
       await tester.enterText(
         find.byKey(const ValueKey('timeweb-social-text')),
@@ -379,6 +398,14 @@ Map<String, dynamic> _receipt(
     'entityRevision': null,
     'result': switch (kind) {
       'publish' => {'postId': _created(kind, uid, body['operationId'])},
+      'prepare-media' => {
+        'mediaId': _postMedia(uid, body['operationId']),
+        'status': 'pending',
+        for (final k in ['mimeType', 'byteSize', 'sha256']) k: p[k],
+      },
+      'commit-media' => {'mediaId': p['mediaId'], 'ready': true},
+      'update-post' => {'postId': p['postId'], 'updated': true},
+      'delete-post' => {'postId': p['postId'], 'deleted': true},
       'comment' => {
         'postId': p['postId'],
         'commentId': _created(kind, uid, body['operationId']),
@@ -443,7 +470,121 @@ TimewebAppRuntime _app(
   socialJournal: TimewebSocialJournal(directory: () async => folder),
 );
 
+String _postMedia(String uid, String operation) =>
+    'tw-post-media-${sha256.convert(utf8.encode('clrs-native-post-photo-v1\u0000${jsonEncode([uid, operation])}'))}';
+
 void main() {
+  test(
+    'post photo uses private upload, verified commit, attached feed and edit/delete receipts',
+    () async {
+      final folder = await Directory.systemTemp.createTemp('post-media-');
+      final bodies = <Map<String, dynamic>>[];
+      String? mid, postId;
+      String text = '';
+      var put = false;
+      final wire = PeopleWire((r) async {
+        if (r.method == 'PUT') {
+          expect((r as http.Request).bodyBytes, photos.binary);
+          expect(r.headers.containsKey('authorization'), false);
+          expect(r.followRedirects, false);
+          put = true;
+          return peopleReply({}, status: 200);
+        }
+        if (r.url.path.endsWith('/lease')) {
+          final operation = r.url.queryParameters['prepareOperationId']!;
+          final value = photos.lease(operation, peopleNow);
+          mid = _postMedia('A', operation);
+          value['mediaId'] = mid;
+          value['url'] = Uri.parse(value['url'] as String)
+              .replace(
+                path:
+                    '/synthetic-bucket/clrs-native-profile/${mid!.substring(14)}',
+              )
+              .toString();
+          return peopleReply(value);
+        }
+        if (r.url.path.endsWith('/social/actions')) {
+          final b =
+              jsonDecode((r as http.Request).body) as Map<String, dynamic>;
+          bodies.add(b);
+          final kind = b['payload']['kind'];
+          if (kind == 'commit-media') expect(put, true);
+          if (kind == 'publish') {
+            postId = _created('publish', 'A', b['operationId']);
+            text = b['payload']['text'];
+          }
+          return peopleReply(
+            _receipt(b, 'A'),
+            status: kind == 'publish' || kind == 'prepare-media' ? 201 : 200,
+          );
+        }
+        if (r.url.path.endsWith('/social/feed')) {
+          return peopleReply(
+            _feed([
+              {
+                ..._post(postId!, peopleStamp),
+                'authorUid': 'A',
+                'text': text,
+                'mediaId': mid,
+                'mediaIds': [mid],
+                'contentHash': _hash({
+                  'text': text,
+                  'mediaIds': [mid],
+                }),
+              },
+            ]),
+          );
+        }
+        return peopleReply({'error': 'not_found'}, status: 404);
+      });
+      final app = _app(wire, PeopleStore(), folder);
+      addTearDown(() async {
+        await app.stop();
+        await folder.delete(recursive: true);
+      });
+      await app.start(remember: true);
+      final flow = await app.openSocial();
+      final source = photos.source();
+      expect(
+        await flow.submit(TimewebSocialAction.prepareMedia(source.metadata)),
+        TimewebSocialOutcome.confirmed,
+      );
+      final prepared = flow.receipt!.preparedMedia;
+      final lease = await app.client.leaseProfilePhotoUpload(prepared);
+      await app.client.putProfilePhoto(lease, source);
+      expect(
+        await flow.submit(TimewebSocialAction.commitMedia(prepared)),
+        TimewebSocialOutcome.confirmed,
+      );
+      expect(
+        await flow.submit(
+          TimewebSocialAction.publish('Two stage photo', mediaIds: [mid!]),
+        ),
+        TimewebSocialOutcome.confirmed,
+      );
+      final page = await app.client.readSocialFeed();
+      final post = page.items.single;
+      expect(post.mediaIds, [mid]);
+      expect(
+        post.contentHash,
+        _hash({
+          'text': text,
+          'mediaIds': [mid],
+        }),
+      );
+      expect(
+        await flow.submit(TimewebSocialAction.updatePost(post, 'Edited', [])),
+        TimewebSocialOutcome.confirmed,
+      );
+      expect(
+        await flow.submit(TimewebSocialAction.deletePost(post)),
+        TimewebSocialOutcome.confirmed,
+      );
+      expect(bodies.map((b) => b['operationId']).toSet().length, 5);
+      flow.close();
+      expect(Firebase.apps, isEmpty);
+    },
+  );
   _socialWidgetCase();
   test(
     'retained meeting IDs are GET-only; native send receipt still requires original derived ID',
@@ -556,7 +697,7 @@ void main() {
   );
 
   test(
-    'lost ACK restart is original lookup only; absent and denied cannot ACK or send a new UUID',
+    'lost ACK restart checks first; explicit retry preserves the original UUID and denied cannot ACK',
     () async {
       final folder = await Directory.systemTemp.createTemp('social-restart-'),
           store = PeopleStore();
@@ -622,7 +763,12 @@ void main() {
       expect(restarted.session.state.authenticated, isTrue);
       status = 'ready';
       expect(await flow.check(), TimewebSocialOutcome.confirmed);
-      expect(wire.calls.where((r) => r.method == 'POST'), hasLength(1));
+      final posts = wire.calls
+          .where((r) => r.method == 'POST')
+          .cast<http.Request>()
+          .toList();
+      expect(posts, hasLength(2));
+      expect(posts.map((r) => r.body).toSet(), hasLength(1));
       flow.close();
     },
   );

@@ -1,13 +1,20 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
-import 'package:wbrs/service/pending_write.dart';
 import 'package:wbrs/service/post_submission.dart';
 import 'package:wbrs/service/social_service.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'image_picker_grid.dart';
+import 'package:wbrs/service/app_session.dart';
+import 'package:wbrs/service/timeweb_app_runtime.dart';
+import 'package:wbrs/service/timeweb_auth_client.dart';
+import 'package:wbrs/service/timeweb_social_flow.dart';
+import 'package:wbrs/presentation/widgets/timeweb_post_image.dart';
+
+part 'timeweb_post_editor_state.dart';
 
 class PostEditorPage extends StatefulWidget {
   const PostEditorPage({
@@ -17,6 +24,8 @@ class PostEditorPage extends StatefulWidget {
     this.postId,
     this.initialText,
     this.initialImages = const [],
+    this.runtime,
+    this.post,
   });
 
   final SocialService? social;
@@ -24,9 +33,12 @@ class PostEditorPage extends StatefulWidget {
   final String? postId;
   final String? initialText;
   final List<String> initialImages;
+  final TimewebAppRuntime? runtime;
+  final TimewebSocialItem? post;
 
   @override
-  State<PostEditorPage> createState() => _PostEditorPageState();
+  State<PostEditorPage> createState() =>
+      runtime == null ? _PostEditorPageState() : _TimewebPostEditorState();
 }
 
 class _PostEditorPageState extends State<PostEditorPage> {
@@ -105,8 +117,11 @@ class _PostEditorPageState extends State<PostEditorPage> {
       });
     } catch (_) {
       if (mounted) {
-        showSnackbar(context, LrsTheme.danger,
-            context.tr('Не удалось открыть изображение. Попробуйте ещё раз.'));
+        showSnackbar(
+          context,
+          LrsTheme.danger,
+          context.tr('Не удалось открыть изображение. Попробуйте ещё раз.'),
+        );
       }
     }
   }
@@ -139,13 +154,17 @@ class _PostEditorPageState extends State<PostEditorPage> {
     final confirmed = await _submission!.write.wait();
     if (!mounted) return;
     if (!_submissions.isCurrentSession) {
-      setState(() => _notice =
-          'Сеанс изменился. Проверьте отправку после входа в исходный аккаунт.');
+      setState(
+        () => _notice =
+            'Сеанс изменился. Проверьте отправку после входа в исходный аккаунт.',
+      );
       return;
     }
     if (!confirmed) {
-      setState(() => _notice =
-          'Подтверждение ещё не получено. Нажмите «Проверить отправку».');
+      setState(
+        () => _notice =
+            'Подтверждение ещё не получено. Нажмите «Проверить отправку».',
+      );
       return;
     }
     _submissions.acknowledge(_submission!);
@@ -170,16 +189,20 @@ class _PostEditorPageState extends State<PostEditorPage> {
         content: Text(context.tr('Это действие нельзя отменить.')),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: Text(context.tr('Отмена'))),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(context.tr('Отмена')),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: Text(context.tr('Удалить'),
-                  style: const TextStyle(color: LrsTheme.danger))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(
+              context.tr('Удалить'),
+              style: const TextStyle(color: LrsTheme.danger),
+            ),
+          ),
         ],
       ),
     );
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
     showSnackbar(
       context,
       LrsTheme.peach,
@@ -193,7 +216,8 @@ class _PostEditorPageState extends State<PostEditorPage> {
     return ClrsScaffold(
       appBar: AppBar(
         title: Text(
-            context.tr(_isEditing ? 'Редактировать' : 'Новая публикация')),
+          context.tr(_isEditing ? 'Редактировать' : 'Новая публикация'),
+        ),
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -251,12 +275,19 @@ class _PostEditorPageState extends State<PostEditorPage> {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2, color: LrsTheme.text))
-                    : Text(context.tr(_isEditing
-                        ? 'Сохранить'
-                        : _submission == null
-                            ? 'Опубликовать'
-                            : 'Проверить отправку')),
+                          strokeWidth: 2,
+                          color: LrsTheme.text,
+                        ),
+                      )
+                    : Text(
+                        context.tr(
+                          _isEditing
+                              ? 'Сохранить'
+                              : _submission == null
+                              ? 'Опубликовать'
+                              : 'Проверить отправку',
+                        ),
+                      ),
               ),
               if (_isEditing) ...[
                 const SizedBox(height: 12),

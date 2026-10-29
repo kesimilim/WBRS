@@ -6,12 +6,14 @@ operation receipt, and replay checks the current visibility/role again.
 from __future__ import annotations
 
 import hashlib
+import json
+import re
 import time
 from datetime import datetime, timezone
 
 from legacy_conversation_payload import OpaqueReferences, LegacyInvalid
 from native_credentials import decode_base64
-from runtime_mutations import RuntimeInvalidRequest, RuntimeRejected, RuntimeUnavailable
+from runtime_mutations import RuntimeInvalidRequest, RuntimeRejected, RuntimeUnavailable, RuntimeConflict, canonical_json
 from runtime_chat import _identifier
 
 class SocialAccessDenied(RuntimeRejected):
@@ -19,11 +21,12 @@ class SocialAccessDenied(RuntimeRejected):
 
 
 ORDER = "created_desc_id_desc_null_last"
-OPS = frozenset({"social.publish.v1", "social.comment.v1", "social.react.v1", "social.report.v1", "social.hide-comment.v1"})
-POST_COLUMNS = """p.post_id,p.author_uid,p.body,COALESCE(pm.media_id,p.media_id),p.status,
+OPS = frozenset({"social.publish.v1", "social.comment.v1", "social.react.v1", "social.report.v1", "social.hide-comment.v1", "social.update-post.v1", "social.delete-post.v1", "social.prepare-media.v1", "social.commit-media.v1"})
+POST_COLUMNS = """p.post_id,p.author_uid,p.body,CASE WHEN pc.post_id IS NOT NULL THEN JSON_UNQUOTE(JSON_EXTRACT(pc.media_ids,'$[0]')) ELSE COALESCE(pm.media_id,p.media_id) END,p.status,
  DATE_FORMAT(p.created_at,'%%Y-%%m-%%dT%%H:%%i:%%s.%%fZ'),p.like_count,p.comment_count,
  a.disabled,a.lifecycle"""
 POST_FROM = (" FROM clrs_staging.posts p JOIN clrs_staging.accounts a ON a.uid=p.author_uid "
+             "LEFT JOIN clrs_staging.social_post_content pc ON pc.post_id=p.post_id "
              "LEFT JOIN clrs_staging.post_media pm ON pm.post_id=p.post_id AND pm.status='ready' ")
 ROLE = """SELECT role,verified_source,revoked_at FROM clrs_staging.role_grants
  WHERE uid=%s AND role IN ('admin','moderator','author') LIMIT 4 FOR SHARE"""
@@ -35,8 +38,8 @@ def ident(value):
     return _identifier(value)
 
 
-def body_text(value):
-    if (type(value) is not str or not value.strip() or len(value)>4000
+def body_text(value, *, allow_empty=False):
+    if (type(value) is not str or (not allow_empty and not value.strip()) or len(value)>4000
             or len(value.encode('utf8'))>16000 or '\x00' in value):
         raise RuntimeInvalidRequest()
     return value.strip()
@@ -65,17 +68,17 @@ def _roles(cursor, execute, uid):
     return accepted
 
 
-def _post(cursor, execute, post_id, *, lock=False):
+def _post(cursor, execute, post_id, *, lock=False, deleted=False):
     execute("SELECT "+POST_COLUMNS+POST_FROM+"WHERE p.post_id=%s LIMIT 1"+
             (" FOR UPDATE OF p FOR SHARE OF a" if lock else " FOR SHARE OF p,a"),(post_id,))
     row=cursor.fetchone()
     if row is None: raise SocialAccessDenied()
-    return _decode_post(row)
+    return _decode_post(row, deleted=deleted)
 
 
-def _decode_post(row):
+def _decode_post(row, *, deleted=False):
     if not isinstance(row,(list,tuple)) or len(row)!=10: raise RuntimeUnavailable()
-    if row[4]!='published' or row[8]!=0 or row[9]!='active': raise SocialAccessDenied()
+    if row[4] not in ({'published','deleted'} if deleted else {'published'}) or row[8]!=0 or row[9]!='active': raise SocialAccessDenied()
     if (row[2] is not None and (type(row[2]) is not str or len(row[2])>4000)
             or any(type(n) is not int or n<0 for n in row[6:8])): raise RuntimeUnavailable()
     return {'id':ident(row[0]),'authorUid':ident(row[1]),'text':row[2],
@@ -96,17 +99,33 @@ def _comment(cursor,execute,post_id,comment_id,*,lock=False):
     return row
 
 
+def content(cursor, execute, post):
+    execute('SELECT media_ids FROM clrs_staging.social_post_content WHERE post_id=%s LIMIT 1 FOR SHARE', (post['id'],))
+    row=cursor.fetchone()
+    ids=([post['mediaId']] if post['mediaId'] else []) if row is None else json.loads(row[0]) if isinstance(row[0],(str,bytes)) else row[0]
+    if type(ids) is not list or len(ids)>10 or any(type(v) is not str for v in ids) or len(set(ids))!=len(ids): raise RuntimeUnavailable()
+    for value in ids: ident(value)
+    return {'mediaIds':ids,'contentHash':hashlib.sha256(canonical_json({'text':post['text'],'mediaIds':ids})).hexdigest()}
+
+
+def editable(cursor, execute, uid, post):
+    if post['authorUid']!=uid and not (_roles(cursor,execute,uid)&{'admin','moderator'}): raise SocialAccessDenied()
+
+
 class RuntimeSocialService:
-    def __init__(self,store,key,*,clock=time.time):
+    def __init__(self,store,key,*,clock=time.time,writer=None):
         if store is None or type(key) is not bytes or len(key)!=32: raise RuntimeUnavailable()
         self.store=store; self.clock=clock
+        from runtime_social_media import RuntimeSocialMedia
+        self.media=RuntimeSocialMedia(store,writer,_roles)
         self.codec=OpaqueReferences(hashlib.sha256(b'clrs-social-page-v1\0'+key).digest())
         for operation in OPS: store.register_replay_guard(operation,self._replay,response_guard=True,operation_id_guard=True)
 
     @classmethod
     def from_env(cls,store,env):
         if env.get('CLRS_RUNTIME_SOCIAL_ENABLED')!='1': return None
-        return cls(store,decode_base64(env.get('CLRS_LEGACY_READ_CURSOR_KEY_B64'),max_bytes=32))
+        from native_profile_photo_factory import create_native_photo_writer
+        return cls(store,decode_base64(env.get('CLRS_LEGACY_READ_CURSOR_KEY_B64'),max_bytes=32),writer=create_native_photo_writer(env))
 
     @staticmethod
     def _new_id(kind,uid,operation_id):
@@ -123,7 +142,15 @@ class RuntimeSocialService:
     def _replay(self,cursor,execute,uid,operation_id,request,response):
         if type(request) is not dict or type(response) is not dict: raise RuntimeUnavailable()
         kind=request.get('kind')
-        shapes={'publish':({'kind','text'},{'postId'}),
+        if set(response)=={'error'} and response['error'] in {'social_access_denied','post_changed','media_not_verified'}: return
+        if kind in {'prepare-media','commit-media'}:
+            self.media.replay(cursor,execute,uid,operation_id,request,response); return
+        if kind in {'update-post','delete-post'}:
+            p=_post(cursor,execute,ident(request['postId']),deleted=True); editable(cursor,execute,uid,p)
+            expected={'postId':request['postId'],'updated':True} if kind=='update-post' else {'postId':request['postId'],'deleted':True}
+            if response!=expected: raise RuntimeUnavailable()
+            return
+        shapes={'publish':({'kind','text',*(['mediaIds'] if 'mediaIds' in request else [])},{'postId'}),
             'comment':({'kind','postId','text','parentId'},{'postId','commentId'}),
             'react':({'kind','postId','commentId','active'},{'postId','commentId','active'}),
             'report':({'kind','postId','commentId'},{'postId','commentId','reported'}),
@@ -132,8 +159,8 @@ class RuntimeSocialService:
         if kind=='publish':
             if response['postId']!=self._new_id(kind,uid,operation_id): raise RuntimeUnavailable()
             if not (_roles(cursor,execute,uid)&{'admin','author'}): raise SocialAccessDenied()
-            p=_post(cursor,execute,response['postId'])
-            if p['authorUid']!=uid or p['text']!=body_text(request['text']): raise RuntimeUnavailable()
+            p=_post(cursor,execute,response['postId'],deleted=True)
+            if p['authorUid']!=uid: raise RuntimeUnavailable()
             return
         if response['postId']!=request['postId']: raise RuntimeUnavailable()
         _post(cursor,execute,ident(request['postId']))
@@ -163,7 +190,7 @@ class RuntimeSocialService:
             row=cursor.fetchone(); expected=(uid,'comment' if cid else 'post',self._report_target(request['postId'],cid))
             if row is None or tuple(row)!=expected: raise RuntimeUnavailable()
 
-    def feed(self,identity,*,access_token,limit=10,cursor=None,wall_uid=None):
+    def feed(self,identity,*,access_token,limit=10,cursor=None,wall_uid=None,all_media=False):
         if type(limit) is not int or not 1<=limit<=10: raise RuntimeInvalidRequest()
         page_limit=min(limit,3)  # 3 * 16 KiB text + DTOs stays below 64 KiB.
         if wall_uid is not None: wall_uid=ident(wall_uid)
@@ -196,6 +223,7 @@ class RuntimeSocialService:
             # like UID supplied by the client.
             for item in items:
                 item['liked']=self._liked(c,ex,uid,item['id'],'')
+                if all_media: item.update(content(c,ex,item))
             next_cursor=None
             if len(rows)>page_limit:
                 last=items[-1]; next_cursor=self.codec.seal('cursor',{'uid':uid,'limit':limit,
@@ -259,9 +287,22 @@ class RuntimeSocialService:
         if type(payload) is not dict: raise RuntimeInvalidRequest()
         kind=payload.get('kind'); allowed={'publish':{'kind','text'},'comment':{'kind','postId','text','parentId'},
             'react':{'kind','postId','commentId','active'},'report':{'kind','postId','commentId'},
-            'hide-comment':{'kind','postId','commentId'}}
+            'hide-comment':{'kind','postId','commentId'},
+            'update-post':{'kind','postId','text','mediaIds','expectedContentHash'},
+            'delete-post':{'kind','postId','expectedContentHash'},
+            'prepare-media':{'kind','sha256','byteSize','mimeType'},
+            'commit-media':{'kind','mediaId','prepareOperationId'}}
+        if kind=='publish' and 'mediaIds' in payload: allowed['publish']=allowed['publish']|{'mediaIds'}
         if kind not in allowed or set(payload)!=allowed[kind]: raise RuntimeInvalidRequest()
-        if kind in {'publish','comment'}: text=body_text(payload['text'])
+        if kind=='prepare-media': return self.media.prepare(identity,operation_id,payload,access_token=access_token)
+        if kind=='commit-media': return self.media.commit(identity,operation_id,payload,access_token=access_token)
+        if kind in {'publish','update-post'}:
+            from runtime_social_media import media_ids
+            attachments=media_ids(payload.get('mediaIds',[]))
+            text=body_text(payload['text'],allow_empty=bool(attachments))
+        if kind=='comment': text=body_text(payload['text'])
+        if kind in {'update-post','delete-post'} and (type(payload['expectedContentHash']) is not str
+                or not re.fullmatch(r'[a-f0-9]{64}',payload['expectedContentHash'])): raise RuntimeInvalidRequest()
         if kind!='publish': post_id=ident(payload['postId'])
         if kind in {'react','report','hide-comment'}:
             comment_id=payload['commentId']; comment_id='' if comment_id is None else ident(comment_id)
@@ -269,14 +310,32 @@ class RuntimeSocialService:
         if kind=='react' and type(payload['active']) is not bool: raise RuntimeInvalidRequest()
         if kind=='comment': parent=payload['parentId']; parent=None if parent is None else ident(parent)
         op={'publish':'social.publish.v1','comment':'social.comment.v1','react':'social.react.v1',
-            'report':'social.report.v1','hide-comment':'social.hide-comment.v1'}[kind]
+            'report':'social.report.v1','hide-comment':'social.hide-comment.v1',
+            'update-post':'social.update-post.v1','delete-post':'social.delete-post.v1'}[kind]
         def action(c,ex,uid):
             if kind=='publish':
                 if not (_roles(c,ex,uid)&{'admin','author'}): raise SocialAccessDenied()
+                for mid in attachments:
+                    if self.media.record(c,ex,uid,mid)[0]!='ready': raise SocialAccessDenied()
                 new_id=self._new_id(kind,uid,operation_id)
                 ex("INSERT INTO clrs_staging.posts(post_id,author_uid,body,status,created_at,updated_at,legacy_raw) VALUES(%s,%s,%s,'published',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6),JSON_OBJECT('nativeSocialVersion',1))",(new_id,uid,text))
+                if attachments: self._save_content(c,ex,new_id,attachments)
                 return 201,{'postId':new_id},None
-            _post(c,ex,post_id,lock=True)
+            post=_post(c,ex,post_id,lock=True)
+            if kind in {'update-post','delete-post'}:
+                editable(c,ex,uid,post); before=content(c,ex,post)
+                if before['contentHash']!=payload['expectedContentHash']: return 409,{'error':'post_changed'},None
+                if kind=='delete-post':
+                    ex("UPDATE clrs_staging.posts SET status='deleted',updated_at=UTC_TIMESTAMP(6) WHERE post_id=%s",(post_id,))
+                    result={'postId':post_id,'deleted':True}
+                else:
+                    for mid in attachments:
+                        if mid not in before['mediaIds'] and self.media.record(c,ex,uid,mid)[0]!='ready': raise SocialAccessDenied()
+                    ex('UPDATE clrs_staging.posts SET body=%s,updated_at=UTC_TIMESTAMP(6) WHERE post_id=%s',(text,post_id))
+                    self._save_content(c,ex,post_id,attachments)
+                    result={'postId':post_id,'updated':True}
+                ex("INSERT INTO clrs_staging.admin_audit(actor_uid,action,target_kind,target_id,request_id,details) VALUES(%s,%s,'post',%s,%s,JSON_OBJECT('nativeSocialVersion',2))",(uid,kind,post_id,operation_id))
+                return 200,result,None
             if kind=='comment':
                 if parent is not None: _comment(c,ex,post_id,parent)
                 new_id=self._new_id(kind,uid,operation_id)
@@ -301,4 +360,11 @@ class RuntimeSocialService:
             ex('UPDATE clrs_staging.posts SET comment_count=GREATEST(0,comment_count-1),updated_at=UTC_TIMESTAMP(6) WHERE post_id=%s',(post_id,))
             ex("INSERT INTO clrs_staging.admin_audit(actor_uid,action,target_kind,target_id,request_id,details) VALUES(%s,'hide-comment','comment',%s,%s,JSON_OBJECT('postId',%s))",(uid,comment_id,operation_id,post_id))
             return 200,{'postId':post_id,'commentId':comment_id,'hidden':True},None
-        return self.store.mutate(identity,op,operation_id,payload,action,access_token=access_token)
+        def guarded(c,ex,uid):
+            try: return action(c,ex,uid)
+            except SocialAccessDenied: return 409,{'error':'social_access_denied'},None
+        return self.store.mutate(identity,op,operation_id,payload,guarded,access_token=access_token)
+
+    @staticmethod
+    def _save_content(c,ex,post_id,ids):
+        ex('INSERT INTO clrs_staging.social_post_content(post_id,media_ids) VALUES(%s,%s) ON DUPLICATE KEY UPDATE media_ids=VALUES(media_ids),updated_at=UTC_TIMESTAMP(6)',(post_id,json.dumps(ids)))

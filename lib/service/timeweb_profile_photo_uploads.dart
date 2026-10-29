@@ -85,6 +85,9 @@ final class TimewebPreparedPhotoReceipt {
   TimewebPreparedPhotoReceipt._(this._data, this._reference, [this._guard]);
   final Map<String, dynamic> _data;
   final TimewebMutationReference _reference;
+  bool get _post =>
+      _reference._request.kind == TimewebMutationKind.socialAction &&
+      _reference._request._payload['kind'] == 'prepare-media';
   final void Function()? _guard;
   void requireCurrent() {
     _reference.requireCurrent();
@@ -130,8 +133,16 @@ final class TimewebCommittedPhotoReceipt {
   final void Function() _check;
   final TimewebMutationReference _reference;
   void requireCurrent() => _check();
-  String get prepareOperationId { requireCurrent(); return _reference._request._payload['prepareOperationId']; }
-  String get commitOperationId { requireCurrent(); return _reference._request.operationId; }
+  String get prepareOperationId {
+    requireCurrent();
+    return _reference._request._payload['prepareOperationId'];
+  }
+
+  String get commitOperationId {
+    requireCurrent();
+    return _reference._request.operationId;
+  }
+
   TimewebCommittedPhotoReceipt bindSessionGuard(void Function() guard) =>
       TimewebCommittedPhotoReceipt._(_data, _reference, () {
         requireCurrent();
@@ -222,7 +233,11 @@ TimewebMutationResult _decodePhotoMutation(
     TimewebMutationState.confirmed,
     status,
     replayed: replayed,
-    committedPhoto: TimewebCommittedPhotoReceipt._(data, ref, ref.requireCurrent),
+    committedPhoto: TimewebCommittedPhotoReceipt._(
+      data,
+      ref,
+      ref.requireCurrent,
+    ),
     receiptConfirmed: true,
   );
 }
@@ -267,11 +282,26 @@ final class TimewebPhotoUploadAvailability {
   final int _count;
   final void Function() _guard;
   void requireCurrent() => _guard();
-  bool get canAppend { requireCurrent(); return _canAppend; }
-  int get photoCount { requireCurrent(); return _count; }
-  int get photoLimit { requireCurrent(); return 20; }
+  bool get canAppend {
+    requireCurrent();
+    return _canAppend;
+  }
+
+  int get photoCount {
+    requireCurrent();
+    return _count;
+  }
+
+  int get photoLimit {
+    requireCurrent();
+    return 20;
+  }
+
   TimewebPhotoUploadAvailability bindSessionGuard(void Function() guard) =>
-      TimewebPhotoUploadAvailability._(_canAppend, _count, () { requireCurrent(); guard(); });
+      TimewebPhotoUploadAvailability._(_canAppend, _count, () {
+        requireCurrent();
+        guard();
+      });
 }
 
 enum TimewebPhotoPutOutcome { acknowledged, unknown }
@@ -280,24 +310,49 @@ extension TimewebProfilePhotoUploadsClient on TimewebAuthClient {
   Future<TimewebPhotoUploadAvailability> readPhotoUploadAvailability() {
     try {
       _checkEnabled(_photoOperation);
-      if (!configuration.currentReadsEnabled || !configuration.runtimeWritesEnabled) {
-        throw const TimewebAuthException(_photoOperation, TimewebAuthError.disabled);
+      if (!configuration.currentReadsEnabled ||
+          !configuration.runtimeWritesEnabled) {
+        throw const TimewebAuthException(
+          _photoOperation,
+          TimewebAuthError.disabled,
+        );
       }
       final session = _session;
       if (session == null || _secureStoreUnsafe) {
-        throw const TimewebAuthException(_photoOperation, TimewebAuthError.notAuthenticated);
+        throw const TimewebAuthException(
+          _photoOperation,
+          TimewebAuthError.notAuthenticated,
+        );
       }
       final key = 'photo-upload-availability:$_epoch';
       final previous = _peopleFlights[key];
-      if (previous != null) return previous.result.future.then((v) => v as TimewebPhotoUploadAvailability);
+      if (previous != null)
+        return previous.result.future.then(
+          (v) => v as TimewebPhotoUploadAvailability,
+        );
       if (_peopleFlights.length >= 4) {
-        throw const TimewebAuthException(_photoOperation, TimewebAuthError.unavailable);
+        throw const TimewebAuthException(
+          _photoOperation,
+          TimewebAuthError.unavailable,
+        );
       }
-      final flight = _PeopleFlight(this, null, null, null, _epoch, session.uid, key);
+      final flight = _PeopleFlight(
+        this,
+        null,
+        null,
+        null,
+        _epoch,
+        session.uid,
+        key,
+      );
       _peopleFlights[key] = flight;
       unawaited(_executeUploadLease(flight, null));
-      return flight.result.future.then((v) => v as TimewebPhotoUploadAvailability);
-    } catch (error) { return Future.error(error); }
+      return flight.result.future.then(
+        (v) => v as TimewebPhotoUploadAvailability,
+      );
+    } catch (error) {
+      return Future.error(error);
+    }
   }
 
   Future<void> cancelProfilePhotoUpload(TimewebProfilePhotoSource source) =>
@@ -388,8 +443,20 @@ Future<void> _executeUploadLease(
       uri = f.owner.configuration.endpoint.replace(
         pathSegments: prepared == null
             ? ['v1', 'runtime', 'profile', 'photos', 'upload-availability']
-            : ['v1', 'runtime', 'profile', 'photos', 'uploads', prepared.mediaId, 'lease'],
-        queryParameters: prepared == null ? const {} : {'prepareOperationId': prepared.prepareOperationId},
+            : prepared._post
+            ? ['v1', 'runtime', 'social', 'media', prepared.mediaId, 'lease']
+            : [
+                'v1',
+                'runtime',
+                'profile',
+                'photos',
+                'uploads',
+                prepared.mediaId,
+                'lease',
+              ],
+        queryParameters: prepared == null
+            ? const {}
+            : {'prepareOperationId': prepared.prepareOperationId},
       );
   Future<_Reply> attempt(String bearer) async {
     // Profile photos may occupy every HTTP slot while this read-only check opens.
@@ -400,6 +467,7 @@ Future<void> _executeUploadLease(
     }
     return _meetingAttempt(f, uri, bearer);
   }
+
   try {
     f.check();
     var session = owner._session!;
@@ -427,9 +495,13 @@ Future<void> _executeUploadLease(
         await owner._invalidate(f.epoch);
       }
       if (prepared == null && reply.status == 404) {
-        if (reply.body == null || !_mutationExact(reply.body!, {'error'}) ||
+        if (reply.body == null ||
+            !_mutationExact(reply.body!, {'error'}) ||
             reply.body!['error'] != 'photo_unavailable') {
-          throw const TimewebAuthException(_photoOperation, TimewebAuthError.invalidResponse);
+          throw const TimewebAuthException(
+            _photoOperation,
+            TimewebAuthError.invalidResponse,
+          );
         }
         throw const TimewebProfilePhotoUnavailable();
       }
@@ -466,14 +538,34 @@ Future<void> _executeUploadLease(
   }
 }
 
-TimewebPhotoUploadAvailability _decodeUploadAvailability(_PeopleFlight flight, Map<String, dynamic> body) {
-  if (!_mutationExact(body, {'canAppend', 'photoCount', 'photoLimit', 'profileAuthority'}) ||
-      body['canAppend'] is! bool || body['photoCount'] is! int || body['photoCount'] < 3 ||
-      body['photoCount'] > 20 || body['photoLimit'] != 20 || body['photoLimit'] is! int ||
-      body['profileAuthority'] != 'canonical-current-v1' || body['photoCount'] == 20 && body['canAppend'] == true) {
-    throw const TimewebAuthException(_photoOperation, TimewebAuthError.invalidResponse);
+TimewebPhotoUploadAvailability _decodeUploadAvailability(
+  _PeopleFlight flight,
+  Map<String, dynamic> body,
+) {
+  if (!_mutationExact(body, {
+        'canAppend',
+        'photoCount',
+        'photoLimit',
+        'profileAuthority',
+      }) ||
+      body['canAppend'] is! bool ||
+      body['photoCount'] is! int ||
+      body['photoCount'] < 3 ||
+      body['photoCount'] > 20 ||
+      body['photoLimit'] != 20 ||
+      body['photoLimit'] is! int ||
+      body['profileAuthority'] != 'canonical-current-v1' ||
+      body['photoCount'] == 20 && body['canAppend'] == true) {
+    throw const TimewebAuthException(
+      _photoOperation,
+      TimewebAuthError.invalidResponse,
+    );
   }
-  return TimewebPhotoUploadAvailability._(body['canAppend'], body['photoCount'], flight.checkSession);
+  return TimewebPhotoUploadAvailability._(
+    body['canAppend'],
+    body['photoCount'],
+    flight.checkSession,
+  );
 }
 
 TimewebPhotoUploadLease _decodeUploadLease(
@@ -513,7 +605,9 @@ TimewebPhotoUploadLease _decodeUploadLease(
       uri.pathSegments.length != 3 ||
       uri.pathSegments[1] != 'clrs-native-profile' ||
       uri.pathSegments[2] !=
-          prepared.mediaId.substring('tw-profile-photo-'.length) ||
+          prepared.mediaId.substring(
+            (prepared._post ? 'tw-post-media-' : 'tw-profile-photo-').length,
+          ) ||
       !RegExp(
         r'^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$',
       ).hasMatch(uri.pathSegments[0]) ||

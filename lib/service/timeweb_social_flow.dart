@@ -9,10 +9,11 @@ import 'package:path_provider/path_provider.dart';
 import 'app_session.dart';
 import 'timeweb_auth_client.dart';
 
-enum TimewebSocialOutcome { confirmed, unknown }
+enum TimewebSocialOutcome { confirmed, rejected, unknown }
 
 /// One unresolved original action per API origin/current UID. Reopening offers
-/// only receipt lookup, even when the server has not found that UUID yet.
+/// receipt lookup first. An explicit retry after not_found reuses the exact UUID
+/// and payload; the server serializes and records that original operation.
 final class TimewebSocialFlow {
   TimewebSocialFlow._(this._client, this._session, this._lease, this._journal);
   final TimewebAuthClient _client;
@@ -106,7 +107,13 @@ final class TimewebSocialFlow {
     return _track(() async {
       _receipt = null;
       _failure = null;
-      return _finish(await _client.reconcileMutation(_reference!));
+      final result = await _client.reconcileMutation(_reference!);
+      requireCurrent();
+      return _finish(
+        result.state == TimewebMutationState.notFound
+            ? await _client.retryOriginalSocialAction(_reference!)
+            : result,
+      );
     });
   }
 
@@ -134,8 +141,9 @@ final class TimewebSocialFlow {
     _failure = result.failure;
     final receipt = result.socialReceipt;
     if (!result.canAcknowledge ||
-        result.state != TimewebMutationState.confirmed ||
-        receipt == null) {
+        (result.state != TimewebMutationState.declaredFailure &&
+            (result.state != TimewebMutationState.confirmed ||
+                receipt == null))) {
       _receipt = null;
       return TimewebSocialOutcome.unknown;
     }
@@ -144,8 +152,10 @@ final class TimewebSocialFlow {
     _client.acknowledgeMutation(_reference!);
     _intent = null;
     _reference = null;
-    _receipt = receipt.bindSessionGuard(_lease.requireCurrent);
-    return TimewebSocialOutcome.confirmed;
+    _receipt = receipt?.bindSessionGuard(_lease.requireCurrent);
+    return result.state == TimewebMutationState.confirmed
+        ? TimewebSocialOutcome.confirmed
+        : TimewebSocialOutcome.rejected;
   }
 
   void close() {

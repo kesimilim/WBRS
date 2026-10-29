@@ -14,6 +14,7 @@ class TimewebNavigationBinding {
     required Set<int> availableIndices,
     required this.onSelect,
     this.showBar = true,
+    this.openDrawer,
   }) : availableIndices = Set.unmodifiable(availableIndices);
 
   final AppSessionLease lease;
@@ -21,6 +22,7 @@ class TimewebNavigationBinding {
   final Set<int> availableIndices;
   final Future<void> Function(BuildContext context, int index) onSelect;
   final bool showBar;
+  final VoidCallback? openDrawer;
 
   TimewebNavigationBinding forRoute({int? selectedIndex}) =>
       TimewebNavigationBinding(
@@ -29,6 +31,31 @@ class TimewebNavigationBinding {
         availableIndices: availableIndices,
         onSelect: onSelect,
       );
+}
+
+/// Root tabs share one native drawer. Pushed detail routes keep their back arrow.
+class TimewebMenuButton extends StatelessWidget {
+  const TimewebMenuButton({super.key});
+
+  static Widget? forRoot(BuildContext context) {
+    final navigation = TimewebNavigationScope.maybeOf(context);
+    return navigation?.openDrawer != null && navigation?.showBar == false
+        ? const TimewebMenuButton()
+        : null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final navigation = TimewebNavigationScope.maybeOf(context);
+    return IconButton(
+      key: const ValueKey('timeweb-open-root-menu'),
+      tooltip: context.tr('Открыть меню навигации'),
+      onPressed: navigation?.lease.isCurrent == true
+          ? navigation?.openDrawer
+          : null,
+      icon: const Icon(Icons.menu),
+    );
+  }
 }
 
 class TimewebNavigationScope extends InheritedWidget {
@@ -125,6 +152,7 @@ class _TimewebBottomNavigationBarState
     ];
     return SafeArea(
       top: false,
+      minimum: const EdgeInsets.only(bottom: 10),
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xD92A1E12),

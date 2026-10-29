@@ -18,6 +18,7 @@ import 'package:wbrs/service/timeweb_auth_client.dart';
 import 'package:wbrs/service/timeweb_initial_profile_flow.dart';
 import 'package:wbrs/service/timeweb_photo_upload_flow.dart';
 import 'package:wbrs/service/timeweb_social_flow.dart';
+import 'package:wbrs/service/timeweb_temperament_flow.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 import 'support/timeweb_people_fixtures.dart';
@@ -179,6 +180,10 @@ void main() {
         currentOwnProfileEnabled: true,
         currentChatsEnabled: true,
         profileEditorEnabled: true,
+        currentTemperamentEnabled: true,
+        temperamentJournal: TimewebTemperamentJournal(
+          directory: () async => folder,
+        ),
         photoUploadJournal: TimewebPhotoUploadJournal(
           directory: () async => folder,
         ),
@@ -234,12 +239,43 @@ void main() {
         find.byKey(const ValueKey('timeweb-people-own-profile')),
         findsNothing,
       );
+      Future<void> checkDrawer() async {
+        final menu = find.byKey(const ValueKey('timeweb-open-root-menu'));
+        expect(menu, findsOneWidget);
+        await tester.tap(menu);
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+        await _until(
+          tester,
+          () =>
+              find
+                  .byKey(const ValueKey('timeweb-menu-temperament'))
+                  .evaluate()
+                  .isNotEmpty &&
+              tester
+                      .widget<InkWell>(
+                        find.byKey(const ValueKey('timeweb-menu-temperament')),
+                      )
+                      .onTap !=
+                  null,
+        );
+        expect(
+          find.byKey(const ValueKey('timeweb-drawer-profile-card')),
+          findsOneWidget,
+        );
+        await tester.binding.handlePopRoute();
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 350));
+      }
+
+      await checkDrawer();
       await _tab(tester, 'chats');
       await _until(
         tester,
         () => find.byType(TimewebChatsPage).evaluate().isNotEmpty,
       );
       expect(find.byType(TimewebPeoplePageView), findsNothing);
+      await checkDrawer();
       await _tab(tester, 'meetings');
       await _until(
         tester,
@@ -250,6 +286,7 @@ void main() {
             ),
       );
       expect(find.byType(TimewebChatsPage), findsNothing);
+      await checkDrawer();
       await _tab(tester, 'profile');
       expect(app.session.state.identity!.uid, 'A');
       await _profileReady(tester, 'A');

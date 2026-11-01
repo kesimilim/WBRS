@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wbrs/app/pages/policy/soglashenie.dart';
+import 'package:wbrs/app/pages/policy/confidecialnost.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
@@ -16,7 +17,9 @@ class _LegalBundle extends CachingAssetBundle {
   Future<ByteData> load(String key) => rootBundle.load(key);
   @override
   Future<String> loadString(String key, {bool cache = true}) =>
-      key == 'assets/agreement.txt' || key.startsWith('assets/legal/')
+      key == 'assets/agreement.txt' ||
+          key == 'assets/policy.txt' ||
+          key.startsWith('assets/legal/')
       ? SynchronousFuture(File(key).readAsStringSync())
       : rootBundle.loadString(key, cache: cache);
 }
@@ -43,6 +46,48 @@ void main() {
         jsonDecode(File('assets/l10n/$code.json').readAsStringSync()) as Map,
       ),
   };
+  testWidgets(
+    'privacy opens the complete supplied policy offline with large text',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        DefaultAssetBundle(
+          bundle: _LegalBundle(),
+          child: MaterialApp(
+            locale: const Locale('ru'),
+            supportedLocales: ClrsLocalizations.supportedLocales,
+            localizationsDelegates: [
+              _CatalogDelegate(catalogs),
+              ...ClrsLocalizations.delegates.skip(1),
+            ],
+            theme: LrsTheme.theme,
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: const TextScaler.linear(2)),
+              child: child!,
+            ),
+            home: const Politica(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final text = tester
+          .widget<SelectableText>(find.byType(SelectableText))
+          .data!;
+      expect(text, File('assets/policy.txt').readAsStringSync());
+      expect(
+        text,
+        startsWith('Политика в\u00a0отношении обработки персональных данных'),
+      );
+      expect(text, contains('12.3.'));
+      expect(text, contains('366514852674'));
+      expect(text, isNot(contains('пока недоступна')));
+      expect(tester.takeException(), isNull);
+    },
+  );
   test(
     'English agreement retains all paragraphs, clauses and literal details',
     () {

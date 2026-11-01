@@ -1,0 +1,179 @@
+Política relativa ao tratamento de dados pessoais
+
+1. Disposições gerais
+
+Esta política de tratamento de dados pessoais é elaborada de acordo com os requisitos da Lei Federal de 27/07/2006. Nº 152-FZ “Sobre Dados Pessoais” (doravante denominada Lei de Dados Pessoais) e determina o procedimento de processamento de dados pessoais e medidas para garantir a segurança dos dados pessoais obtidos pelo IP Pavlenko Dmitry Yuryevich (doravante denominado Operador) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. A operadora estabelece como objetivo e condição mais importante para o exercício das suas atividades a observância dos direitos e liberdades das pessoas e dos cidadãos no tratamento dos seus dados pessoais, incluindo a proteção dos direitos à privacidade, aos segredos pessoais e familiares.
+
+1.2. A presente política do Operador relativamente ao tratamento de dados pessoais (doravante designada por Política) aplica-se a todas as informações que o Operador possa obter sobre os visitantes da aplicação web do LRS.
+
+2. Conceitos básicos utilizados na Política
+
+2.1. O processamento automatizado de dados pessoais é o processamento de dados pessoais utilizando tecnologia informática.
+
+2.2. O bloqueio de dados pessoais constitui uma cessação temporária do tratamento de dados pessoais (exceto nos casos em que o tratamento seja necessário para esclarecimento de dados pessoais).
+
+2.3. Site/Aplicação/Aplicação Web - conjunto de materiais gráficos e informativos, bem como programas de computador e bases de dados que garantem a sua disponibilização na Internet.
+
+2.4. Sistema de informação de dados pessoais é um conjunto de dados pessoais contidos em bases de dados e tecnologias de informação e meios técnicos que asseguram o seu tratamento.
+
+2.5. A despersonalização de dados pessoais são ações pelas quais é impossível determinar, sem a utilização de informações adicionais, a propriedade dos dados pessoais a um determinado Utilizador ou outro titular de dados pessoais.
+
+2.6. Tratamento de dados pessoais é qualquer ação (operação) ou conjunto de ações (operações) realizadas com ou sem recurso a ferramentas de automatização com dados pessoais, incluindo recolha, registo, sistematização, acumulação, armazenamento, esclarecimento (atualização, alteração), extração, utilização, transferência (distribuição, disponibilização, acesso), despersonalização, bloqueio, eliminação, destruição de dados pessoais.
+
+2.7. Operador é o órgão estadual, municipal, pessoa jurídica ou física que, de forma independente ou em conjunto com outras pessoas, organiza e/ou realiza o tratamento de dados pessoais, bem como determina as finalidades do tratamento dos dados pessoais, a composição dos dados pessoais a serem tratados e as ações (operações) realizadas com os dados pessoais.
+
+2.8. Dados pessoais são quaisquer informações relacionadas, direta ou indiretamente, com um Utilizador específico ou identificável da aplicação web do LRS.
+
+2.9. Os dados pessoais autorizados pelo titular dos dados pessoais para distribuição são dados pessoais, cujo acesso a um número ilimitado de pessoas é fornecido pelo titular dos dados pessoais, dando consentimento para o tratamento de dados pessoais autorizados pelo titular dos dados pessoais para distribuição na forma prescrita pela Lei de Dados Pessoais (doravante denominados dados pessoais permitidos para distribuição).
+
+2.10. Usuário é qualquer visitante da aplicação web LRS.
+
+2.11. Fornecimento de dados pessoais são ações que visam divulgar dados pessoais a uma determinada pessoa ou a um determinado grupo de pessoas.
+
+2.12. A divulgação de dados pessoais é qualquer ação destinada a divulgar dados pessoais a um número indefinido de pessoas (transferência de dados pessoais) ou a familiarizar os dados pessoais a um número ilimitado de pessoas, incluindo a publicação de dados pessoais nos meios de comunicação, a publicação em redes de informação e telecomunicações ou o fornecimento de acesso a dados pessoais de qualquer outra forma.
+
+2.13. A transferência transfronteiriça de dados pessoais é a transferência de dados pessoais para o território de um estado estrangeiro para uma autoridade de um estado estrangeiro, uma pessoa física estrangeira ou uma entidade jurídica estrangeira.
+
+2.14. A destruição de dados pessoais é qualquer ação em que os dados pessoais sejam irremediavelmente destruídos com a impossibilidade de posterior restauração do conteúdo dos dados pessoais no sistema de informação de dados pessoais e/ou meios materiais de dados pessoais sejam destruídos.
+
+3. Direitos e responsabilidades básicas do Operador
+
+3.1. A operadora tem o direito:
+
+— receber do titular dos dados pessoais informações e/ou documentos confiáveis contendo dados pessoais;
+
+— caso o titular dos dados pessoais retire o consentimento para o tratamento dos dados pessoais, bem como envie um pedido com um pedido de cessação do tratamento dos dados pessoais, o Operador tem o direito de continuar o tratamento dos dados pessoais sem o consentimento do titular dos dados pessoais, se houver motivos especificados na Lei de Dados Pessoais;
+
+— determinar de forma independente a composição e lista de medidas necessárias e suficientes para garantir o cumprimento das obrigações previstas na Lei de Dados Pessoais e nos regulamentos adotados de acordo com ela, salvo disposição em contrário da Lei de Dados Pessoais ou outras leis federais.
+
+3.2. O operador é obrigado:
+
+— fornecer ao titular dos dados pessoais, a seu pedido, informações relativas ao tratamento dos seus dados pessoais;
+
+— organizar o processamento de dados pessoais na forma prescrita pela legislação em vigor da Federação Russa;
+
+— responder aos recursos e solicitações dos titulares de dados pessoais e seus representantes legais de acordo com os requisitos da Lei de Dados Pessoais;
+
+— comunicar ao órgão autorizado para a protecção dos direitos dos titulares dos dados pessoais, a pedido deste órgão, as informações necessárias no prazo de 10 dias a contar da data de recepção do pedido;
+
+— publicar ou de outra forma fornecer acesso irrestrito a esta Política relativa ao tratamento de dados pessoais;
+
+— tomar medidas legais, organizacionais e técnicas para proteger os dados pessoais contra acesso não autorizado ou acidental aos mesmos, destruição, modificação, bloqueio, cópia, fornecimento, distribuição de dados pessoais, bem como de outras ações ilícitas em relação aos dados pessoais;
+
+— interromper a transferência (distribuição, fornecimento, acesso) de dados pessoais, interromper o processamento e destruir dados pessoais na forma e nos casos previstos na Lei de Dados Pessoais;
+
+— exercer outras funções previstas na Lei de Dados Pessoais.
+
+4. Direitos e obrigações básicas dos titulares de dados pessoais
+
+4.1. Os titulares dos dados pessoais têm direito:
+
+— receber informações a respeito do tratamento de seus dados pessoais, salvo nos casos previstos em legislação federal. A informação é fornecida ao titular dos dados pessoais pelo Operador de forma acessível, não devendo conter dados pessoais relativos a outros titulares de dados pessoais, exceto nos casos em que existam fundamentos legais para a divulgação de tais dados pessoais. A lista de informações e o procedimento para sua obtenção são estabelecidos pela Lei de Dados Pessoais;
+
+— exigir que o operador esclareça os seus dados pessoais, bloqueie-os ou destrua-os se os dados pessoais estiverem incompletos, desatualizados, imprecisos, obtidos ilegalmente ou não forem necessários para a finalidade declarada do tratamento, e também tomar as medidas previstas na lei para proteger os seus direitos;
+
+— impor condição de consentimento prévio no tratamento de dados pessoais para efeitos de promoção de bens, obras e serviços no mercado;
+
+— retirar o consentimento para o tratamento de dados pessoais, bem como enviar pedido de cessação do tratamento de dados pessoais;
+
+— recorrer ao órgão autorizado para a proteção dos direitos dos titulares dos dados pessoais ou judicialmente contra ações ilícitas ou omissões do Operador no tratamento dos seus dados pessoais;
+
+— exercer outros direitos previstos na legislação da Federação Russa.
+
+4.2. Os titulares dos dados pessoais são obrigados a:
+
+— fornecer ao Operador informações confiáveis sobre você;
+
+— informar a Operadora sobre a atualização (atualização, alteração) de seus dados pessoais.
+
+4.3. As pessoas que forneceram ao Operador informações falsas sobre si mesmas ou informações sobre outro assunto de dados pessoais sem o consentimento deste último são responsáveis de acordo com a legislação da Federação Russa.
+
+5. Princípios para o tratamento de dados pessoais
+
+5.1. O tratamento de dados pessoais é realizado de forma legal e justa.
+
+5.2. O tratamento de dados pessoais limita-se à consecução de finalidades específicas, pré-definidas e legítimas. Não é permitido o tratamento de dados pessoais que seja incompatível com as finalidades da recolha de dados pessoais.
+
+5.3. Não é permitida a combinação de bases de dados que contenham dados pessoais, cujo tratamento seja efectuado para fins incompatíveis entre si.
+
+5.4. Apenas estão sujeitos a tratamento os dados pessoais que cumpram as finalidades do seu tratamento.
+
+5.5. O conteúdo e o volume dos dados pessoais tratados correspondem às finalidades de tratamento declaradas. Não é permitida a redundância dos dados pessoais tratados em relação às finalidades declaradas do seu tratamento.
+
+5.6. No tratamento de dados pessoais, são garantidas a exatidão dos dados pessoais, a sua suficiência e, quando necessário, a relevância em relação às finalidades do tratamento dos dados pessoais. O operador toma as medidas necessárias e/ou garante que sejam tomadas para remover ou esclarecer dados incompletos ou imprecisos.
+
+5.7. O armazenamento dos dados pessoais é realizado de forma que permita a identificação do titular dos dados pessoais, não mais do que o exigido pelas finalidades do tratamento dos dados pessoais, a menos que o prazo de armazenamento dos dados pessoais seja estabelecido por lei federal, contrato do qual o titular dos dados pessoais seja parte, beneficiário ou fiador. Os dados pessoais tratados são destruídos ou anonimizados quando as finalidades do tratamento são atingidas ou em caso de perda da necessidade de atingir essas finalidades, salvo disposição em contrário da legislação federal.
+
+6. Finalidades do tratamento de dados pessoais
+
+A finalidade do processamento é fornecer ao Usuário acesso aos serviços, informações e/ou materiais contidos no Aplicativo e a prestação de serviços a ele pelo Aplicativo.
+
+Dados pessoais – endereço de e-mail, número de anos completos do utilizador, apelido, dados antropométricos, fotografias.
+
+Base jurídica - documentos estatutários (constitutivos) da Operadora.
+
+Tipos de tratamento de dados pessoais – recolha, registo, sistematização, acumulação, armazenamento, destruição e anonimização de dados pessoais
+
+7. Condições de tratamento de dados pessoais
+
+7.1. O tratamento de dados pessoais é realizado com o consentimento do titular dos dados pessoais para o tratamento dos seus dados pessoais.
+
+7.2. O processamento de dados pessoais é necessário para atingir os objetivos previstos em um tratado internacional da Federação Russa ou na lei, para implementar as funções, poderes e responsabilidades atribuídas pela legislação da Federação Russa ao operador.
+
+7.3. O tratamento de dados pessoais é necessário para a administração da justiça, a execução de um ato judicial, um ato de outro órgão ou funcionário, sujeito a execução de acordo com a legislação da Federação Russa sobre processos de execução.
+
+7.4. O tratamento de dados pessoais é necessário para a celebração de um contrato do qual o titular dos dados pessoais seja parte ou beneficiário ou fiador, bem como para a celebração de um acordo por iniciativa do titular dos dados pessoais ou de um acordo ao abrigo do qual o titular dos dados pessoais será beneficiário ou fiador.
+
+7.5. O tratamento de dados pessoais é necessário para exercer os direitos e interesses legítimos do operador ou de terceiros ou para atingir objetivos socialmente significativos, desde que os direitos e liberdades do titular dos dados pessoais não sejam violados.
+
+7.6. É efectuado o tratamento de dados pessoais, cujo acesso a um número ilimitado de pessoas é fornecido pelo titular dos dados pessoais ou a seu pedido (doravante designados por dados pessoais publicamente disponíveis).
+
+7.7. Processamos dados pessoais que estão sujeitos a publicação ou divulgação obrigatória de acordo com a lei federal.
+
+8. O procedimento de coleta, armazenamento, transferência e outros tipos de processamento de dados pessoais
+
+A segurança dos dados pessoais tratados pelo Operador é garantida através da implementação de medidas legais, organizacionais e técnicas necessárias ao cumprimento integral dos requisitos da legislação em vigor no domínio da proteção de dados pessoais.
+
+8.1. O operador garante a segurança dos dados pessoais e toma todas as medidas possíveis para impedir o acesso aos dados pessoais por pessoas não autorizadas.
+
+8.2. Os dados pessoais do Utilizador nunca, em caso algum, serão transferidos a terceiros, com exceção dos casos relacionados com a implementação da legislação em vigor ou no caso em que o titular dos dados pessoais tenha dado consentimento ao Operador para transferir os dados a um terceiro para cumprir obrigações decorrentes de um contrato de direito civil.
+
+8.3. Se forem identificadas imprecisões nos dados pessoais, o Usuário poderá atualizá-los de forma independente, enviando uma notificação à Operadora para o endereço de e-mail da Operadora supp.lrs@ya.ru marcado como “Atualização de dados pessoais”.
+
+8.4. O prazo de tratamento dos dados pessoais é determinado pela concretização das finalidades para as quais os dados pessoais foram recolhidos, salvo se prazo diferente estiver previsto no contrato ou na legislação em vigor. O Usuário pode, a qualquer momento, retirar seu consentimento para o processamento de dados pessoais, enviando à Operadora uma notificação por e-mail para o endereço de e-mail da Operadora supp.lrs@ya.ru marcado como “Retirada de consentimento para o processamento de dados pessoais”.
+
+8.5. Todas as informações coletadas por serviços de terceiros, incluindo sistemas de pagamento, comunicações e outros prestadores de serviços, são armazenadas e processadas por essas pessoas (Operadores) de acordo com seu Contrato de Usuário e Política de Privacidade. Sujeito de dados pessoais e/ou com documentos especificados. A operadora não é responsável pelas ações de terceiros, incluindo os prestadores de serviços especificados neste parágrafo.
+
+8.6. As proibições estabelecidas pelo titular dos dados pessoais sobre a transferência (exceto para fornecer acesso), bem como sobre o processamento ou condições de processamento (exceto para obter acesso) de dados pessoais permitidos para distribuição, não se aplicam nos casos de processamento de dados pessoais no estado, interesse público e outros interesses públicos determinados pela legislação da Federação Russa.
+
+8.7. Ao processar dados pessoais, o operador garante a confidencialidade dos dados pessoais.
+
+8.8. A operadora armazena os dados pessoais de forma que permita a identificação do titular dos dados pessoais, não mais do que o exigido pelas finalidades do tratamento dos dados pessoais, a menos que o prazo de armazenamento dos dados pessoais seja estabelecido por lei federal, contrato do qual o titular dos dados pessoais é parte, beneficiário ou fiador.
+
+8.9. A condição para a cessação do tratamento de dados pessoais pode ser a concretização das finalidades do tratamento de dados pessoais, a expiração do consentimento do titular dos dados pessoais, a retirada do consentimento pelo titular dos dados pessoais ou a exigência de cessação do tratamento de dados pessoais, bem como a identificação de tratamento ilícito de dados pessoais.
+
+9. Lista de ações realizadas pela Operadora com dados pessoais recebidos
+
+9.1. O operador recolhe, regista, sistematiza, acumula, armazena, refina (atualizações, alterações), extrai, utiliza, transfere (distribuição, disponibilização, acesso), despersonaliza, bloqueia, elimina e destrói dados pessoais.
+
+9.2. O operador realiza o tratamento automatizado de dados pessoais com ou sem recepção e/ou transmissão das informações recebidas através de redes de informação e telecomunicações.
+
+10. Transferência transfronteiriça de dados pessoais
+
+10.1. Antes de iniciar as atividades de transferência transfronteiriça de dados pessoais, o operador é obrigado a notificar o organismo autorizado para a proteção dos direitos dos titulares de dados pessoais sobre a sua intenção de realizar a transferência transfronteiriça de dados pessoais (tal notificação é enviada separadamente da notificação da intenção de processar dados pessoais).
+
+10.2. Antes de enviar a notificação acima, o operador é obrigado a obter informações relevantes das autoridades de um Estado estrangeiro, pessoas físicas estrangeiras, pessoas jurídicas estrangeiras para as quais está prevista a transferência transfronteiriça de dados pessoais.
+
+11. Confidencialidade dos dados pessoais
+
+O operador e outras pessoas que tenham acesso aos dados pessoais são obrigados a não divulgar a terceiros ou distribuir dados pessoais sem o consentimento do titular dos dados pessoais, salvo disposição em contrário da lei federal.
+
+12. Disposições finais
+
+12.1. O usuário poderá receber qualquer esclarecimento sobre questões de interesse relativas ao tratamento de seus dados pessoais entrando em contato com a Operadora através do e-mail supp.lrs@ya.ru.
+
+12.2. Este documento refletirá quaisquer alterações na política de tratamento de dados pessoais da Operadora. A política é válida indefinidamente até ser substituída por uma nova versão.
+
+12.3. A versão atual da Política está disponível gratuitamente na Internet no aplicativo web LRS em https://www.rustore.ru/catalog/app/com.lrs

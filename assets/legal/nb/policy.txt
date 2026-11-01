@@ -1,0 +1,179 @@
+Retningslinjer for behandling av personopplysninger
+
+1. Generelle bestemmelser
+
+Denne policyen for behandling av personopplysninger er utarbeidet i samsvar med kravene i føderal lov av 27.07.2006. nr. 152-FZ "Om personopplysninger" (heretter referert til som loven om personopplysninger) og bestemmer prosedyren for behandling av personopplysninger og tiltak for å sikre sikkerheten til personopplysninger tatt av IP Pavlenko Dmitry Yuryevich (heretter referert til som operatøren) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Operatøren setter som sitt viktigste mål og forutsetning for å utføre sine aktiviteter å overholde rettighetene og frihetene til enkeltpersoner og borgere ved behandling av deres personopplysninger, inkludert beskyttelse av rettighetene til privatliv, personlige og familiehemmeligheter.
+
+1.2. Denne operatørens retningslinjer for behandling av personopplysninger (heretter referert til som policyen) gjelder for all informasjon som operatøren kan få om besøkende til LRS-nettapplikasjonen.
+
+2. Grunnleggende konsepter brukt i policyen
+
+2.1. Automatisert behandling av personopplysninger er behandling av personopplysninger ved bruk av datateknologi.
+
+2.2. Blokkering av personopplysninger er en midlertidig stans i behandlingen av personopplysninger (bortsett fra tilfeller hvor behandling er nødvendig for å avklare personopplysninger).
+
+2.3. Nettsted / applikasjon / nettapplikasjon - et sett med grafisk og informasjonsmateriell, samt dataprogrammer og databaser som sikrer deres tilgjengelighet på Internett.
+
+2.4. Informasjonssystem for personopplysninger er et sett med personopplysninger som finnes i databaser og informasjonsteknologier og tekniske midler som sikrer behandlingen av dem.
+
+2.5. Depersonalisering av personopplysninger er handlinger som et resultat av at det er umulig å avgjøre uten bruk av tilleggsinformasjon eierskapet av personopplysninger til en spesifikk bruker eller annet emne av personopplysninger.
+
+2.6. Behandling av personopplysninger er enhver handling (operasjon) eller sett av handlinger (operasjoner) utført med eller uten bruk av automatiseringsverktøy med personopplysninger, inkludert innsamling, registrering, systematisering, akkumulering, lagring, avklaring (oppdatering, endring), utvinning, bruk, overføring (distribusjon, tilveiebringelse, tilgang), depersonalisering, blokkering, sletting, ødeleggelse av personopplysninger.
+
+2.7. Operatør er et statlig organ, kommunalt organ, juridisk person eller enkeltperson som uavhengig eller sammen med andre personer organiserer og/eller utfører behandlingen av personopplysninger, samt fastsetter formålene med behandlingen av personopplysningene, sammensetningen av personopplysningene som skal behandles, og handlinger (operasjoner) utført med personopplysninger.
+
+2.8. Personopplysninger er all informasjon som direkte eller indirekte er relatert til en spesifikk eller identifiserbar bruker av LRS-nettapplikasjonen.
+
+2.9. Personopplysninger autorisert av gjenstanden for personopplysninger for distribusjon er personopplysninger, tilgang til et ubegrenset antall personer som gis av gjenstanden for personopplysninger ved å gi samtykke til behandling av personopplysninger autorisert av gjenstanden for personopplysninger for distribusjon på den måten som er foreskrevet av loven om personopplysninger (heretter referert til som personopplysninger tillatt for distribusjon).
+
+2.10. Bruker er enhver besøkende til LRS-nettapplikasjonen.
+
+2.11. Å gi personopplysninger er handlinger rettet mot å utlevere personopplysninger til en bestemt person eller en bestemt gruppe mennesker.
+
+2.12. Formidling av personopplysninger er enhver handling som tar sikte på å utlevere personopplysninger til et ubestemt antall personer (overføring av personopplysninger) eller å gjøre deg kjent med personopplysninger til et ubegrenset antall personer, inkludert publisering av personopplysninger i media, publisering i informasjons- og telekommunikasjonsnettverk, eller gi tilgang til personopplysninger på annen måte.
+
+2.13. Grenseoverskridende overføring av personopplysninger er overføring av personopplysninger til territoriet til en fremmed stat til en myndighet i en fremmed stat, en utenlandsk person eller en utenlandsk juridisk enhet.
+
+2.14. Ødeleggelse av personopplysninger er enhver handling som fører til at personopplysninger blir ugjenkallelig tilintetgjort med umulighet for ytterligere gjenoppretting av innholdet av personopplysninger i personopplysningssystemet og/eller materielle medier med personopplysninger blir ødelagt.
+
+3. Operatørens grunnleggende rettigheter og ansvar
+
+3.1. Operatøren har rett til:
+
+— motta pålitelig informasjon og/eller dokumenter som inneholder personopplysninger fra emnet for personopplysninger;
+
+— i tilfelle at emnet for personopplysninger trekker tilbake samtykket til behandling av personopplysninger, samt sender en søknad med en forespørsel om å avslutte behandlingen av personopplysninger, har operatøren rett til å fortsette å behandle personopplysninger uten samtykke fra emnet for personopplysninger hvis det er grunn spesifisert i loven om personopplysninger;
+
+— uavhengig bestemme sammensetningen og listen over tiltak som er nødvendige og tilstrekkelige for å sikre oppfyllelsen av forpliktelsene fastsatt i loven om personopplysninger og forskrifter vedtatt i samsvar med den, med mindre annet er bestemt av loven om personopplysninger eller andre føderale lover.
+
+3.2. Operatøren er forpliktet til:
+
+— gi emnet for personopplysninger, på hans forespørsel, informasjon om behandlingen av hans personopplysninger;
+
+— organisere behandlingen av personopplysninger på den måten som er fastsatt av gjeldende lovgivning i Den russiske føderasjonen;
+
+— svare på appeller og forespørsler fra personopplysninger og deres juridiske representanter i samsvar med kravene i personopplysningsloven;
+
+— rapportere til det autoriserte organet for beskyttelse av rettighetene til personopplysninger, på forespørsel fra dette organet, den nødvendige informasjonen innen 10 dager fra datoen for mottak av en slik forespørsel;
+
+— publisere eller på annen måte gi ubegrenset tilgang til denne policyen angående behandling av personopplysninger;
+
+— ta juridiske, organisatoriske og tekniske tiltak for å beskytte personopplysninger mot uautorisert eller utilsiktet tilgang til dem, ødeleggelse, modifikasjon, blokkering, kopiering, utlevering, distribusjon av personopplysninger, samt fra andre ulovlige handlinger i forhold til personopplysninger;
+
+— stoppe overføring (distribusjon, tilveiebringelse, tilgang) av personopplysninger, stoppe behandlingen og ødelegge personopplysninger på den måten og i tilfeller som er fastsatt i personopplysningsloven;
+
+— utføre andre oppgaver i henhold til personopplysningsloven.
+
+4. Grunnleggende rettigheter og plikter for personopplysninger
+
+4.1. Personer med personopplysninger har rett til:
+
+— motta informasjon om behandlingen av hans personopplysninger, unntatt i tilfeller gitt av føderale lover. Informasjonen gis til emnet for personopplysninger av operatøren i en tilgjengelig form, og den bør ikke inneholde personopplysninger knyttet til andre emner av personopplysninger, unntatt i tilfeller der det er juridisk grunnlag for utlevering av slike personopplysninger. Listen over informasjon og prosedyren for å innhente den er fastsatt av loven om personopplysninger;
+
+— kreve at operatøren oppklarer sine personopplysninger, blokkerer dem eller ødelegger dem hvis personopplysningene er ufullstendige, utdaterte, unøyaktige, ulovlig innhentet eller ikke er nødvendige for det angitte formålet med behandlingen, og også treffe tiltak gitt ved lov for å beskytte deres rettigheter;
+
+— stille et vilkår om forhåndssamtykke ved behandling av personopplysninger med det formål å markedsføre varer, verk og tjenester på markedet;
+
+— å trekke tilbake samtykke til behandling av personopplysninger, samt å sende en forespørsel om å avslutte behandlingen av personopplysninger;
+
+— klage til det autoriserte organet for å beskytte rettighetene til personopplysninger eller i retten mot ulovlige handlinger eller passivitet fra operatøren når han behandler personopplysningene hans;
+
+— å utøve andre rettigheter gitt av lovgivningen i Den russiske føderasjonen.
+
+4.2. Personer med personopplysninger er forpliktet til å:
+
+— gi operatøren pålitelig informasjon om deg selv;
+
+— informere operatøren om å oppdatere (oppdatere, endre) dine personopplysninger.
+
+4.3. Personer som ga operatøren falsk informasjon om seg selv eller informasjon om et annet emne av personopplysninger uten sistnevntes samtykke, er ansvarlige i henhold til lovgivningen i den russiske føderasjonen.
+
+5. Prinsipper for behandling av personopplysninger
+
+5.1. Behandlingen av personopplysninger utføres på et lovlig og rettferdig grunnlag.
+
+5.2. Behandlingen av personopplysninger er begrenset til å oppnå spesifikke, forhåndsdefinerte og legitime formål. Behandling av personopplysninger som er uforenlig med formålet med innsamling av personopplysninger er ikke tillatt.
+
+5.3. Det er ikke tillatt å kombinere databaser som inneholder personopplysninger, hvis behandling utføres for formål som er uforenlige med hverandre.
+
+5.4. Kun personopplysninger som oppfyller formålene med behandlingen deres er gjenstand for behandling.
+
+5.5. Innholdet og volumet av personopplysninger som behandles samsvarer med de angitte formålene med behandlingen. Redundans av behandlede personopplysninger i forhold til de angitte formålene med behandlingen er ikke tillatt.
+
+5.6. Ved behandling av personopplysninger sikres nøyaktigheten av personopplysningene, deres tilstrekkelighet og, om nødvendig, relevans i forhold til formålene med å behandle personopplysninger. Operatøren tar nødvendige tiltak og/eller sørger for at de blir iverksatt for å fjerne eller oppklare ufullstendige eller unøyaktige data.
+
+5.7. Lagring av personopplysninger utføres i en form som gjør det mulig å identifisere gjenstanden for personopplysninger, ikke lenger enn det som kreves av formålet med behandling av personopplysninger, med mindre perioden for lagring av personopplysninger er fastsatt av føderal lov, en avtale som gjenstanden for personopplysninger er en part, begunstiget eller garantist for. De behandlede personopplysningene blir ødelagt eller anonymisert ved oppnåelse av formålene med behandlingen eller i tilfelle tap av behovet for å oppnå disse formålene, med mindre annet er bestemt av føderal lov.
+
+6. Formål med å behandle personopplysninger
+
+Formålet med behandlingen er å gi brukeren tilgang til tjenester, informasjon og/eller materiell i applikasjonen og levering av tjenester til ham av applikasjonen.
+
+Personlige data - e-postadresse, antall fullstendige år av brukeren, kallenavn, antropometriske data, fotografier.
+
+Juridisk grunnlag - lovpålagte (konstituerende) dokumenter fra operatøren.
+
+Typer behandling av personopplysninger - innsamling, registrering, systematisering, akkumulering, lagring, ødeleggelse og anonymisering av personopplysninger
+
+7. Vilkår for behandling av personopplysninger
+
+7.1. Behandlingen av personopplysninger utføres med samtykke fra subjektet for personopplysninger til behandlingen av hans personopplysninger.
+
+7.2. Behandlingen av personopplysninger er nødvendig for å oppnå målene fastsatt i en internasjonal traktat fra Den russiske føderasjonen eller lov, for å implementere funksjonene, kreftene og ansvaret som er tildelt operatøren av lovgivningen i den russiske føderasjonen.
+
+7.3. Behandlingen av personopplysninger er nødvendig for rettspleien, utførelsen av en rettslig handling, en handling fra et annet organ eller tjenestemann, underlagt henrettelse i samsvar med lovgivningen i Den russiske føderasjonen om tvangsfullbyrdelse.
+
+7.4. Behandlingen av personopplysninger er nødvendig for gjennomføringen av en avtale som gjenstanden for personopplysninger er en part eller en begunstiget eller garantist i, samt for å inngå en avtale på initiativ av emnet for personopplysninger eller en avtale der gjenstanden for personopplysninger vil være en begunstiget eller garantist.
+
+7.5. Behandlingen av personopplysninger er nødvendig for å utøve rettighetene og legitime interessene til operatøren eller tredjeparter eller for å oppnå samfunnsmessig betydningsfulle mål, forutsatt at rettighetene og frihetene til personopplysningspersonen ikke krenkes.
+
+7.6. Behandlingen av personopplysninger utføres, tilgang til et ubegrenset antall personer som er gitt av gjenstanden for personopplysninger eller på hans anmodning (heretter kalt offentlig tilgjengelige personopplysninger).
+
+7.7. Vi behandler personopplysninger som er underlagt publisering eller obligatorisk offentliggjøring i samsvar med føderal lov.
+
+8. Prosedyren for innsamling, lagring, overføring og andre typer behandling av personopplysninger
+
+Sikkerheten til personopplysninger som behandles av Operatøren er sikret ved å implementere juridiske, organisatoriske og tekniske tiltak som er nødvendige for fullt ut å overholde kravene i gjeldende lovgivning innen personopplysningsbeskyttelse.
+
+8.1. Operatøren sørger for sikkerheten til personopplysninger og tar alle mulige tiltak for å hindre tilgang til personopplysninger for uvedkommende.
+
+8.2. Brukerens personopplysninger vil aldri, under noen omstendigheter, bli overført til tredjeparter, med unntak av tilfeller knyttet til implementering av gjeldende lovgivning eller i tilfelle hvor gjenstanden for personopplysningene har gitt samtykke til Operatøren om å overføre data til en tredjepart for å oppfylle forpliktelser i henhold til en sivilrettslig kontrakt.
+
+8.3. Hvis det identifiseres unøyaktigheter i personopplysninger, kan brukeren oppdatere dem uavhengig ved å sende en melding til operatøren til operatørens e-postadresse supp.lrs@ya.ru merket "Oppdaterer personlige data."
+
+8.4. Perioden for behandling av personopplysninger bestemmes av oppnåelsen av formålene som personopplysningene ble samlet inn for, med mindre en annen periode er fastsatt i kontrakten eller gjeldende lovgivning. Brukeren kan når som helst trekke tilbake sitt samtykke til behandling av personopplysninger ved å sende operatøren en melding via e-post til operatørens e-postadresse supp.lrs@ya.ru merket "Tilbaketrekking av samtykke til behandling av personopplysninger."
+
+8.5. All informasjon som samles inn av tredjepartstjenester, inkludert betalingssystemer, kommunikasjon og andre tjenesteleverandører, lagres og behandles av disse personene (operatørene) i samsvar med deres brukeravtale og personvernerklæring. Gjenstand for personopplysninger og/eller med spesifiserte dokumenter. Operatøren er ikke ansvarlig for handlingene til tredjeparter, inkludert tjenesteleverandørene spesifisert i dette avsnittet.
+
+8.6. Forbudene som er etablert av emnet for personopplysninger om overføring (bortsett fra å gi tilgang), samt om behandling eller vilkår for behandling (unntatt for å få tilgang) av personopplysninger som er tillatt for distribusjon, gjelder ikke i tilfeller av behandling av personopplysninger i staten, offentlige og andre offentlige interesser bestemt av lovgivningen i Den russiske føderasjonen.
+
+8.7. Ved behandling av personopplysninger sikrer operatøren konfidensialiteten til personopplysningene.
+
+8.8. Operatøren lagrer personopplysninger i en form som gjør det mulig å identifisere gjenstanden for personopplysninger, ikke lenger enn det som kreves av formålene med å behandle personopplysninger, med mindre perioden for lagring av personopplysninger er fastsatt av føderal lov, en avtale som gjenstanden for personopplysninger er en part, begunstiget eller garantist for.
+
+8.9. Betingelsen for å avslutte behandlingen av personopplysninger kan være oppnåelse av formålene med å behandle personopplysninger, utløpet av samtykket fra personen med personopplysninger, tilbaketrekking av samtykke fra subjektet av personopplysninger eller et krav om å avslutte behandlingen av personopplysninger, samt identifisering av ulovlig behandling av personopplysninger.
+
+9. Liste over handlinger utført av operatøren med mottatte personopplysninger
+
+9.1. Operatøren samler inn, registrerer, systematiserer, akkumulerer, lagrer, foredler (oppdateringer, endringer), trekker ut, bruker, overfører (distribusjon, tilveiebringelse, tilgang), depersonaliserer, blokkerer, sletter og ødelegger personopplysninger.
+
+9.2. Operatøren utfører automatisert behandling av personopplysninger med eller uten å motta og/eller overføre den mottatte informasjonen via informasjons- og telenett.
+
+10. Grenseoverskridende overføring av personopplysninger
+
+10.1. Før du starter aktiviteter for grenseoverskridende overføring av personopplysninger, er operatøren forpliktet til å varsle det autoriserte organet for beskyttelse av rettighetene til personopplysninger om sin intensjon om å utføre grenseoverskridende overføring av personopplysninger (en slik melding sendes separat fra meldingen om intensjonen om å behandle personopplysninger).
+
+10.2. Før du sender inn meldingen ovenfor, er operatøren forpliktet til å innhente relevant informasjon fra myndighetene i en fremmed stat, utenlandske enkeltpersoner, utenlandske juridiske personer som det er planlagt grenseoverskridende overføring av personopplysninger.
+
+11. Konfidensialitet av personopplysninger
+
+Operatøren og andre personer som har tilgang til personopplysninger er forpliktet til ikke å avsløre til tredjeparter eller distribuere personopplysninger uten samtykke fra den personopplysningspliktige, med mindre annet er bestemt av føderal lov.
+
+12. Sluttbestemmelser
+
+12.1. Brukeren kan motta enhver avklaring på spørsmål av interesse angående behandlingen av hans personlige data ved å kontakte operatøren via e-post supp.lrs@ya.ru.
+
+12.2. Dette dokumentet vil gjenspeile eventuelle endringer i operatørens retningslinjer for behandling av personopplysninger. Policyen er gyldig på ubestemt tid inntil den erstattes av en ny versjon.
+
+12.3. Den nåværende versjonen av retningslinjene er fritt tilgjengelig på Internett i LRS-nettapplikasjonen på https://www.rustore.ru/catalog/app/com.lrs

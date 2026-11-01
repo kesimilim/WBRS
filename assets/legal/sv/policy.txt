@@ -1,0 +1,179 @@
+Policy för behandling av personuppgifter
+
+1. Allmänna bestämmelser
+
+Denna policy för behandling av personuppgifter är upprättad i enlighet med kraven i den federala lagen från 27.07.2006. nr 152-FZ "Om personuppgifter" (nedan kallad lagen om personuppgifter) och bestämmer förfarandet för behandling av personuppgifter och åtgärder för att säkerställa säkerheten för personuppgifter som tas av IP Pavlenko Dmitry Yuryevich (nedan kallad operatören) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Operatören ställer som sitt viktigaste mål och villkor för sin verksamhet att iaktta individers och medborgares rättigheter och friheter vid behandling av deras personuppgifter, inklusive skydd av rätten till privatliv, personliga hemligheter och familjehemligheter.
+
+1.2. Denna Operatörs policy avseende behandling av personuppgifter (nedan kallad Policyn) gäller all information som Operatören kan få om besökare till LRS webbapplikation.
+
+2. Grundläggande begrepp som används i policyn
+
+2.1. Automatiserad behandling av personuppgifter är behandling av personuppgifter med hjälp av datorteknik.
+
+2.2. Blockering av personuppgifter är ett tillfälligt upphörande av behandlingen av personuppgifter (förutom de fall där behandlingen är nödvändig för att klargöra personuppgifter).
+
+2.3. Webbplats / applikation / webbapplikation - en uppsättning grafik- och informationsmaterial, samt datorprogram och databaser som säkerställer deras tillgänglighet på Internet.
+
+2.4. Personuppgiftsinformationssystem är en uppsättning personuppgifter som finns i databaser och informationsteknologier och tekniska medel som säkerställer behandlingen av dem.
+
+2.5. Depersonalisering av personuppgifter är handlingar som ett resultat av vilka det är omöjligt att utan användning av ytterligare information avgöra äganderätten till personuppgifter till en specifik användare eller annat föremål för personuppgifter.
+
+2.6. Behandling av personuppgifter är varje åtgärd (operation) eller uppsättning av åtgärder (operationer) som utförs med eller utan användning av automatiseringsverktyg med personuppgifter, inklusive insamling, registrering, systematisering, ackumulering, lagring, förtydligande (uppdatering, ändring), extrahering, användning, överföring (distribution, tillhandahållande, åtkomst), depersonalisering, blockering, radering, förstöring av personuppgifter.
+
+2.7. Operatör är ett statligt organ, kommunalt organ, juridisk person eller enskild person som självständigt eller tillsammans med andra personer organiserar och/eller utför behandlingen av personuppgifter, samt bestämmer ändamålen med behandlingen av personuppgifter, sammansättningen av de personuppgifter som ska behandlas samt åtgärder (operationer) som utförs med personuppgifter.
+
+2.8. Personuppgifter är all information som direkt eller indirekt relaterar till en specifik eller identifierbar användare av LRS webbapplikation.
+
+2.9. Personuppgifter som godkänts av föremålet för personuppgifter för distribution är personuppgifter, åtkomst för ett obegränsat antal personer som tillhandahålls av föremålet för personuppgifter genom att ge samtycke till behandling av personuppgifter som godkänts av föremålet för personuppgifter för spridning på det sätt som föreskrivs i lagen om personuppgifter (nedan kallad personuppgifter som är tillåtna för distribution).
+
+2.10. Användare är alla besökare till LRS webbapplikation.
+
+2.11. Att tillhandahålla personuppgifter är åtgärder som syftar till att lämna ut personuppgifter till en viss person eller en viss grupp människor.
+
+2.12. Spridning av personuppgifter är varje åtgärd som syftar till att lämna ut personuppgifter till ett obestämt antal personer (överföring av personuppgifter) eller att göra bekantskap med personuppgifter till ett obegränsat antal personer, inklusive publicering av personuppgifter i media, inlägg i informations- och telekommunikationsnätverk, eller ge tillgång till personuppgifter på annat sätt.
+
+2.13. Gränsöverskridande överföring av personuppgifter är överföring av personuppgifter till en främmande stats territorium till en myndighet i en främmande stat, en utländsk individ eller en utländsk juridisk person.
+
+2.14. Förstöring av personuppgifter är varje åtgärd som leder till att personuppgifter oåterkalleligt förstörs med omöjlighet att ytterligare återställa innehållet i personuppgifter i personuppgiftsinformationssystemet och/eller materiella medier med personuppgifter förstörs.
+
+3. Operatörens grundläggande rättigheter och skyldigheter
+
+3.1. Operatören har rätt:
+
+— ta emot pålitlig information och/eller dokument som innehåller personuppgifter från föremålet för personuppgifter;
+
+— i händelse av att föremålet för personuppgifter drar tillbaka sitt samtycke till behandling av personuppgifter, samt skickar en ansökan med en begäran om att avsluta behandlingen av personuppgifter, har Operatören rätt att fortsätta behandla personuppgifter utan samtycke från föremålet för personuppgifter om det finns skäl som anges i lagen om personuppgifter;
+
+— självständigt bestämma sammansättningen och listan över åtgärder som är nödvändiga och tillräckliga för att säkerställa fullgörandet av de skyldigheter som föreskrivs i lagen om personuppgifter och förordningar antagna i enlighet med den, om inte annat föreskrivs i lagen om personuppgifter eller andra federala lagar.
+
+3.2. Operatören är skyldig:
+
+— förse föremålet för personuppgifter, på dennes begäran, med information om behandlingen av hans personuppgifter;
+
+— organisera behandlingen av personuppgifter på det sätt som fastställts av den nuvarande lagstiftningen i Ryska federationen;
+
+— svara på överklaganden och förfrågningar från personuppgiftspersoner och deras juridiska ombud i enlighet med kraven i personuppgiftslagen;
+
+— rapportera till det auktoriserade organet för att skydda rättigheterna för personuppgiftspersoner, på begäran av detta organ, den nödvändiga informationen inom 10 dagar från dagen för mottagandet av en sådan begäran;
+
+— publicera eller på annat sätt ge obegränsad tillgång till denna policy angående behandling av personuppgifter;
+
+— vidta juridiska, organisatoriska och tekniska åtgärder för att skydda personuppgifter från obehörig eller oavsiktlig åtkomst till dem, förstörelse, modifiering, blockering, kopiering, tillhandahållande, distribution av personuppgifter, såväl som från andra olagliga handlingar i samband med personuppgifter;
+
+— stoppa överföring (distribution, tillhandahållande, åtkomst) av personuppgifter, stoppa behandling och förstöra personuppgifter på det sätt och i de fall som föreskrivs i lagen om personuppgifter;
+
+— utföra andra uppgifter enligt personuppgiftslagen.
+
+4. Personuppgifters grundläggande rättigheter och skyldigheter
+
+4.1. Ämnen av personuppgifter har rätt:
+
+— få information om behandlingen av hans personuppgifter, utom i fall som föreskrivs av federala lagar. Informationen lämnas till föremålet för personuppgifter av Operatören i en tillgänglig form, och den bör inte innehålla personuppgifter som rör andra föremål för personuppgifter, förutom i de fall där det finns lagliga skäl för att lämna ut sådana personuppgifter. Listan över information och förfarandet för att erhålla den fastställs av lagen om personuppgifter;
+
+— kräva att operatören klargör sina personuppgifter, blockerar dem eller förstör dem om personuppgifterna är ofullständiga, föråldrade, felaktiga, olagligt erhållna eller inte är nödvändiga för det angivna ändamålet med behandlingen, och även vidta åtgärder enligt lag för att skydda sina rättigheter;
+
+— ställa ett villkor om förhandssamtycke vid behandling av personuppgifter i syfte att marknadsföra varor, verk och tjänster på marknaden;
+
+— att återkalla samtycke till behandling av personuppgifter, samt att skicka en begäran om att avsluta behandlingen av personuppgifter;
+
+— överklaga till det auktoriserade organet för skydd av personuppgiftspersoners rättigheter eller i domstol mot olagliga handlingar eller passivitet från Operatörens sida vid behandling av hans personuppgifter;
+
+— att utöva andra rättigheter enligt Ryska federationens lagstiftning.
+
+4.2. Ämnen med personuppgifter är skyldiga att:
+
+— ge operatören tillförlitlig information om dig själv;
+
+— informera operatören om uppdatering (uppdatering, ändring) av dina personuppgifter.
+
+4.3. Personer som försett operatören med falsk information om sig själva eller information om ett annat ämne av personuppgifter utan dennes samtycke är ansvariga i enlighet med Rysslands lagstiftning.
+
+5. Principer för behandling av personuppgifter
+
+5.1. Behandlingen av personuppgifter utförs på en laglig och rättvis grund.
+
+5.2. Behandlingen av personuppgifter är begränsad till att uppnå specifika, fördefinierade och legitima ändamål. Behandling av personuppgifter som är oförenlig med syftet med att samla in personuppgifter är inte tillåten.
+
+5.3. Det är inte tillåtet att kombinera databaser som innehåller personuppgifter, vars behandling sker för ändamål som är oförenliga med varandra.
+
+5.4. Endast personuppgifter som uppfyller ändamålen med deras behandling är föremål för behandling.
+
+5.5. Innehållet och volymen av personuppgifter som behandlas motsvarar de angivna ändamålen med behandlingen. Redundans av behandlade personuppgifter i förhållande till de angivna ändamålen för deras behandling är inte tillåten.
+
+5.6. Vid behandling av personuppgifter säkerställs personuppgifternas riktighet, deras tillräcklighet och, vid behov, relevans i förhållande till ändamålen med behandlingen av personuppgifter. Operatören vidtar nödvändiga åtgärder och/eller ser till att de vidtas för att ta bort eller förtydliga ofullständiga eller felaktiga uppgifter.
+
+5.7. Lagringen av personuppgifter utförs i en form som gör det möjligt att identifiera föremålet för personuppgifter, inte längre än vad som krävs av syftet med behandling av personuppgifter, såvida inte perioden för lagring av personuppgifter är fastställd av federal lag, ett avtal till vilket föremålet för personuppgifter är part, förmånstagare eller garant. De behandlade personuppgifterna förstörs eller anonymiseras vid uppnåendet av ändamålen med behandlingen eller i händelse av att behovet av att uppnå dessa ändamål försvinner, om inte annat föreskrivs i federal lag.
+
+6. Syften med att behandla personuppgifter
+
+Syftet med behandlingen är att ge Användaren tillgång till tjänster, information och/eller material som finns i Applikationen och tillhandahållande av tjänster till honom genom Applikationen.
+
+Personuppgifter - e-postadress, antal hela år av användaren, smeknamn, antropometriska data, fotografier.
+
+Rättslig grund - operatörens lagstadgade (ingående) dokument.
+
+Typer av behandling av personuppgifter - insamling, registrering, systematisering, ackumulering, lagring, förstörelse och anonymisering av personuppgifter
+
+7. Villkor för behandling av personuppgifter
+
+7.1. Behandlingen av personuppgifter utförs med samtycke från föremålet för personuppgifter till behandlingen av hans personuppgifter.
+
+7.2. Behandlingen av personuppgifter är nödvändig för att uppnå de mål som anges i ett internationellt fördrag från Ryska federationen eller lag, för att genomföra de funktioner, befogenheter och ansvar som tilldelats operatören enligt Ryska federationens lagstiftning.
+
+7.3. Behandlingen av personuppgifter är nödvändig för rättskipningen, verkställandet av en rättslig handling, en handling från ett annat organ eller tjänsteman, med förbehåll för verkställighet i enlighet med Ryska federationens lagstiftning om verkställighetsförfaranden.
+
+7.4. Behandlingen av personuppgifter är nödvändig för genomförandet av ett avtal till vilket personuppgiftssubjektet är part eller en förmånstagare eller borgensman, samt för att ingå ett avtal på initiativ av personuppgiftssubjektet eller ett avtal enligt vilket personuppgiftssubjektet kommer att vara en förmånstagare eller garant.
+
+7.5. Behandlingen av personuppgifter är nödvändig för att utöva operatörens eller tredje parts rättigheter och berättigade intressen eller för att uppnå socialt betydelsefulla mål, förutsatt att rättigheterna och friheterna för personuppgiftssubjektet inte kränks.
+
+7.6. Behandlingen av personuppgifter utförs, åtkomst av ett obegränsat antal personer som tillhandahålls av föremålet för personuppgifter eller på dennes begäran (nedan kallad allmänt tillgängliga personuppgifter).
+
+7.7. Vi behandlar personuppgifter som är föremål för publicering eller obligatoriskt utlämnande i enlighet med federal lag.
+
+8. Förfarandet för insamling, lagring, överföring och andra typer av behandling av personuppgifter
+
+Säkerheten för personuppgifter som behandlas av Operatören säkerställs genom att implementera juridiska, organisatoriska och tekniska åtgärder som är nödvändiga för att fullt ut uppfylla kraven i gällande lagstiftning inom området för skydd av personuppgifter.
+
+8.1. Operatören säkerställer säkerheten för personuppgifter och vidtar alla möjliga åtgärder för att förhindra tillgång till personuppgifter för obehöriga.
+
+8.2. Användarens personuppgifter kommer aldrig, under några omständigheter, att överföras till tredje part, med undantag för fall som rör implementeringen av gällande lagstiftning eller i de fall då föremålet för personuppgifterna har gett samtycke till Operatören att överföra uppgifter till tredje part för att fullgöra skyldigheter enligt ett civilrättsligt avtal.
+
+8.3. Om felaktigheter i personuppgifter identifieras kan Användaren uppdatera dem oberoende genom att skicka ett meddelande till Operatören till Operatörens e-postadress supp.lrs@ya.ru märkt "Uppdaterar personuppgifter."
+
+8.4. Perioden för behandling av personuppgifter bestäms av uppnåendet av de ändamål för vilka personuppgifterna samlades in, om inte en annan period föreskrivs i avtalet eller gällande lagstiftning. Användaren kan när som helst återkalla sitt samtycke till behandlingen av personuppgifter genom att skicka operatören ett meddelande via e-post till operatörens e-postadress supp.lrs@ya.ru märkt "Återkallande av samtycke till behandling av personuppgifter."
+
+8.5. All information som samlas in av tredjepartstjänster, inklusive betalningssystem, kommunikation och andra tjänsteleverantörer, lagras och behandlas av dessa personer (operatörer) i enlighet med deras användaravtal och integritetspolicy. Föremål för personuppgifter och/eller med specificerade dokument. Operatören är inte ansvarig för tredje parts handlingar, inklusive de tjänsteleverantörer som anges i denna paragraf.
+
+8.6. Förbuden som fastställts av föremålet för personuppgifter för överföring (förutom tillhandahållande av tillgång), såväl som för behandling eller villkor för behandling (förutom för att få tillgång) av personuppgifter som är tillåtna för distribution, gäller inte i fall av behandling av personuppgifter i staten, allmänna och andra allmänna intressen som bestäms av Rysslands lagstiftning.
+
+8.7. Vid behandling av personuppgifter säkerställer operatören att personuppgifterna är konfidentiella.
+
+8.8. Operatören lagrar personuppgifter i en form som gör det möjligt att identifiera föremålet för personuppgifter, inte längre än vad som krävs av ändamålen med behandling av personuppgifter, såvida inte perioden för lagring av personuppgifter är fastställd av federal lag, ett avtal till vilket föremålet för personuppgifter är part, förmånstagare eller garant.
+
+8.9. Villkoret för att avbryta behandlingen av personuppgifter kan vara uppnåendet av syftena med behandlingen av personuppgifter, utgången av samtycke från föremålet för personuppgifter, återkallande av samtycke från föremålet för personuppgifter eller ett krav på att avsluta behandlingen av personuppgifter, samt identifiering av olaglig behandling av personuppgifter.
+
+9. Lista över åtgärder utförda av Operatören med mottagna personuppgifter
+
+9.1. Operatören samlar in, registrerar, systematiserar, ackumulerar, lagrar, förfinar (uppdateringar, ändringar), extraherar, använder, överför (distribution, tillhandahållande, åtkomst), avpersonaliserar, blockerar, raderar och förstör personuppgifter.
+
+9.2. Operatören utför automatiserad behandling av personuppgifter med eller utan att ta emot och/eller överföra den mottagna informationen via informations- och telenät.
+
+10. Gränsöverskridande överföring av personuppgifter
+
+10.1. Innan verksamhet för gränsöverskridande överföring av personuppgifter påbörjas är operatören skyldig att meddela det auktoriserade organet för skydd av personuppgiftspersoners rättigheter om sin avsikt att genomföra gränsöverskridande överföring av personuppgifter (en sådan anmälan skickas separat från anmälan om avsikten att behandla personuppgifter).
+
+10.2. Innan ovanstående anmälan lämnas är operatören skyldig att inhämta relevant information från myndigheterna i en främmande stat, utländska individer, utländska juridiska personer till vilka den gränsöverskridande överföringen av personuppgifter är planerad.
+
+11. Sekretess för personuppgifter
+
+Operatören och andra personer som har tillgång till personuppgifter är skyldiga att inte avslöja till tredje part eller distribuera personuppgifter utan samtycke från den personuppgiftsansvarige, om inte annat följer av federal lag.
+
+12. Slutbestämmelser
+
+12.1. Användaren kan få alla förtydliganden i frågor av intresse angående behandlingen av hans personuppgifter genom att kontakta operatören via e-post supp.lrs@ya.ru.
+
+12.2. Detta dokument kommer att återspegla alla ändringar av operatörens policy för behandling av personuppgifter. Policyn är giltig på obestämd tid tills den ersätts av en ny version.
+
+12.3. Den aktuella versionen av policyn är fritt tillgänglig på Internet i LRS webbapplikation på https://www.rustore.ru/catalog/app/com.lrs

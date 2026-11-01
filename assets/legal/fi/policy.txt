@@ -1,0 +1,179 @@
+Henkilötietojen käsittelyä koskeva politiikka
+
+1. Yleiset määräykset
+
+Tämä henkilötietojen käsittelykäytäntö on laadittu 27.07.2006 liittovaltion lain vaatimusten mukaisesti. N:o 152-FZ "Henkilötiedoista" (jäljempänä henkilötietolaki) ja määrittää henkilötietojen käsittelymenettelyn ja toimenpiteet henkilötietojen turvallisuuden varmistamiseksi IP Pavlenko Dmitri Jurjevitšin (jäljempänä Operaattori) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Toimija asettaa tärkeimmäksi tavoitteekseen ja toimintansa edellytykseksi yksilöiden ja kansalaisten oikeuksien ja vapauksien kunnioittamisen henkilötietoja käsiteltäessä, mukaan lukien oikeuksien yksityisyyteen sekä henkilö- ja perhesalaisuuksiin suojelemisen.
+
+1.2. Tämä Operaattorin henkilötietojen käsittelyä koskeva käytäntö (jäljempänä Käytäntö) koskee kaikkia tietoja, joita Operaattori voi saada LRS-verkkosovelluksen vierailijoista.
+
+2. Käytännössä käytetyt peruskäsitteet
+
+2.1. Henkilötietojen automaattinen käsittely on henkilötietojen käsittelyä tietotekniikkaa käyttäen.
+
+2.2. Henkilötietojen estäminen on henkilötietojen käsittelyn väliaikainen keskeyttäminen (paitsi tapauksia, joissa käsittely on tarpeen henkilötietojen selvittämiseksi).
+
+2.3. Verkkosivusto / Sovellus / Verkkosovellus - joukko graafisia ja tietomateriaaleja sekä tietokoneohjelmia ja tietokantoja, jotka varmistavat niiden saatavuuden Internetissä.
+
+2.4. Henkilötietojärjestelmä on tietokantoihin ja tietotekniikkaan sisältyviä henkilötietoja ja niiden käsittelyn varmistavia teknisiä keinoja.
+
+2.5. Henkilötietojen depersonalisointi ovat toimia, joiden seurauksena on mahdotonta määrittää ilman lisätietojen käyttöä henkilötietojen omistusoikeutta tietylle käyttäjälle tai muulle henkilötietojen kohteelle.
+
+2.6. Henkilötietojen käsittelyllä tarkoitetaan mitä tahansa toimintoa (toimintoa) tai toimintojen sarjaa, joka suoritetaan henkilötietojen automaatiotyökalujen avulla tai ilman, mukaan lukien henkilötietojen kerääminen, tallentaminen, systematisointi, kerääminen, tallentaminen, selventäminen (päivitys, muuttaminen), poimiminen, käyttö, siirto (jakelu, tarjoaminen, pääsy), depersonalisointi, estäminen, poistaminen, tuhoaminen.
+
+2.7. Toiminnanharjoittaja on valtion elin, kunta, oikeushenkilö tai henkilö, joka itsenäisesti tai yhdessä muiden henkilöiden kanssa järjestää ja/tai suorittaa henkilötietojen käsittelyn sekä määrittää henkilötietojen käsittelyn tarkoitukset, käsiteltävien henkilötietojen koostumuksen sekä henkilötiedoilla suoritettavat toimet (toiminnot).
+
+2.8. Henkilötiedot ovat mitä tahansa tietoja, jotka liittyvät suoraan tai epäsuorasti tiettyyn tai tunnistettavaan LRS-verkkosovelluksen käyttäjään.
+
+2.9. Henkilötiedot, jotka henkilötietojen kohteena on valtuuttanut jakeluun, ovat henkilötietoja, joihin henkilötietojen kohteena on pääsy rajattomalle määrälle henkilöitä antamalla suostumuksensa henkilötietojen käsittelyyn, jonka henkilötietojen kohde on valtuuttanut jaettaviksi henkilötietolain säädetyllä tavalla (jäljempänä jakelu sallitut henkilötiedot).
+
+2.10. Käyttäjä on mikä tahansa LRS-verkkosovelluksen vierailija.
+
+2.11. Henkilötietojen luovuttaminen on toimintaa, jonka tarkoituksena on luovuttaa henkilötietoja tietylle henkilölle tai tietylle ihmisryhmälle.
+
+2.12. Henkilötietojen levittäminen on mitä tahansa toimintaa, jonka tarkoituksena on luovuttaa henkilötietoja määräämättömälle määrälle henkilöitä (henkilötietojen siirto) tai tutustua henkilötietoihin rajoittamattomalle määrälle henkilöitä, mukaan lukien henkilötietojen julkaiseminen tiedotusvälineissä, julkaiseminen tieto- ja televerkoissa tai muulla tavoin pääsy henkilötietoihin.
+
+2.13. Rajat ylittävä henkilötietojen siirto on henkilötietojen siirtoa vieraan valtion alueelle vieraan valtion viranomaiselle, ulkomaiselle luonnolliselle henkilölle tai ulkomaiselle oikeushenkilölle.
+
+2.14. Henkilötietojen tuhoaminen on mitä tahansa toimenpidettä, jonka seurauksena henkilötiedot tuhoutuvat peruuttamattomasti siten, että henkilötietojärjestelmässä olevien henkilötietojen sisältöä ei ole enää mahdollista palauttaa ja/tai henkilötietojen materiaalit tuhoutuvat.
+
+3. Operaattorin perusoikeudet ja -velvollisuudet
+
+3.1. Operaattorilla on oikeus:
+
+— saada henkilötietojen kohteelta luotettavaa tietoa ja/tai henkilötietoja sisältäviä asiakirjoja;
+
+— siinä tapauksessa, että henkilötietojen kohde peruuttaa suostumuksensa henkilötietojen käsittelyyn sekä lähettää hakemuksen henkilötietojen käsittelyn lopettamisesta, palveluntarjoajalla on oikeus jatkaa henkilötietojen käsittelyä ilman henkilötietojen kohteen suostumusta, jos siihen on henkilötietolaissa määritelty peruste;
+
+— määrittää itsenäisesti kokoonpanon ja luettelon tarvittavista ja riittävistä toimenpiteistä henkilötietolaissa ja sen mukaisesti annetuissa säännöksissä säädettyjen velvoitteiden täyttämisen varmistamiseksi, ellei henkilötietolaissa tai muissa liittovaltion laeissa toisin säädetä.
+
+3.2. Operaattori on velvollinen:
+
+— antaa henkilötietojen kohteelle tämän pyynnöstä tietoja hänen henkilötietojensa käsittelystä;
+
+— järjestää henkilötietojen käsittelyn Venäjän federaation voimassa olevan lainsäädännön mukaisesti;
+
+— vastata henkilötietolain vaatimusten mukaisesti rekisteröityjen ja heidän laillisten edustajiensa valituksiin ja pyyntöihin;
+
+— ilmoittaa rekisteröidyn oikeuksien suojelemiseksi valtuutetulle elimelle tämän pyynnöstä tarvittavat tiedot 10 päivän kuluessa tällaisen pyynnön vastaanottamisesta;
+
+— julkaista tai muutoin tarjota rajoittamaton pääsy tähän tietosuojakäytäntöön henkilötietojen käsittelyn osalta;
+
+— ryhtyä oikeudellisiin, organisatorisiin ja teknisiin toimenpiteisiin henkilötietojen suojaamiseksi luvattomalta tai vahingossa pääsyltä niihin, henkilötietojen tuhoamiselta, muuttamiselta, estämiseltä, kopioimiselta, toimittamiselta, jakamiselta sekä muilta henkilötietoihin liittyviltä lainvastaisilta toimenpiteiltä;
+
+— lopettaa henkilötietojen siirron (jakelun, tarjoamisen, pääsyn), lopettaa henkilötietojen käsittelyn ja tuhota henkilötietolain säädetyllä tavalla ja tapauksissa;
+
+— suorittaa muita henkilötietolain mukaisia tehtäviä.
+
+4. Rekisteröityjen perusoikeudet ja -velvollisuudet
+
+4.1. Henkilötietojen kohteilla on oikeus:
+
+— saada tietoja henkilötietojensa käsittelystä, paitsi liittovaltion laeissa säädetyissä tapauksissa. Operaattori toimittaa tiedot henkilötietojen kohteelle saavutettavassa muodossa, eivätkä ne saa sisältää henkilötietoja, jotka liittyvät muihin henkilötietojen kohteisiin, paitsi tapauksissa, joissa tällaisten henkilötietojen luovuttamiselle on laillinen peruste. Luettelo tiedoista ja niiden hankkimismenettely on vahvistettu henkilötietolaissa;
+
+— vaatia toiminnanharjoittajaa täsmentämään henkilötietonsa, estämään ne tai tuhoamaan ne, jos henkilötiedot ovat epätäydellisiä, vanhentuneita, epätarkkoja, laittomasti hankittuja tai eivät ole välttämättömiä ilmoitettuun käsittelytarkoitukseen, sekä ryhtymään laissa säädetyihin toimenpiteisiin oikeuksiensa turvaamiseksi;
+
+— asettaa edellytyksen ennakkosuostumuksesta, kun henkilötietoja käsitellään tavaroiden, töiden ja palvelujen edistämiseksi markkinoilla;
+
+— peruuttaa suostumus henkilötietojen käsittelyyn sekä lähettää pyyntö henkilötietojen käsittelyn lopettamiseksi;
+
+— vedota valtuutettuun elimeen rekisteröityjen oikeuksien suojelemiseksi tai tuomioistuimessa Operaattorin laittomista toimista tai laiminlyönneistä henkilötietoja käsiteltäessä;
+
+— käyttää muita Venäjän federaation lainsäädännössä säädettyjä oikeuksia.
+
+4.2. Henkilötietojen kohteet ovat velvollisia:
+
+— antaa Operaattorille luotettavaa tietoa itsestäsi;
+
+— ilmoittaa Operaattorille henkilötietojesi päivittämisestä (päivittämisestä, muuttamisesta).
+
+4.3. Henkilöt, jotka ovat toimittaneet Operaattorille vääriä tietoja itsestään tai toisesta henkilötietojen kohteesta ilman tämän suostumusta, ovat vastuussa Venäjän federaation lainsäädännön mukaisesti.
+
+5. Henkilötietojen käsittelyn periaatteet
+
+5.1. Henkilötietojen käsittely tapahtuu laillisin ja oikeudenmukaisin perustein.
+
+5.2. Henkilötietojen käsittely on rajoitettu tiettyjen, ennalta määriteltyjen ja laillisten tarkoitusten saavuttamiseen. Henkilötietojen käsittely, joka on ristiriidassa henkilötietojen keräämisen tarkoituksen kanssa, ei ole sallittua.
+
+5.3. Henkilötietoja sisältäviä tietokantoja, joiden käsittely tapahtuu keskenään yhteensopimattomiin tarkoituksiin, ei saa yhdistää.
+
+5.4. Ainoastaan henkilötietoja, jotka vastaavat käsittelyn tarkoitusta, käsitellään.
+
+5.5. Käsiteltyjen henkilötietojen sisältö ja määrä vastaavat ilmoitettuja käsittelyn tarkoituksia. Käsiteltyjen henkilötietojen redundoituminen niiden käsittelyn ilmoitettuihin tarkoituksiin ei ole sallittua.
+
+5.6. Henkilötietoja käsiteltäessä varmistetaan henkilötietojen oikeellisuus, riittävyys ja tarvittaessa merkityksellisyys henkilötietojen käsittelyn tarkoituksen kannalta. Operaattori ryhtyy tarvittaviin toimenpiteisiin ja/tai varmistaa, että niihin ryhdytään puutteellisten tai virheellisten tietojen poistamiseksi tai oikaisemiseksi.
+
+5.7. Henkilötietojen säilytys tapahtuu muodossa, joka mahdollistaa henkilötietojen kohteen tunnistamisen, enintään henkilötietojen käsittelyn tarkoitusten edellyttämän ajan, ellei henkilötietojen säilytysaikaa säädetä liittovaltion laissa, sopimuksessa, jonka osapuoli, edunsaaja tai takaaja henkilötietojen kohde on. Käsitellyt henkilötiedot tuhotaan tai anonymisoidaan, kun käsittelyn tarkoitukset saavutetaan tai jos tarve saavuttaa nämä tarkoitukset menetetään, ellei liittovaltion laissa toisin säädetä.
+
+6. Henkilötietojen käsittelyn tarkoitukset
+
+Käsittelyn tarkoituksena on tarjota Käyttäjälle pääsy Sovelluksen sisältämiin palveluihin, tietoihin ja/tai materiaaleihin sekä Palvelun tarjoaminen hänelle.
+
+Henkilötiedot - sähköpostiosoite, käyttäjän kokonaisten vuosien lukumäärä, lempinimi, antropometriset tiedot, valokuvat.
+
+Oikeusperusta - Operaattorin lakisääteiset (perusasiakirjat).
+
+Henkilötietojen käsittelytyypit - henkilötietojen kerääminen, tallentaminen, systematisointi, kerääminen, säilyttäminen, tuhoaminen ja anonymisointi
+
+7. Henkilötietojen käsittelyn ehdot
+
+7.1. Henkilötietojen käsittely tapahtuu henkilötietojen kohteen suostumuksella henkilötietojensa käsittelyyn.
+
+7.2. Henkilötietojen käsittely on tarpeen Venäjän federaation kansainvälisessä sopimuksessa tai laissa asetettujen tavoitteiden saavuttamiseksi, Venäjän federaation lainsäädännössä operaattorille määrättyjen tehtävien, toimivaltuuksien ja vastuiden toteuttamiseksi.
+
+7.3. Henkilötietojen käsittely on tarpeen oikeudenkäytön, oikeudellisen toimen, toisen elimen tai virkamiehen toimen toteuttamiseksi, ja se on pantava täytäntöön Venäjän federaation täytäntöönpanomenettelyjä koskevan lainsäädännön mukaisesti.
+
+7.4. Henkilötietojen käsittely on tarpeen sellaisen sopimuksen täytäntöönpanemiseksi, jossa henkilötietojen kohteena on osapuoli tai edunsaaja tai takaaja, sekä sopimuksen tekemiseksi henkilötietojen kohteen aloitteesta tai sopimuksen tekemiseksi, jonka mukaan henkilötietojen kohteena on edunsaaja tai takaaja.
+
+7.5. Henkilötietojen käsittely on välttämätöntä operaattorin tai kolmansien osapuolien oikeuksien ja oikeutettujen etujen käyttämiseksi tai yhteiskunnallisesti merkittävien tavoitteiden saavuttamiseksi, edellyttäen, että henkilötietojen kohteen oikeuksia ja vapauksia ei rikota.
+
+7.6. Henkilötietojen käsittely suoritetaan siten, että rajattoman määrän henkilöitä pääsee käsiksi henkilötietojen kohteena olevaan tai hänen pyynnöstään (jäljempänä julkisesti saatavilla olevat henkilötiedot).
+
+7.7. Käsittelemme henkilötietoja, jotka ovat julkistamisen tai pakollisen luovuttamisen alaisia liittovaltion lain mukaisesti.
+
+8. Menettely henkilötietojen keräämiseksi, tallentamiseksi, siirtämiseksi ja muunlaisessa käsittelyssä
+
+Palveluntarjoajan käsittelemien henkilötietojen turvallisuus varmistetaan toteuttamalla oikeudellisia, organisatorisia ja teknisiä toimenpiteitä, jotka ovat tarpeen voimassa olevan henkilötietojen suojaa koskevan lainsäädännön vaatimusten täyttämiseksi.
+
+8.1. Palveluntarjoaja varmistaa henkilötietojen turvallisuuden ja tekee kaikki mahdolliset toimenpiteet estääkseen asiattomien pääsyn henkilötietoihin.
+
+8.2. Käyttäjän henkilötietoja ei koskaan, missään olosuhteissa, luovuteta kolmansille osapuolille, lukuun ottamatta tapauksia, jotka liittyvät voimassa olevan lainsäädännön toimeenpanoon tai silloin, kun henkilötietojen kohde on antanut Operaattorille suostumuksen tietojen siirtämiseen kolmannelle osapuolelle siviilioikeudellisen sopimuksen mukaisten velvoitteiden täyttämiseksi.
+
+8.3. Mikäli henkilötiedoissa havaitaan epätarkkuuksia, Käyttäjä voi päivittää ne itsenäisesti lähettämällä ilmoituksen Operaattorille Operaattorin sähköpostiosoitteeseen supp.lrs@ya.ru, jossa on merkintä "Henkilötietojen päivittäminen".
+
+8.4. Henkilötietojen käsittelyaika määräytyy sen mukaan, miten ne tarkoitukset on saavutettu, joita varten henkilötiedot on kerätty, ellei sopimuksessa tai voimassa olevassa lainsäädännössä toisin määrätä. Käyttäjä voi milloin tahansa peruuttaa suostumuksensa henkilötietojen käsittelyyn lähettämällä Operaattorille sähköpostilla ilmoituksen Operaattorin sähköpostiosoitteeseen supp.lrs@ya.ru, jossa on merkintä "Henkilötietojen käsittelyn suostumuksen peruuttaminen".
+
+8.5. Nämä henkilöt (Operaattorit) tallentavat ja käsittelevät kaikki tiedot, jotka kolmannen osapuolen palvelut, mukaan lukien maksujärjestelmät, viestintä ja muut palveluntarjoajat, keräävät käyttösopimuksensa ja tietosuojakäytäntönsä mukaisesti. Henkilötietojen aihe ja/tai tietyt asiakirjat. Operaattori ei ole vastuussa kolmansien osapuolien toiminnasta, mukaan lukien tässä kohdassa mainitut palveluntarjoajat.
+
+8.6. Henkilötietojen kohteen asettamat kiellot levitettäväksi sallittujen henkilötietojen siirtoa (lukuun ottamatta pääsyä) sekä käsittelyä tai käsittelyn ehtoja (lukuun ottamatta pääsyä) eivät koske henkilötietojen käsittelyä valtion, yleisen ja muiden Venäjän federaation lainsäädännön määräämien yleisten etujen vuoksi.
+
+8.7. Käsitellessään henkilötietoja operaattori varmistaa henkilötietojen luottamuksellisuuden.
+
+8.8. Operaattori säilyttää henkilötietoja muodossa, joka mahdollistaa henkilötietojen kohteen tunnistamisen, enintään henkilötietojen käsittelyn tarkoitusten edellyttämän ajan, ellei henkilötietojen säilytysajasta ole säädetty liittovaltion laissa, sopimuksessa, jonka osapuoli, edunsaaja tai takaaja henkilötietojen kohteena on.
+
+8.9. Henkilötietojen käsittelyn lopettamisen ehtona voi olla henkilötietojen käsittelyn tavoitteiden saavuttaminen, henkilötietojen kohteen suostumuksen umpeutuminen, henkilötietojen kohteen suostumuksen peruuttaminen tai vaatimus henkilötietojen käsittelyn lopettamisesta sekä henkilötietojen laittoman käsittelyn havaitseminen.
+
+9. Luettelo operaattorin suorittamista toimista vastaanotettujen henkilötietojen kanssa
+
+9.1. Operaattori kerää, tallentaa, systematisoi, kerää, tallentaa, jalostaa (päivittää, muuttaa), poimii, käyttää, siirtää (jakelu, tarjoaminen, pääsy), depersonalisoi, estää, poistaa ja tuhoaa henkilötietoja.
+
+9.2. Operaattori suorittaa henkilötietojen automaattisen käsittelyn joko vastaanottamalla tai vastaanottamatta ja/tai välittämällä vastaanotetut tiedot tieto- ja televerkkojen kautta.
+
+10. Henkilötietojen rajat ylittävä siirto
+
+10.1. Ennen henkilötietojen rajat ylittävää siirtoa koskevan toiminnan aloittamista toiminnanharjoittaja on velvollinen ilmoittamaan rekisteröityjen oikeuksien suojeluun valtuutetulle elimelle aikomuksestaan suorittaa henkilötietojen rajat ylittävää siirtoa (tällainen ilmoitus lähetetään erikseen ilmoituksesta henkilötietojen käsittelyaikeesta).
+
+10.2. Ennen edellä mainitun ilmoituksen tekemistä toiminnanharjoittaja on velvollinen hankkimaan asiaankuuluvat tiedot vieraan valtion viranomaisilta, ulkomaalaisilta yksityishenkilöiltä, ulkomaalaisilta oikeushenkilöiltä, joille henkilötietojen rajat ylittävää siirtoa suunnitellaan.
+
+11. Henkilötietojen luottamuksellisuus
+
+Operaattori ja muut henkilöt, joilla on pääsy henkilötietoihin, ovat velvollisia olemaan paljastamatta tai jakamatta henkilötietoja kolmansille osapuolille ilman rekisteröidyn suostumusta, ellei liittovaltion laissa toisin säädetä.
+
+12. Loppusäännökset
+
+12.1. Käyttäjä voi saada selvennyksiä hänen henkilötietojensa käsittelyä koskeviin kysymyksiisi ottamalla yhteyttä Operaattoriin sähköpostitse supp.lrs@ya.ru.
+
+12.2. Tämä asiakirja sisältää kaikki muutokset Operaattorin henkilötietojen käsittelykäytäntöihin. Käytäntö on voimassa toistaiseksi, kunnes se korvataan uudella versiolla.
+
+12.3. Käytännön nykyinen versio on vapaasti saatavilla Internetissä LRS-verkkosovelluksessa osoitteessa https://www.rustore.ru/catalog/app/com.lrs

@@ -1,0 +1,225 @@
+{
+  "sourceSha256": "affe6e1e7177ba50749d4dff4fc00ade6d13eecfcc54418539d667ea6263ee08",
+  "sourceLanguage": "ru",
+  "source": "Owner-supplied Politika.docx, received 2026-11-01",
+  "generatedAt": "2026-11-01T15:26:25.505785+00:00",
+  "documents": {
+    "en": {
+      "asset": "assets/legal/en/policy.txt",
+      "sha256": "1c99228f7644c4cd899cab56ee34d6a393290e04903461d55b12988b6a78b612",
+      "paragraphs": 90,
+      "translation": "English translation"
+    },
+    "de": {
+      "asset": "assets/legal/de/policy.txt",
+      "sha256": "5c2317e2bbdea467664181a4f2c65d2ae938d2800e65750b848fd60c799cc255",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "es": {
+      "asset": "assets/legal/es/policy.txt",
+      "sha256": "4b1203a91454f638f238e987f21d498bf8b7012cc4fd3651278f8c33e748c48d",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "fr": {
+      "asset": "assets/legal/fr/policy.txt",
+      "sha256": "fe7768c0a9eb268e1035b40339a46ebbe88eb2fc7ee38270ced43cb858958ecd",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "it": {
+      "asset": "assets/legal/it/policy.txt",
+      "sha256": "ed59b69605cc9a841bb193f945330699efa3ef2d92a296ee453674652a8ae4b3",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "pt": {
+      "asset": "assets/legal/pt/policy.txt",
+      "sha256": "d1ec3b307267639a6c0faccb449b9eacb5146956c9b7f111e7757b8291afa7fe",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "el": {
+      "asset": "assets/legal/el/policy.txt",
+      "sha256": "f3542500d963f4fcd78297a23bbfecb4a3c91c62dc08c20b58d0fbd9ca025186",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "ru": {
+      "asset": "assets/policy.txt",
+      "sha256": "affe6e1e7177ba50749d4dff4fc00ade6d13eecfcc54418539d667ea6263ee08",
+      "paragraphs": 90,
+      "translation": "original"
+    },
+    "sr": {
+      "asset": "assets/legal/sr/policy.txt",
+      "sha256": "ec6793cbdd0191610d656dcd9af6dced0d8cdc8ad34baf4294106f1bf512f94c",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "pl": {
+      "asset": "assets/legal/pl/policy.txt",
+      "sha256": "fbfa33a6f9735216fa313f376efc51a2387291d8e2f32a9173bab6267547101e",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "sl": {
+      "asset": "assets/legal/sl/policy.txt",
+      "sha256": "546af46fc25745ef5e795c332b1345187fc821411ff011aad3895baed1da1580",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "sk": {
+      "asset": "assets/legal/sk/policy.txt",
+      "sha256": "84dc7edefea7bb8de61f0950ac99b26a73066566e01c85a7143abbe38d8dd48f",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "cs": {
+      "asset": "assets/legal/cs/policy.txt",
+      "sha256": "550ed6b73887940018a9c0f965fb402fa12eaefaf9c0f05ae650b0e3bf51eeec",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "bg": {
+      "asset": "assets/legal/bg/policy.txt",
+      "sha256": "079b143ac6a6f15c72e3c0af2611b01cb6a02bb83a56b159d0c55f4cde929a47",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "ro": {
+      "asset": "assets/legal/ro/policy.txt",
+      "sha256": "afd2929d193acd84c087309964682394e5518ebd8d54a2b8e68831e60e7e955c",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "mk": {
+      "asset": "assets/legal/mk/policy.txt",
+      "sha256": "ef4bac393ac08477cb092bfb4f1ba36b2ff38ef3fb35d3bf057b205cf216fb5c",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "hu": {
+      "asset": "assets/legal/hu/policy.txt",
+      "sha256": "3c1e8810a632b90f4c9de9ffca51462fe2e3dec314fd4b0b942a3131d777ab46",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "sv": {
+      "asset": "assets/legal/sv/policy.txt",
+      "sha256": "00435d0fcfbe3526fc8108a82773ea1ed93f99926b99b1862753bd04755f7778",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "nb": {
+      "asset": "assets/legal/nb/policy.txt",
+      "sha256": "051233dc31d088552c86d93f9e88ca95dba75ded9485e575e3ce8b8e466b52d3",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "fi": {
+      "asset": "assets/legal/fi/policy.txt",
+      "sha256": "c1300a634ccf4c174678f98b29702a8aaf441afdc4982cbed82bbee3d5142917",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "da": {
+      "asset": "assets/legal/da/policy.txt",
+      "sha256": "ba2192881580563aa1f080313cee0cb62577bdb26faad5fe939fd597641ac36d",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "nl": {
+      "asset": "assets/legal/nl/policy.txt",
+      "sha256": "e957866a798bc14e61338866d47407e33fe6a61526914c48a132e9316453ca62",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    },
+    "is": {
+      "asset": "assets/legal/is/policy.txt",
+      "sha256": "db321d1ba608758d8cf2b757eabc1c3426284734939e03f78511cc9531fc0ce8",
+      "paragraphs": 90,
+      "translation": "Google machine translation with source-literal corrections"
+    }
+  },
+  "reviewedCorrections": [
+    {
+      "language": "es",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "sr",
+      "correctedParagraphs": [
+        2,
+        3,
+        4,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        71,
+        72,
+        87,
+        89
+      ]
+    },
+    {
+      "language": "sk",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "cs",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "hu",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "sv",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "nb",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "fi",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "da",
+      "correctedParagraphs": [
+        2
+      ]
+    },
+    {
+      "language": "is",
+      "correctedParagraphs": [
+        2
+      ]
+    }
+  ],
+  "limitations": "Translations are informational machine-assisted versions, not separately approved legal texts. The Russian original is available in the app."
+}

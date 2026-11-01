@@ -1,0 +1,179 @@
+Politica privind prelucrarea datelor cu caracter personal
+
+1. Prevederi generale
+
+Această politică de prelucrare a datelor cu caracter personal este întocmită în conformitate cu cerințele Legii federale din 27.07.2006. Nr. 152-FZ „Cu privire la datele cu caracter personal” (denumită în continuare Legea cu privire la datele cu caracter personal) și stabilește procedura de prelucrare a datelor cu caracter personal și măsurile de asigurare a securității datelor cu caracter personal luate de IP Pavlenko Dmitry Yuryevich (denumit în continuare Operator) INN: 366514852674, OGRNIP:/OGRN:/OGRN 323366800022544.
+
+1.1. Operatorul își stabilește ca obiectiv și condiție cel mai important pentru desfășurarea activităților sale respectarea drepturilor și libertăților persoanelor și cetățenilor atunci când prelucrează datele cu caracter personal ale acestora, inclusiv protecția drepturilor la viață privată, a secretelor personale și de familie.
+
+1.2. Această politică a Operatorului privind prelucrarea datelor cu caracter personal (denumită în continuare Politica) se aplică tuturor informațiilor pe care Operatorul le poate obține despre vizitatorii aplicației web LRS.
+
+2. Concepte de bază utilizate în Politică
+
+2.1. Prelucrarea automată a datelor cu caracter personal este prelucrarea datelor cu caracter personal folosind tehnologia informatică.
+
+2.2. Blocarea datelor cu caracter personal reprezintă o încetare temporară a prelucrării datelor cu caracter personal (cu excepția cazurilor în care prelucrarea este necesară pentru clarificarea datelor cu caracter personal).
+
+2.3. Website / Aplicație / Aplicație web - un set de materiale grafice și informative, precum și programe informatice și baze de date care asigură disponibilitatea acestora pe Internet.
+
+2.4. Sistemul informatic de date cu caracter personal este un ansamblu de date cu caracter personal continute in baze de date si tehnologii informatice si mijloace tehnice care asigura prelucrarea acestora.
+
+2.5. Depersonalizarea datelor cu caracter personal sunt acțiuni în urma cărora este imposibil să se determine fără utilizarea unor informații suplimentare dreptul de proprietate asupra datelor cu caracter personal pentru un anumit Utilizator sau alt subiect de date cu caracter personal.
+
+2.6. Prelucrarea datelor cu caracter personal este orice acțiune (operațiune) sau set de acțiuni (operațiuni) efectuate cu sau fără utilizarea instrumentelor de automatizare cu date personale, inclusiv colectarea, înregistrarea, sistematizarea, acumularea, stocarea, clarificarea (actualizarea, modificarea), extragerea, utilizarea, transferul (distribuirea, furnizarea, accesul), depersonalizarea, blocarea, ștergerea, distrugerea datelor personale.
+
+2.7. Operatorul este un organism de stat, organ municipal, persoană juridică sau persoană fizică care, în mod independent sau împreună cu alte persoane, organizează și/sau realizează prelucrarea datelor cu caracter personal, precum și determinarea scopurilor prelucrării datelor cu caracter personal, componența datelor cu caracter personal care urmează a fi prelucrate, precum și acțiunile (operațiunile) efectuate cu datele cu caracter personal.
+
+2.8. Datele personale reprezintă orice informație care se referă direct sau indirect la un Utilizator specific sau identificabil al aplicației web LRS.
+
+2.9. Datele cu caracter personal autorizate de subiectul datelor cu caracter personal pentru distribuire sunt date cu caracter personal, accesul unui număr nelimitat de persoane cărora le este oferit de către subiectul datelor cu caracter personal prin acordarea consimțământului pentru prelucrarea datelor cu caracter personal autorizate de subiectul datelor cu caracter personal pentru distribuire în modul prevăzut de Legea cu privire la datele cu caracter personal (denumite în continuare date cu caracter personal permise pentru distribuire).
+
+2.10. Utilizatorul este orice vizitator al aplicației web LRS.
+
+2.11. Furnizarea datelor cu caracter personal sunt acțiuni care vizează dezvăluirea datelor cu caracter personal unei anumite persoane sau unui anumit grup de persoane.
+
+2.12. Diseminarea datelor cu caracter personal este orice acțiune care vizează dezvăluirea datelor cu caracter personal către un număr nedeterminat de persoane (transfer de date cu caracter personal) sau familiarizarea cu datele cu caracter personal către un număr nelimitat de persoane, inclusiv publicarea datelor cu caracter personal în mass-media, postarea în rețelele de informare și telecomunicații sau furnizarea accesului la date personale în orice alt mod.
+
+2.13. Transferul transfrontalier de date cu caracter personal este transferul de date cu caracter personal pe teritoriul unui stat străin către o autoritate a unui stat străin, o persoană fizică străină sau o persoană juridică străină.
+
+2.14. Distrugerea datelor cu caracter personal este orice acțiune în urma căreia datele cu caracter personal sunt distruse iremediabil cu imposibilitatea restaurării ulterioare a conținutului datelor cu caracter personal din sistemul de informare a datelor cu caracter personal și/sau mediile materiale ale datelor cu caracter personal sunt distruse.
+
+3. Drepturile și responsabilitățile de bază ale Operatorului
+
+3.1. Operatorul are dreptul:
+
+— să primească de la subiectul datelor cu caracter personal informații fiabile și/sau documente care conțin date cu caracter personal;
+
+— în cazul în care subiectul datelor cu caracter personal își retrage consimțământul pentru prelucrarea datelor cu caracter personal, precum și trimite o cerere cu o cerere de încetare a prelucrării datelor cu caracter personal, Operatorul are dreptul de a continua prelucrarea datelor cu caracter personal fără consimțământul subiectului datelor cu caracter personal, dacă există temeiuri specificate în Legea cu privire la datele cu caracter personal;
+
+— stabilește în mod independent componența și lista măsurilor necesare și suficiente pentru a asigura îndeplinirea obligațiilor prevăzute de Legea cu privire la datele cu caracter personal și de reglementările adoptate în conformitate cu aceasta, cu excepția cazului în care Legea privind datele cu caracter personal sau alte legi federale nu prevede altfel.
+
+3.2. Operatorul este obligat:
+
+— furnizează subiectului datelor cu caracter personal, la cererea acestuia, informații privind prelucrarea datelor sale cu caracter personal;
+
+— organizează prelucrarea datelor cu caracter personal în modul stabilit de legislația în vigoare a Federației Ruse;
+
+— să răspundă contestațiilor și solicitărilor din partea persoanelor vizate și a reprezentanților legali ai acestora, în conformitate cu cerințele Legii datelor cu caracter personal;
+
+— raportează organului abilitat pentru protecția drepturilor persoanelor vizate, la solicitarea acestui organism, informațiile necesare în termen de 10 zile de la data primirii unei astfel de solicitări;
+
+— să publice sau să ofere în alt mod acces nerestricționat la această Politică privind prelucrarea datelor cu caracter personal;
+
+— ia măsuri legale, organizatorice și tehnice pentru a proteja datele cu caracter personal împotriva accesului neautorizat sau accidental la acestea, a distrugerii, modificării, blocării, copierii, furnizării, distribuirii datelor cu caracter personal, precum și împotriva altor acțiuni ilegale în legătură cu datele cu caracter personal;
+
+— stoparea transferului (distribuirea, furnizarea, accesul) datelor cu caracter personal, oprirea procesării și distrugerea datelor cu caracter personal în modul și în cazurile prevăzute de Legea datelor cu caracter personal;
+
+— îndeplinește alte atribuții prevăzute de Legea datelor cu caracter personal.
+
+4. Drepturile și obligațiile de bază ale persoanelor vizate de date cu caracter personal
+
+4.1. Subiecții datelor cu caracter personal au dreptul:
+
+— primește informații cu privire la prelucrarea datelor sale cu caracter personal, cu excepția cazurilor prevăzute de legile federale. Informațiile sunt furnizate subiectului datelor cu caracter personal de către Operator într-o formă accesibilă și nu ar trebui să conțină date cu caracter personal referitoare la alte subiecte ale datelor cu caracter personal, cu excepția cazurilor în care există temeiuri legale pentru dezvăluirea acestor date cu caracter personal. Lista informațiilor și procedura de obținere a acestora sunt stabilite de Legea datelor cu caracter personal;
+
+— solicita operatorului să își clarifice datele cu caracter personal, să le blocheze sau să le distrugă în cazul în care datele cu caracter personal sunt incomplete, depășite, inexacte, obținute ilegal sau nu sunt necesare pentru scopul declarat al prelucrării, precum și să ia măsurile prevăzute de lege pentru a le proteja drepturile;
+
+— să impună o condiție de consimțământ prealabil la prelucrarea datelor cu caracter personal în scopul promovării bunurilor, lucrărilor și serviciilor pe piață;
+
+— să retragă consimțământul pentru prelucrarea datelor cu caracter personal, precum și să trimită o cerere de încetare a prelucrării datelor cu caracter personal;
+
+— apel la organismul autorizat pentru protecția drepturilor persoanelor vizate de date cu caracter personal sau în instanță împotriva acțiunilor ilegale sau a inacțiunii Operatorului la prelucrarea datelor sale cu caracter personal;
+
+— să-și exercite alte drepturi prevăzute de legislația Federației Ruse.
+
+4.2. Subiecții datelor cu caracter personal sunt obligați să:
+
+— furnizați Operatorului informații fiabile despre dvs.;
+
+— informează Operatorul despre actualizarea (actualizarea, modificarea) datelor dumneavoastră cu caracter personal.
+
+4.3. Persoanele care au furnizat Operatorului informații false despre ei înșiși sau informații despre un alt subiect de date cu caracter personal fără consimțământul acestuia din urmă sunt răspunzătoare în conformitate cu legislația Federației Ruse.
+
+5. Principii de prelucrare a datelor cu caracter personal
+
+5.1. Prelucrarea datelor cu caracter personal se realizează pe o bază legală și echitabilă.
+
+5.2. Prelucrarea datelor cu caracter personal se limitează la realizarea unor scopuri specifice, predefinite și legitime. Prelucrarea datelor cu caracter personal care este incompatibilă cu scopurile colectării datelor cu caracter personal nu este permisă.
+
+5.3. Nu este permisă combinarea bazelor de date care conțin date cu caracter personal, a căror prelucrare se efectuează în scopuri care sunt incompatibile între ele.
+
+5.4. Sunt supuse prelucrării numai datele cu caracter personal care îndeplinesc scopurile prelucrării acestora.
+
+5.5. Conținutul și volumul datelor cu caracter personal prelucrate corespund scopurilor de prelucrare declarate. Nu este permisă redundanța datelor cu caracter personal prelucrate în raport cu scopurile declarate ale prelucrării acestora.
+
+5.6. La prelucrarea datelor cu caracter personal, se asigură acuratețea datelor cu caracter personal, suficiența acestora și, dacă este necesar, relevanța în raport cu scopurile prelucrării datelor cu caracter personal. Operatorul ia măsurile necesare și/sau se asigură că acestea sunt luate pentru eliminarea sau clarificarea datelor incomplete sau inexacte.
+
+5.7. Stocarea datelor cu caracter personal se realizează într-o formă care face posibilă identificarea subiectului datelor cu caracter personal, nu mai mult decât este cerut de scopurile prelucrării datelor cu caracter personal, cu excepția cazului în care perioada de stocare a datelor cu caracter personal este stabilită de legea federală, acord la care subiectul datelor cu caracter personal este parte, beneficiar sau garant. Datele cu caracter personal prelucrate sunt distruse sau anonimizate la realizarea scopurilor de prelucrare sau în cazul pierderii necesității de a realiza aceste scopuri, cu excepția cazului în care legea federală prevede altfel.
+
+6. Scopurile prelucrării datelor cu caracter personal
+
+Scopul prelucrării este de a oferi Utilizatorului acces la serviciile, informațiile și/sau materialele conținute în Aplicație și furnizarea de servicii către acesta de către Aplicație.
+
+Date personale - adresa de email, numarul de ani intregi ai utilizatorului, porecla, date antropometrice, fotografii.
+
+Temei juridic - documente statutare (constitutive) ale Operatorului.
+
+Tipuri de prelucrare a datelor cu caracter personal - colectarea, înregistrarea, sistematizarea, acumularea, stocarea, distrugerea și anonimizarea datelor cu caracter personal
+
+7. Conditii de prelucrare a datelor cu caracter personal
+
+7.1. Prelucrarea datelor cu caracter personal se realizează cu acordul subiectului datelor cu caracter personal la prelucrarea datelor sale personale.
+
+7.2. Prelucrarea datelor cu caracter personal este necesară pentru a atinge obiectivele prevăzute de un tratat internațional al Federației Ruse sau de lege, pentru a implementa funcțiile, puterile și responsabilitățile atribuite operatorului de legislația Federației Ruse.
+
+7.3. Prelucrarea datelor cu caracter personal este necesară pentru administrarea justiției, executarea unui act judiciar, a unui alt organism sau funcționar, supus executării în conformitate cu legislația Federației Ruse privind procedurile de executare.
+
+7.4. Prelucrarea datelor cu caracter personal este necesară pentru executarea unui acord la care subiectul datelor cu caracter personal este parte sau beneficiar sau garant, precum și pentru încheierea unui acord la inițiativa subiectului datelor cu caracter personal sau a unui acord în baza căruia subiectul datelor cu caracter personal va fi beneficiar sau garant.
+
+7.5. Prelucrarea datelor cu caracter personal este necesară pentru exercitarea drepturilor și intereselor legitime ale operatorului sau ale terților sau pentru atingerea unor obiective semnificative din punct de vedere social, cu condiția ca drepturile și libertățile subiectului datelor cu caracter personal să nu fie încălcate.
+
+7.6. Prelucrarea datelor cu caracter personal se realizează, accesul unui număr nelimitat de persoane cărora le este furnizat subiectul datelor cu caracter personal sau la cererea acestuia (denumite în continuare date cu caracter personal disponibile publicului).
+
+7.7. Prelucrăm date cu caracter personal care sunt supuse publicării sau dezvăluirii obligatorii în conformitate cu legea federală.
+
+8. Procedura de colectare, stocare, transfer și alte tipuri de prelucrare a datelor cu caracter personal
+
+Securitatea datelor cu caracter personal prelucrate de Operator este asigurata prin implementarea masurilor legale, organizatorice si tehnice necesare respectarii in totalitate a cerintelor legislatiei in vigoare in domeniul protectiei datelor cu caracter personal.
+
+8.1. Operatorul asigură siguranța datelor cu caracter personal și ia toate măsurile posibile pentru a împiedica accesul la datele personale de către persoane neautorizate.
+
+8.2. Datele cu caracter personal ale Utilizatorului nu vor fi niciodată transferate, în niciun caz, către terți, cu excepția cazurilor legate de punerea în aplicare a legislației în vigoare sau în cazul în care subiectul datelor cu caracter personal și-a dat acordul Operatorului pentru a transfera date către un terț pentru îndeplinirea obligațiilor care decurg din contractul de drept civil.
+
+8.3. Dacă sunt identificate inexactități în datele cu caracter personal, Utilizatorul le poate actualiza în mod independent, trimițând o notificare către Operator la adresa de e-mail a Operatorului supp.lrs@ya.ru, marcată „Actualizarea datelor personale”.
+
+8.4. Perioada de prelucrare a datelor cu caracter personal este determinată de realizarea scopurilor pentru care au fost colectate datele cu caracter personal, cu excepția cazului în care contractul sau legislația în vigoare prevede o perioadă diferită. Utilizatorul își poate retrage oricând consimțământul pentru prelucrarea datelor cu caracter personal, trimițând Operatorului o notificare prin e-mail la adresa de e-mail a Operatorului supp.lrs@ya.ru marcată „Retragerea consimțământului pentru prelucrarea datelor cu caracter personal”.
+
+8.5. Toate informațiile care sunt colectate de servicii terțe, inclusiv sisteme de plată, comunicații și alți furnizori de servicii, sunt stocate și procesate de aceste persoane (Operatori) în conformitate cu Acordul de utilizare și Politica lor de confidențialitate. Subiectul datelor cu caracter personal și/sau cu documentele specificate. Operatorul nu este responsabil pentru acțiunile terților, inclusiv a furnizorilor de servicii specificati în acest paragraf.
+
+8.6. Interdicțiile stabilite de subiectul datelor cu caracter personal privind transferul (cu excepția furnizării accesului), precum și asupra prelucrării sau condițiilor de prelucrare (cu excepția obținerii accesului) a datelor cu caracter personal permise pentru distribuire, nu se aplică în cazurile de prelucrare a datelor cu caracter personal în interesul statului, public și alte interese publice determinate de legislația Federației Ruse.
+
+8.7. La prelucrarea datelor cu caracter personal, operatorul asigură confidențialitatea datelor cu caracter personal.
+
+8.8. Operatorul stochează datele cu caracter personal într-o formă care să facă posibilă identificarea subiectului datelor cu caracter personal, nu mai mult decât este cerut de scopurile prelucrării datelor cu caracter personal, cu excepția cazului în care perioada de stocare a datelor cu caracter personal este stabilită de legea federală, acord la care subiectul datelor cu caracter personal este parte, beneficiar sau garant.
+
+8.9. Condiția de încetare a prelucrării datelor cu caracter personal poate fi realizarea scopurilor prelucrării datelor cu caracter personal, expirarea consimțământului subiectului datelor cu caracter personal, retragerea consimțământului de către subiectul datelor cu caracter personal sau o cerință de încetare a prelucrării datelor cu caracter personal, precum și identificarea prelucrării ilegale a datelor cu caracter personal.
+
+9. Lista acțiunilor efectuate de Operator cu datele personale primite
+
+9.1. Operatorul colectează, înregistrează, sistematizează, acumulează, stochează, rafinează (actualizează, modifică), extrage, folosește, transferă (distribuție, furnizare, acces), depersonalizează, blochează, șterge și distruge datele personale.
+
+9.2. Operatorul realizează prelucrarea automată a datelor cu caracter personal cu sau fără primirea și/sau transmiterea informațiilor primite prin intermediul rețelelor de informare și telecomunicații.
+
+10. Transfer transfrontalier de date cu caracter personal
+
+10.1. Înainte de începerea activităților de transfer transfrontalier de date cu caracter personal, operatorul este obligat să notifice organismului autorizat pentru protecția drepturilor persoanelor vizate cu caracter personal intenția sa de a efectua transfer transfrontalier de date cu caracter personal (o astfel de notificare este transmisă separat de notificarea intenției de prelucrare a datelor cu caracter personal).
+
+10.2. Înainte de transmiterea notificării de mai sus, operatorul este obligat să obțină informații relevante de la autoritățile unui stat străin, persoane fizice străine, persoane juridice străine către care este planificat transferul transfrontalier de date cu caracter personal.
+
+11. Confidențialitatea datelor cu caracter personal
+
+Operatorul și alte persoane care au acces la datele cu caracter personal sunt obligate să nu dezvăluie terților sau să distribuie date cu caracter personal fără acordul persoanei vizate, cu excepția cazului în care legea federală prevede altfel.
+
+12. Dispoziții finale
+
+12.1. Utilizatorul poate primi orice clarificare cu privire la întrebări de interes privind prelucrarea datelor sale personale contactând Operatorul prin e-mail supp.lrs@ya.ru.
+
+12.2. Acest document va reflecta orice modificare a politicii de prelucrare a datelor cu caracter personal a Operatorului. Politica este valabilă pe termen nelimitat până când este înlocuită cu o nouă versiune.
+
+12.3. Versiunea actuală a Politicii este disponibilă gratuit pe internet în aplicația web LRS la https://www.rustore.ru/catalog/app/com.lrs

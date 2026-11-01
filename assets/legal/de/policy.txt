@@ -1,0 +1,179 @@
+Richtlinie zur Verarbeitung personenbezogener Daten
+
+1. Allgemeine Bestimmungen
+
+Diese Richtlinie zur Verarbeitung personenbezogener Daten wurde in Übereinstimmung mit den Anforderungen des Bundesgesetzes vom 27.07.2006 erstellt. Nr. 152-FZ „Über personenbezogene Daten“ (im Folgenden „Gesetz über personenbezogene Daten“ genannt) und legt das Verfahren zur Verarbeitung personenbezogener Daten und Maßnahmen zur Gewährleistung der Sicherheit personenbezogener Daten von IP Pavlenko Dmitry Yuryevich (im Folgenden „Betreiber“ genannt) INN: 366514852674, OGRN/OGRNIP: 323366800022544 fest.
+
+1.1. Als wichtigstes Ziel und wichtigste Bedingung für die Ausübung seiner Tätigkeit legt der Betreiber die Wahrung der Rechte und Freiheiten von Einzelpersonen und Bürgern bei der Verarbeitung ihrer personenbezogenen Daten fest, einschließlich des Schutzes der Rechte auf Privatsphäre sowie auf persönliche und familiäre Geheimnisse.
+
+1.2. Die Richtlinie dieses Betreibers zur Verarbeitung personenbezogener Daten (im Folgenden „Richtlinie“ genannt) gilt für alle Informationen, die der Betreiber über Besucher der LRS-Webanwendung erhalten kann.
+
+2. Grundlegende Konzepte, die in der Richtlinie verwendet werden
+
+2.1. Unter der automatisierten Verarbeitung personenbezogener Daten versteht man die Verarbeitung personenbezogener Daten mittels Computertechnik.
+
+2.2. Bei der Sperrung personenbezogener Daten handelt es sich um eine vorübergehende Einstellung der Verarbeitung personenbezogener Daten (außer in Fällen, in denen die Verarbeitung zur Klärung personenbezogener Daten erforderlich ist).
+
+2.3. Website / Anwendung / Webanwendung – eine Reihe von Grafik- und Informationsmaterialien sowie Computerprogrammen und Datenbanken, die deren Verfügbarkeit im Internet gewährleisten.
+
+2.4. Das Informationssystem für personenbezogene Daten ist eine Reihe personenbezogener Daten, die in Datenbanken und Informationstechnologien sowie technischen Mitteln enthalten sind, die deren Verarbeitung gewährleisten.
+
+2.5. Bei der Depersonalisierung personenbezogener Daten handelt es sich um Handlungen, bei denen ohne die Verwendung zusätzlicher Informationen nicht festgestellt werden kann, ob einem bestimmten Benutzer oder einem anderen Subjekt personenbezogener Daten das Eigentum an personenbezogenen Daten zusteht.
+
+2.6. Die Verarbeitung personenbezogener Daten ist jede Aktion (Vorgang) oder jede Reihe von Aktionen (Vorgängen), die mit oder ohne Verwendung von Automatisierungstools mit personenbezogenen Daten durchgeführt werden, einschließlich Erhebung, Aufzeichnung, Systematisierung, Akkumulation, Speicherung, Klärung (Aktualisierung, Änderung), Extraktion, Verwendung, Übertragung (Verteilung, Bereitstellung, Zugriff), Depersonalisierung, Sperrung, Löschung, Vernichtung personenbezogener Daten.
+
+2.7. Betreiber ist eine staatliche Stelle, eine kommunale Körperschaft, eine juristische Person oder eine natürliche Person, die unabhängig oder gemeinsam mit anderen Personen die Verarbeitung personenbezogener Daten organisiert und/oder durchführt sowie die Zwecke der Verarbeitung personenbezogener Daten, die Zusammensetzung der zu verarbeitenden personenbezogenen Daten und die mit personenbezogenen Daten durchgeführten Aktionen (Vorgänge) festlegt.
+
+2.8. Personenbezogene Daten sind alle Informationen, die sich direkt oder indirekt auf einen bestimmten oder identifizierbaren Nutzer der LRS-Webanwendung beziehen.
+
+2.9. Bei personenbezogenen Daten handelt es sich um personenbezogene Daten, die einer unbegrenzten Anzahl von Personen zugänglich gemacht werden, indem der Betroffene der personenbezogenen Daten seine Zustimmung zur Verarbeitung personenbezogener Daten erteilt, die der Betroffene der personenbezogenen Daten zur Verbreitung in der im Gesetz über personenbezogene Daten vorgeschriebenen Weise genehmigt hat (im Folgenden „zur Verbreitung zugelassene personenbezogene Daten“ genannt).
+
+2.10. Benutzer ist jeder Besucher der LRS-Webanwendung.
+
+2.11. Bei der Bereitstellung personenbezogener Daten handelt es sich um Handlungen, die darauf abzielen, personenbezogene Daten an eine bestimmte Person oder einen bestimmten Personenkreis weiterzugeben.
+
+2.12. Die Verbreitung personenbezogener Daten ist jede Handlung, die darauf abzielt, personenbezogene Daten einer unbestimmten Anzahl von Personen offenzulegen (Übermittlung personenbezogener Daten) oder einer unbegrenzten Anzahl von Personen personenbezogene Daten zugänglich zu machen, einschließlich der Veröffentlichung personenbezogener Daten in den Medien, der Veröffentlichung in Informations- und Telekommunikationsnetzen oder der Bereitstellung des Zugangs zu personenbezogenen Daten auf andere Weise.
+
+2.13. Bei der grenzüberschreitenden Übermittlung personenbezogener Daten handelt es sich um die Übermittlung personenbezogener Daten in das Hoheitsgebiet eines ausländischen Staates an eine Behörde eines ausländischen Staates, eine ausländische natürliche Person oder eine ausländische juristische Person.
+
+2.14. Die Vernichtung personenbezogener Daten ist jede Handlung, durch die personenbezogene Daten unwiederbringlich vernichtet werden, ohne dass eine weitere Wiederherstellung des Inhalts personenbezogener Daten im Informationssystem für personenbezogene Daten und/oder die Vernichtung materieller Datenträger mit personenbezogenen Daten möglich ist.
+
+3. Grundlegende Rechte und Pflichten des Betreibers
+
+3.1. Der Betreiber hat das Recht:
+
+— von der Person, von der personenbezogene Daten betroffen sind, zuverlässige Informationen und/oder Dokumente zu erhalten, die personenbezogene Daten enthalten;
+
+— Für den Fall, dass der Betroffene der personenbezogenen Daten seine Einwilligung zur Verarbeitung personenbezogener Daten widerruft und einen Antrag mit der Aufforderung sendet, die Verarbeitung personenbezogener Daten zu beenden, hat der Betreiber das Recht, die Verarbeitung personenbezogener Daten ohne Zustimmung des Betroffenen personenbezogener Daten fortzusetzen, sofern im Gesetz über personenbezogene Daten festgelegte Gründe vorliegen;
+
+— Bestimmen Sie unabhängig die Zusammensetzung und Liste der Maßnahmen, die erforderlich und ausreichend sind, um die Erfüllung der Verpflichtungen aus dem Gesetz über personenbezogene Daten und den in Übereinstimmung damit erlassenen Vorschriften sicherzustellen, sofern das Gesetz über personenbezogene Daten oder andere Bundesgesetze nichts anderes vorsehen.
+
+3.2. Der Betreiber ist verpflichtet:
+
+— dem Betroffenen personenbezogener Daten auf Anfrage Auskunft über die Verarbeitung seiner personenbezogenen Daten zu erteilen;
+
+— die Verarbeitung personenbezogener Daten gemäß den geltenden Rechtsvorschriften der Russischen Föderation organisieren;
+
+— auf Beschwerden und Anfragen von Personen personenbezogener Daten und ihren gesetzlichen Vertretern gemäß den Anforderungen des Gesetzes über personenbezogene Daten reagieren;
+
+— Melden Sie der autorisierten Stelle zum Schutz der Rechte personenbezogener Daten auf Anfrage dieser Stelle die erforderlichen Informationen innerhalb von 10 Tagen ab dem Datum des Eingangs einer solchen Anfrage.
+
+— diese Richtlinie bezüglich der Verarbeitung personenbezogener Daten veröffentlichen oder auf andere Weise uneingeschränkten Zugriff darauf gewähren;
+
+— Ergreifen Sie rechtliche, organisatorische und technische Maßnahmen, um personenbezogene Daten vor unbefugtem oder versehentlichem Zugriff, Zerstörung, Änderung, Sperrung, Kopieren, Bereitstellung, Verbreitung personenbezogener Daten sowie vor anderen rechtswidrigen Handlungen in Bezug auf personenbezogene Daten zu schützen.
+
+— die Übertragung (Verbreitung, Bereitstellung, Zugriff) personenbezogener Daten zu stoppen, die Verarbeitung einzustellen und personenbezogene Daten auf die im Gesetz über personenbezogene Daten vorgesehene Art und Weise und in den Fällen zu vernichten;
+
+— andere im Gesetz über personenbezogene Daten vorgesehene Aufgaben wahrzunehmen.
+
+4. Grundlegende Rechte und Pflichten von Personen, die personenbezogene Daten verarbeiten
+
+4.1. Personen mit personenbezogenen Daten haben das Recht:
+
+— Auskunft über die Verarbeitung seiner personenbezogenen Daten zu erhalten, außer in den durch Bundesgesetze vorgesehenen Fällen. Die Informationen werden dem Subjekt personenbezogener Daten vom Betreiber in zugänglicher Form zur Verfügung gestellt und dürfen keine personenbezogenen Daten anderer Subjekte personenbezogener Daten enthalten, außer in Fällen, in denen eine Rechtsgrundlage für die Offenlegung dieser personenbezogenen Daten besteht. Die Liste der Informationen und das Verfahren zu ihrer Beschaffung sind im Gesetz über personenbezogene Daten festgelegt.
+
+— vom Betreiber verlangen, dass er seine personenbezogenen Daten klärt, sperrt oder vernichtet, wenn die personenbezogenen Daten unvollständig, veraltet, unrichtig oder unrechtmäßig erlangt oder für den angegebenen Zweck der Verarbeitung nicht erforderlich sind, und außerdem gesetzlich vorgesehene Maßnahmen zum Schutz seiner Rechte ergreift;
+
+— bei der Verarbeitung personenbezogener Daten zum Zweck der Vermarktung von Waren, Werken und Dienstleistungen eine vorherige Zustimmungsbedingung vorsehen;
+
+— die Einwilligung zur Verarbeitung personenbezogener Daten zu widerrufen sowie eine Anfrage zur Beendigung der Verarbeitung personenbezogener Daten zu senden;
+
+— Berufung bei der zuständigen Stelle zum Schutz der Rechte personenbezogener Daten oder vor Gericht gegen rechtswidrige Handlungen oder Unterlassungen des Betreibers bei der Verarbeitung seiner personenbezogenen Daten;
+
+— andere in der Gesetzgebung der Russischen Föderation vorgesehene Rechte auszuüben.
+
+4.2. Personen mit personenbezogenen Daten sind verpflichtet:
+
+— dem Betreiber verlässliche Informationen über sich selbst zur Verfügung stellen;
+
+— Informieren Sie den Betreiber über die Aktualisierung (Aktualisierung, Änderung) Ihrer personenbezogenen Daten.
+
+4.3. Personen, die dem Betreiber ohne dessen Zustimmung falsche Angaben zu ihrer Person oder zu einem anderen Subjekt personenbezogener Daten gemacht haben, haften nach den Rechtsvorschriften der Russischen Föderation.
+
+5. Grundsätze für die Verarbeitung personenbezogener Daten
+
+5.1. Die Verarbeitung personenbezogener Daten erfolgt auf rechtmäßiger und fairer Grundlage.
+
+5.2. Die Verarbeitung personenbezogener Daten beschränkt sich auf die Erreichung bestimmter, vorab festgelegter und rechtmäßiger Zwecke. Eine Verarbeitung personenbezogener Daten, die mit den Zwecken der Erhebung personenbezogener Daten nicht vereinbar ist, ist nicht gestattet.
+
+5.3. Es ist nicht gestattet, Datenbanken mit personenbezogenen Daten zusammenzuführen, deren Verarbeitung zu miteinander unvereinbaren Zwecken erfolgt.
+
+5.4. Von der Verarbeitung unterliegen nur personenbezogene Daten, die den Zwecken ihrer Verarbeitung entsprechen.
+
+5.5. Inhalt und Umfang der verarbeiteten personenbezogenen Daten entsprechen den angegebenen Verarbeitungszwecken. Eine Redundanz der verarbeiteten personenbezogenen Daten im Verhältnis zu den angegebenen Zwecken ihrer Verarbeitung ist nicht zulässig.
+
+5.6. Bei der Verarbeitung personenbezogener Daten wird sichergestellt, dass die personenbezogenen Daten korrekt, ausreichend und gegebenenfalls relevant für die Zwecke der Verarbeitung personenbezogener Daten sind. Der Betreiber ergreift die erforderlichen Maßnahmen und/oder sorgt dafür, dass diese ergriffen werden, um unvollständige oder unrichtige Daten zu entfernen oder aufzuklären.
+
+5.7. Die Speicherung personenbezogener Daten erfolgt in einer Form, die eine Identifizierung des Subjekts personenbezogener Daten ermöglicht, und zwar nicht länger als für die Zwecke der Verarbeitung personenbezogener Daten erforderlich, es sei denn, die Aufbewahrungsfrist personenbezogener Daten ist durch Bundesgesetz, eine Vereinbarung, deren Vertragspartei, Begünstigter oder Bürge das Subjekt personenbezogener Daten ist, festgelegt. Die verarbeiteten personenbezogenen Daten werden bei Erreichen der Verarbeitungszwecke oder bei Wegfall der Erforderlichkeit zur Erreichung dieser Zwecke vernichtet oder anonymisiert, sofern das Bundesrecht nichts anderes vorsieht.
+
+6. Zwecke der Verarbeitung personenbezogener Daten
+
+Der Zweck der Verarbeitung besteht darin, dem Benutzer Zugang zu den in der Anwendung enthaltenen Diensten, Informationen und/oder Materialien zu gewähren und ihm durch die Anwendung Dienste bereitzustellen.
+
+Persönliche Daten – E-Mail-Adresse, Anzahl der vollständigen Jahre des Benutzers, Spitzname, anthropometrische Daten, Fotos.
+
+Rechtsgrundlage – gesetzliche (konstituierende) Dokumente des Betreibers.
+
+Arten der Verarbeitung personenbezogener Daten – Erhebung, Aufzeichnung, Systematisierung, Akkumulation, Speicherung, Vernichtung und Anonymisierung personenbezogener Daten
+
+7. Bedingungen für die Verarbeitung personenbezogener Daten
+
+7.1. Die Verarbeitung personenbezogener Daten erfolgt mit Zustimmung des Betroffenen zur Verarbeitung seiner personenbezogenen Daten.
+
+7.2. Die Verarbeitung personenbezogener Daten ist erforderlich, um die in einem internationalen Vertrag der Russischen Föderation oder einem Gesetz vorgesehenen Ziele zu erreichen und die dem Betreiber durch die Gesetzgebung der Russischen Föderation übertragenen Funktionen, Befugnisse und Verantwortlichkeiten wahrzunehmen.
+
+7.3. Die Verarbeitung personenbezogener Daten ist für die Rechtspflege, die Vollstreckung einer gerichtlichen Handlung, einer Handlung einer anderen Stelle oder eines Beamten erforderlich, vorbehaltlich der Vollstreckung gemäß den Rechtsvorschriften der Russischen Föderation über Vollstreckungsverfahren.
+
+7.4. Die Verarbeitung personenbezogener Daten ist für die Ausführung eines Vertrags erforderlich, bei dem der Betroffene der personenbezogenen Daten Vertragspartei, Begünstigter oder Bürge ist, sowie für den Abschluss eines Vertrages auf Initiative des Betroffenen der personenbezogenen Daten oder eines Vertrags, bei dem der Gegenstand der personenbezogenen Daten Begünstigter oder Bürge ist.
+
+7.5. Die Verarbeitung personenbezogener Daten ist zur Ausübung der Rechte und berechtigten Interessen des Betreibers oder Dritter oder zur Erreichung gesellschaftlich bedeutsamer Ziele erforderlich, sofern die Rechte und Freiheiten des Betroffenen der personenbezogenen Daten nicht verletzt werden.
+
+7.6. Die Verarbeitung personenbezogener Daten erfolgt durch den Zugriff einer unbegrenzten Anzahl von Personen, zu denen der Betroffene personenbezogene Daten oder auf dessen Anfrage hin bereitstellt (im Folgenden „öffentlich zugängliche personenbezogene Daten“ genannt).
+
+7.7. Wir verarbeiten personenbezogene Daten, die nach Bundesrecht der Veröffentlichung oder Offenlegungspflicht unterliegen.
+
+8. Das Verfahren zur Erhebung, Speicherung, Übermittlung und sonstigen Verarbeitung personenbezogener Daten
+
+Die Sicherheit der vom Betreiber verarbeiteten personenbezogenen Daten wird durch die Umsetzung rechtlicher, organisatorischer und technischer Maßnahmen gewährleistet, die zur vollständigen Einhaltung der Anforderungen der geltenden Gesetzgebung im Bereich des Schutzes personenbezogener Daten erforderlich sind.
+
+8.1. Der Betreiber gewährleistet die Sicherheit personenbezogener Daten und ergreift alle möglichen Maßnahmen, um den Zugriff unbefugter Personen auf personenbezogene Daten zu verhindern.
+
+8.2. Die personenbezogenen Daten des Nutzers werden unter keinen Umständen an Dritte weitergegeben, mit Ausnahme von Fällen im Zusammenhang mit der Umsetzung geltender Rechtsvorschriften oder in dem Fall, in dem der Betroffene der personenbezogenen Daten dem Betreiber seine Einwilligung zur Übermittlung von Daten an Dritte zur Erfüllung von Verpflichtungen aus einem zivilrechtlichen Vertrag erteilt hat.
+
+8.3. Wenn Ungenauigkeiten in den personenbezogenen Daten festgestellt werden, kann der Benutzer diese selbstständig aktualisieren, indem er eine Benachrichtigung an den Betreiber an die E-Mail-Adresse des Betreibers supp.lrs@ya.ru mit dem Vermerk „Aktualisierung personenbezogener Daten“ sendet.
+
+8.4. Der Zeitraum für die Verarbeitung personenbezogener Daten richtet sich nach der Erreichung der Zwecke, für die die personenbezogenen Daten erhoben wurden, es sei denn, der Vertrag oder die geltenden Rechtsvorschriften sehen eine andere Frist vor. Der Benutzer kann seine Einwilligung zur Verarbeitung personenbezogener Daten jederzeit widerrufen, indem er dem Betreiber eine Mitteilung per E-Mail an die E-Mail-Adresse des Betreibers supp.lrs@ya.ru mit dem Vermerk „Widerruf der Einwilligung zur Verarbeitung personenbezogener Daten“ sendet.
+
+8.5. Alle Informationen, die von Drittanbietern, einschließlich Zahlungssystemen, Kommunikations- und anderen Dienstanbietern, erfasst werden, werden von diesen Personen (Betreibern) gemäß ihrer Benutzervereinbarung und Datenschutzrichtlinie gespeichert und verarbeitet. Gegenstand personenbezogener Daten und/oder mit spezifizierten Dokumenten. Der Betreiber ist nicht verantwortlich für die Handlungen Dritter, einschließlich der in diesem Absatz genannten Dienstleister.
+
+8.6. Die von der betroffenen Person festgelegten Verbote für die Übermittlung (mit Ausnahme der Gewährung des Zugangs) sowie für die Verarbeitung oder Bedingungen für die Verarbeitung (mit Ausnahme der Erlangung des Zugangs) personenbezogener Daten, die zur Weitergabe zugelassen sind, gelten nicht in Fällen der Verarbeitung personenbezogener Daten im staatlichen, öffentlichen oder anderen öffentlichen Interesse, die durch die Gesetzgebung der Russischen Föderation bestimmt werden.
+
+8.7. Bei der Verarbeitung personenbezogener Daten gewährleistet der Betreiber die Vertraulichkeit personenbezogener Daten.
+
+8.8. Der Betreiber speichert personenbezogene Daten in einer Form, die es ermöglicht, die Person der personenbezogenen Daten zu identifizieren, und zwar nicht länger als für die Zwecke der Verarbeitung personenbezogener Daten erforderlich, es sei denn, die Aufbewahrungsfrist für personenbezogene Daten ist durch Bundesgesetz oder eine Vereinbarung festgelegt, bei der die Person der personenbezogenen Daten Vertragspartei, Begünstigter oder Bürge ist.
+
+8.9. Voraussetzung für die Beendigung der Verarbeitung personenbezogener Daten kann das Erreichen der Zwecke der Verarbeitung personenbezogener Daten, das Erlöschen der Einwilligung des Betroffenen personenbezogener Daten, der Widerruf der Einwilligung seitens des Betroffenen personenbezogener Daten oder die Verpflichtung zur Beendigung der Verarbeitung personenbezogener Daten sowie die Feststellung einer rechtswidrigen Verarbeitung personenbezogener Daten sein.
+
+9. Liste der vom Betreiber mit den erhaltenen personenbezogenen Daten durchgeführten Aktionen
+
+9.1. Der Betreiber erhebt, erfasst, systematisiert, sammelt, speichert, verfeinert (Aktualisierungen, Änderungen), extrahiert, nutzt, übermittelt (Verbreitung, Bereitstellung, Zugriff), entpersonalisiert, sperrt, löscht und vernichtet personenbezogene Daten.
+
+9.2. Der Betreiber führt eine automatisierte Verarbeitung personenbezogener Daten mit oder ohne Empfang und/oder Übermittlung der empfangenen Informationen über Informations- und Telekommunikationsnetze durch.
+
+10. Grenzüberschreitende Übermittlung personenbezogener Daten
+
+10.1. Vor Beginn der Tätigkeit zur grenzüberschreitenden Übermittlung personenbezogener Daten ist der Betreiber verpflichtet, die für den Schutz der Rechte personenbezogener Daten zuständige Stelle über seine Absicht zu informieren, eine grenzüberschreitende Übermittlung personenbezogener Daten durchzuführen (diese Benachrichtigung erfolgt getrennt von der Benachrichtigung über die Absicht, personenbezogene Daten zu verarbeiten).
+
+10.2. Vor der Übermittlung der oben genannten Meldung ist der Betreiber verpflichtet, bei den Behörden eines ausländischen Staates, bei ausländischen natürlichen Personen oder ausländischen juristischen Personen, an die die grenzüberschreitende Übermittlung personenbezogener Daten geplant ist, entsprechende Informationen einzuholen.
+
+11. Vertraulichkeit personenbezogener Daten
+
+Der Betreiber und andere Personen, die Zugriff auf personenbezogene Daten haben, sind verpflichtet, personenbezogene Daten nicht ohne Zustimmung des Betroffenen an Dritte weiterzugeben oder weiterzugeben, sofern das Bundesgesetz nichts anderes vorsieht.
+
+12. Schlussbestimmungen
+
+12.1. Der Nutzer kann alle Fragen, die ihn bezüglich der Verarbeitung seiner personenbezogenen Daten interessieren, klären, indem er sich per E-Mail an den Betreiber per E-Mail an supp.lrs@ya.ru wendet.
+
+12.2. Dieses Dokument spiegelt alle Änderungen der Richtlinie zur Verarbeitung personenbezogener Daten des Betreibers wider. Die Richtlinie ist unbegrenzt gültig, bis sie durch eine neue Version ersetzt wird.
+
+12.3. Die aktuelle Version der Richtlinie ist im Internet in der LRS-Webanwendung unter https://www.rustore.ru/catalog/app/com.lrs frei verfügbar

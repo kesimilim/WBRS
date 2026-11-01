@@ -1,0 +1,179 @@
+Politika obdelave osebnih podatkov
+
+1. Splošne določbe
+
+Ta politika obdelave osebnih podatkov je sestavljena v skladu z zahtevami zveznega zakona 27.07.2006. 152-FZ "O osebnih podatkih" (v nadaljnjem besedilu Zakon o osebnih podatkih) in določa postopek obdelave osebnih podatkov in ukrepe za zagotavljanje varnosti osebnih podatkov, ki jih sprejme IP Pavlenko Dmitry Yuryevich (v nadaljnjem besedilu Upravljavec) INN: 366514852674, OGRN / OGRNIP: 323366800022544.
+
+1.1. Upravljavec si kot najpomembnejši cilj in pogoj za opravljanje svoje dejavnosti postavlja spoštovanje pravic in svoboščin posameznika in državljana pri obdelavi njegovih osebnih podatkov, vključno z varovanjem pravice do zasebnosti, osebnih in družinskih skrivnosti.
+
+1.2. Ta Upravljavčeva politika obdelave osebnih podatkov (v nadaljevanju Politika) velja za vse podatke, ki jih lahko Upravljavec pridobi o obiskovalcih spletne aplikacije LRS.
+
+2. Osnovni pojmi, uporabljeni v Politiki
+
+2.1. Avtomatizirana obdelava osebnih podatkov je obdelava osebnih podatkov z uporabo računalniške tehnologije.
+
+2.2. Blokada osebnih podatkov je začasna prekinitev obdelave osebnih podatkov (razen v primerih, ko je obdelava potrebna zaradi razjasnitve osebnih podatkov).
+
+2.3. Spletna stran / aplikacija / spletna aplikacija - niz grafičnih in informacijskih materialov ter računalniških programov in podatkovnih baz, ki zagotavljajo njihovo dostopnost na internetu.
+
+2.4. Informacijski sistem osebnih podatkov je niz osebnih podatkov, ki jih vsebujejo zbirke podatkov in informacijske tehnologije ter tehnična sredstva, ki zagotavljajo njihovo obdelavo.
+
+2.5. Depersonalizacija osebnih podatkov so dejanja, zaradi katerih brez uporabe dodatnih informacij ni mogoče ugotoviti lastništva osebnih podatkov določenemu uporabniku ali drugemu subjektu osebnih podatkov.
+
+2.6. Obdelava osebnih podatkov je vsako dejanje (operacija) ali niz dejanj (operacij), ki se izvajajo z ali brez uporabe orodij za avtomatizacijo z osebnimi podatki, vključno z zbiranjem, beleženjem, sistematizacijo, kopičenjem, shranjevanjem, pojasnjevanjem (posodabljanjem, spreminjanjem), ekstrakcijo, uporabo, prenosom (razširjanjem, zagotavljanjem, dostopom), depersonalizacijo, blokiranjem, izbrisom, uničenjem osebnih podatkov.
+
+2.7. Upravljavec je državni organ, organ občine, pravna oseba ali posameznik, ki samostojno ali skupaj z drugimi osebami organizira in/ali izvaja obdelavo osebnih podatkov ter določa namene obdelave osebnih podatkov, sestavo osebnih podatkov, ki se obdelujejo, in dejanja (operacije), ki se izvajajo z osebnimi podatki.
+
+2.8. Osebni podatek je vsaka informacija, ki se neposredno ali posredno nanaša na določenega ali določljivega uporabnika spletne aplikacije LRS.
+
+2.9. Osebni podatek, ki ga je subjekt osebnih podatkov dovolil za posredovanje, je osebni podatek, do katerega dostop neomejenemu številu oseb omogoči subjekt osebnih podatkov s soglasjem za obdelavo osebnih podatkov, ki jih je subjekt osebnih podatkov dovolil za posredovanje na način, ki ga določa zakon o osebnih podatkih (v nadaljevanju: osebni podatki, dovoljeni za posredovanje).
+
+2.10. Uporabnik je vsak obiskovalec spletne aplikacije LRS.
+
+2.11. Posredovanje osebnih podatkov so dejanja, katerih cilj je razkritje osebnih podatkov določeni osebi ali določeni skupini ljudi.
+
+2.12. Razširjanje osebnih podatkov je vsako dejanje, katerega namen je razkritje osebnih podatkov nedoločenemu številu oseb (prenos osebnih podatkov) ali seznanitev z osebnimi podatki neomejenemu številu oseb, vključno z objavo osebnih podatkov v medijih, objavo v informacijskih in telekomunikacijskih omrežjih ali na kakršen koli drug način omogočiti dostop do osebnih podatkov.
+
+2.13. Čezmejni prenos osebnih podatkov je prenos osebnih podatkov na ozemlje tuje države organu tuje države, tujemu posamezniku ali tuji pravni osebi.
+
+2.14. Uničenje osebnih podatkov je vsako ravnanje, s katerim se osebni podatki nepovratno uničijo z onemogočanjem nadaljnje ponovne vzpostavitve vsebine osebnih podatkov v informacijskem sistemu osebnih podatkov in/ali se uničijo materialni nosilci osebnih podatkov.
+
+3. Osnovne pravice in odgovornosti upravljavca
+
+3.1. Operater ima pravico:
+
+— prejemati od subjekta osebnih podatkov zanesljive informacije in/ali dokumente, ki vsebujejo osebne podatke;
+
+— v primeru, da subjekt osebnih podatkov prekliče soglasje za obdelavo osebnih podatkov in pošlje vlogo z zahtevo za prenehanje obdelave osebnih podatkov, ima upravljavec pravico nadaljevati obdelavo osebnih podatkov brez soglasja subjekta osebnih podatkov, če obstajajo razlogi, določeni v zakonu o osebnih podatkih;
+
+— neodvisno določi sestavo in seznam ukrepov, potrebnih in zadostnih za zagotovitev izpolnjevanja obveznosti, ki jih določa zakon o osebnih podatkih in predpisi, sprejeti v skladu z njim, razen če zakon o osebnih podatkih ali drugi zvezni zakoni ne določajo drugače.
+
+3.2. Upravljavec je dolžan:
+
+— subjektu osebnih podatkov na njegovo zahtevo zagotoviti informacije o obdelavi njegovih osebnih podatkov;
+
+— organizirati obdelavo osebnih podatkov na način, ki ga določa veljavna zakonodaja Ruske federacije;
+
+— odgovarja na pritožbe in zahteve posameznikov, na katere se nanašajo osebni podatki, in njihovih zakonitih zastopnikov v skladu z zahtevami zakona o osebnih podatkih;
+
+— pristojnemu organu za varstvo pravic posameznikov, na katere se nanašajo osebni podatki, na zahtevo tega organa sporočijo potrebne informacije v 10 dneh od dneva prejema take zahteve;
+
+— objaviti ali kako drugače omogočiti neomejen dostop do te politike glede obdelave osebnih podatkov;
+
+— sprejema pravne, organizacijske in tehnične ukrepe za zaščito osebnih podatkov pred nepooblaščenim ali naključnim dostopom do njih, uničenjem, spreminjanjem, blokiranjem, kopiranjem, posredovanjem, distribucijo osebnih podatkov, pa tudi pred drugimi nezakonitimi dejanji v zvezi z osebnimi podatki;
+
+— ustaviti posredovanje (distribucijo, posredovanje, dostop) osebnih podatkov, ustaviti obdelavo in uničiti osebne podatke na način in v primerih, ki jih določa zakon o osebnih podatkih;
+
+— opravlja druge naloge, ki jih določa zakon o osebnih podatkih.
+
+4. Osnovne pravice in obveznosti posameznikov, na katere se nanašajo osebni podatki
+
+4.1. Subjekti osebnih podatkov imajo pravico:
+
+— prejemati informacije o obdelavi njegovih osebnih podatkov, razen v primerih, ki jih določajo zvezni zakoni. Podatke subjektu osebnih podatkov posreduje upravljavec v dostopni obliki in ne sme vsebovati osebnih podatkov, ki se nanašajo na druge subjekte osebnih podatkov, razen v primerih, ko obstajajo zakonske podlage za razkritje takih osebnih podatkov. Seznam informacij in postopek za njihovo pridobitev določa zakon o osebnih podatkih;
+
+— od upravljavca zahtevati razjasnitev svojih osebnih podatkov, jih blokirati ali uničiti, če so osebni podatki nepopolni, zastareli, netočni, nezakonito pridobljeni ali niso potrebni za navedeni namen obdelave, ter sprejeti zakonsko določene ukrepe za zaščito svojih pravic;
+
+— postavlja pogoj predhodne privolitve pri obdelavi osebnih podatkov za namene promocije blaga, del in storitev na trgu;
+
+— preklic soglasja za obdelavo osebnih podatkov, kakor tudi pošiljanje zahteve za prenehanje obdelave osebnih podatkov;
+
+— pritožba pri pooblaščenem organu za varstvo pravic posameznikov, na katere se nanašajo osebni podatki, ali na sodišču zoper nezakonita dejanja ali neukrepanje upravljavca pri obdelavi njegovih osebnih podatkov;
+
+— uveljavljanje drugih pravic, ki jih določa zakonodaja Ruske federacije.
+
+4.2. Subjekti osebnih podatkov so dolžni:
+
+— upravljavcu posredovati zanesljive informacije o sebi;
+
+— obvestiti upravljavca o posodobitvi (posodabljanju, spreminjanju) vaših osebnih podatkov.
+
+4.3. Osebe, ki so upravljavcu posredovale lažne podatke o sebi ali podatke o drugem subjektu osebnih podatkov brez soglasja slednjega, so odgovorne v skladu z zakonodajo Ruske federacije.
+
+5. Načela obdelave osebnih podatkov
+
+5.1. Obdelava osebnih podatkov poteka zakonito in pošteno.
+
+5.2. Obdelava osebnih podatkov je omejena na doseganje posebnih, vnaprej določenih in zakonitih namenov. Obdelava osebnih podatkov, ki ni združljiva z nameni zbiranja osebnih podatkov, ni dovoljena.
+
+5.3. Združevanje zbirk osebnih podatkov, katerih obdelava se izvaja za namene, ki so med seboj nezdružljivi, ni dovoljeno.
+
+5.4. Predmet obdelave so le osebni podatki, ki ustrezajo namenom njihove obdelave.
+
+5.5. Vsebina in obseg obdelanih osebnih podatkov ustrezata navedenim namenom obdelave. Redundanca obdelanih osebnih podatkov glede na navedene namene njihove obdelave ni dovoljena.
+
+5.6. Pri obdelavi osebnih podatkov se zagotavlja točnost osebnih podatkov, njihova zadostnost in po potrebi ustreznost glede na namene obdelave osebnih podatkov. Upravljavec sprejme potrebne ukrepe in/ali zagotovi njihovo izvedbo za odstranitev ali razjasnitev nepopolnih ali netočnih podatkov.
+
+5.7. Shranjevanje osebnih podatkov se izvaja v obliki, ki omogoča identifikacijo subjekta osebnih podatkov, ne dlje, kot to zahtevajo nameni obdelave osebnih podatkov, razen če obdobje shranjevanja osebnih podatkov določa zvezni zakon, sporazum, v katerem je subjekt osebnih podatkov stranka, upravičenec ali porok. Obdelani osebni podatki se uničijo ali anonimizirajo ob doseganju namenov obdelave ali v primeru izgube potrebe po doseganju teh namenov, razen če zvezni zakon ne določa drugače.
+
+6. Nameni obdelave osebnih podatkov
+
+Namen obdelave je omogočiti uporabniku dostop do storitev, informacij in/ali gradiv, vsebovanih v aplikaciji, ter zagotavljanje storitev zanj s strani aplikacije.
+
+Osebni podatki - elektronski naslov, število polnih let uporabnika, vzdevek, antropometrični podatki, fotografije.
+
+Pravna podlaga - statutarni (ustanovni) dokumenti upravljavca.
+
+Vrste obdelave osebnih podatkov - zbiranje, evidentiranje, sistematizacija, zbiranje, shranjevanje, uničenje in anonimizacija osebnih podatkov
+
+7. Pogoji za obdelavo osebnih podatkov
+
+7.1. Obdelava osebnih podatkov se izvaja s soglasjem subjekta osebnih podatkov za obdelavo njegovih osebnih podatkov.
+
+7.2. Obdelava osebnih podatkov je potrebna za doseganje ciljev, določenih z mednarodno pogodbo Ruske federacije ali zakonom, za izvajanje funkcij, pooblastil in odgovornosti, ki jih zakonodaja Ruske federacije nalaga operaterju.
+
+7.3. Obdelava osebnih podatkov je potrebna za izvajanje pravosodja, izvršitev sodnega akta, akta drugega organa ali uradne osebe, ki je predmet izvršitve v skladu z zakonodajo Ruske federacije o izvršilnem postopku.
+
+7.4. Obdelava osebnih podatkov je potrebna za sklenitev pogodbe, v kateri je subjekt osebnih podatkov stranka ali upravičenec ali porok, kot tudi za sklenitev pogodbe na pobudo subjekta osebnih podatkov ali pogodbe, po kateri bo subjekt osebnih podatkov upravičenec ali porok.
+
+7.5. Obdelava osebnih podatkov je potrebna za uresničevanje pravic in zakonitih interesov upravljavca ali tretjih oseb ali za doseganje družbeno pomembnih ciljev, če niso kršene pravice in svoboščine subjekta osebnih podatkov.
+
+7.6. Izvaja se obdelava osebnih podatkov, dostop neomejenemu številu oseb, do katere se zagotovi s strani subjekta osebnih podatkov ali na njegovo zahtevo (v nadaljevanju javno dostopni osebni podatki).
+
+7.7. Obdelujemo osebne podatke, ki so predmet objave ali obveznega razkritja v skladu z zvezno zakonodajo.
+
+8. Postopek zbiranja, shranjevanja, prenosa in drugih vrst obdelave osebnih podatkov
+
+Varnost osebnih podatkov, ki jih upravljavec obdeluje, je zagotovljena z izvajanjem pravnih, organizacijskih in tehničnih ukrepov, potrebnih za popolno izpolnjevanje zahtev veljavne zakonodaje na področju varstva osebnih podatkov.
+
+8.1. Upravljavec zagotavlja varnost osebnih podatkov in izvaja vse možne ukrepe za preprečitev dostopa do osebnih podatkov nepooblaščenim osebam.
+
+8.2. Osebni podatki uporabnika nikoli in pod nobenim pogojem ne bodo posredovani tretjim osebam, razen v primerih, povezanih z izvajanjem veljavne zakonodaje ali v primeru, ko je subjekt osebnih podatkov dal soglasje upravljavcu za prenos podatkov tretji osebi za izpolnjevanje obveznosti iz pogodbe civilnega prava.
+
+8.3. Če se ugotovijo netočnosti v osebnih podatkih, jih lahko uporabnik samostojno posodobi tako, da operaterju pošlje obvestilo na e-poštni naslov operaterja supp.lrs@ya.ru z oznako »Posodobitev osebnih podatkov«.
+
+8.4. Obdobje obdelave osebnih podatkov je odvisno od doseganja namenov, za katere so bili osebni podatki zbrani, razen če je s pogodbo ali veljavno zakonodajo določeno drugačno obdobje. Uporabnik lahko kadar koli prekliče svoje soglasje za obdelavo osebnih podatkov tako, da upravljavcu pošlje obvestilo po elektronski pošti na e-poštni naslov upravljavca supp.lrs@ya.ru z oznako »Preklic soglasja za obdelavo osebnih podatkov«.
+
+8.5. Vse informacije, ki jih zbirajo storitve tretjih oseb, vključno s ponudniki plačilnih sistemov, komunikacij in drugih storitev, te osebe (operaterji) hranijo in obdelujejo v skladu z njihovo uporabniško pogodbo in politiko zasebnosti. Predmet osebnih podatkov in/ali z navedenimi dokumenti. Upravljavec ni odgovoren za dejanja tretjih oseb, vključno s ponudniki storitev, navedenimi v tem odstavku.
+
+8.6. Prepovedi, ki jih določi subjekt osebnih podatkov o prenosu (razen za zagotavljanje dostopa), pa tudi o obdelavi ali pogojih za obdelavo (razen za pridobitev dostopa) osebnih podatkov, dovoljenih za distribucijo, ne veljajo v primerih obdelave osebnih podatkov v državnem, javnem in drugem javnem interesu, določenem z zakonodajo Ruske federacije.
+
+8.7. Pri obdelavi osebnih podatkov upravljavec zagotavlja zaupnost osebnih podatkov.
+
+8.8. Upravljavec hrani osebne podatke v obliki, ki omogoča identifikacijo subjekta osebnih podatkov, ne dlje, kot to zahtevajo nameni obdelave osebnih podatkov, razen če obdobje shranjevanja osebnih podatkov določa zvezni zakon, sporazum, v katerem je subjekt osebnih podatkov stranka, upravičenec ali porok.
+
+8.9. Pogoj za prenehanje obdelave osebnih podatkov je lahko doseganje namenov obdelave osebnih podatkov, potek veljavnosti privolitve posameznika osebnih podatkov, preklic privolitve s strani subjekta osebnih podatkov ali zahteva po prenehanju obdelave osebnih podatkov ter ugotovitev nezakonite obdelave osebnih podatkov.
+
+9. Seznam dejanj, ki jih izvaja upravljavec s prejetimi osebnimi podatki
+
+9.1. Upravljavec osebne podatke zbira, evidentira, sistematizira, kopiči, hrani, izpopolnjuje (posodablja, spreminja), izloča, uporablja, prenaša (distribucija, posredovanje, dostop), razoseblja, blokira, briše in uničuje.
+
+9.2. Upravljavec izvaja avtomatizirano obdelavo osebnih podatkov z ali brez sprejema in/ali posredovanja prejetih informacij preko informacijsko-telekomunikacijskih omrežij.
+
+10. Čezmejni prenos osebnih podatkov
+
+10.1. Upravljavec je dolžan pred začetkom dejavnosti čezmejnega prenosa osebnih podatkov obvestiti pooblaščeni organ za varstvo pravic posameznikov, na katere se osebni podatki nanašajo, o svoji nameri izvajanja čezmejnega prenosa osebnih podatkov (takšno obvestilo se pošlje ločeno od obvestila o nameri obdelave osebnih podatkov).
+
+10.2. Pred oddajo navedenega obvestila je upravljavec dolžan pridobiti ustrezne informacije od organov tuje države, tujih fizičnih oseb, tujih pravnih oseb, katerim je predviden čezmejni prenos osebnih podatkov.
+
+11. Zaupnost osebnih podatkov
+
+Operater in druge osebe, ki imajo dostop do osebnih podatkov, so dolžni ne razkriti tretjim osebam ali distribuirati osebnih podatkov brez soglasja posameznika, na katerega se nanašajo osebni podatki, razen če zvezni zakon ne določa drugače.
+
+12. Končne določbe
+
+12.1. Uporabnik lahko prejme kakršna koli pojasnila o vprašanjih v zvezi z obdelavo njegovih osebnih podatkov, tako da se obrne na upravljavca po e-pošti supp.lrs@ya.ru.
+
+12.2. Ta dokument bo odražal vse spremembe operaterjeve politike obdelave osebnih podatkov. Politika velja za nedoločen čas, dokler je ne nadomesti nova različica.
+
+12.3. Trenutna različica pravilnika je prosto dostopna na internetu v spletni aplikaciji LRS na naslovu https://www.rustore.ru/catalog/app/com.lrs

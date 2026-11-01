@@ -1,0 +1,179 @@
+A személyes adatok kezelésére vonatkozó szabályzat
+
+1. Általános rendelkezések
+
+Ez a személyes adatok feldolgozására vonatkozó szabályzat a 27.07.2006 szövetségi törvény követelményeivel összhangban készült. No. 152-FZ „A személyes adatokról” (a továbbiakban: a személyes adatokról szóló törvény), és meghatározza a személyes adatok feldolgozására vonatkozó eljárást, valamint az IP Pavlenko Dmitry Yuryevich (a továbbiakban: Üzemeltető) által a személyes adatok biztonságát biztosító intézkedéseket INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Az üzemeltető tevékenysége végzésének legfontosabb céljául és feltételéül tűzi ki az egyének és az állampolgárok jogainak és szabadságainak tiszteletben tartását személyes adataik kezelése során, ideértve a magánélethez, a személyes és családi titkokhoz való jogok védelmét.
+
+1.2. Jelen Üzemeltető személyes adatok kezelésére vonatkozó szabályzata (a továbbiakban: Szabályzat) minden olyan információra vonatkozik, amelyet az Üzemeltető az LRS webalkalmazás látogatóiról szerezhet.
+
+2. A szabályzatban használt alapfogalmak
+
+2.1. A személyes adatok automatizált feldolgozása a személyes adatok számítógépes technológia felhasználásával történő kezelése.
+
+2.2. A személyes adatok zárolása a személyes adatok kezelésének ideiglenes leállítása (kivéve azokat az eseteket, amikor az adatkezelés a személyes adatok tisztázásához szükséges).
+
+2.3. Weboldal / Alkalmazás / Webes alkalmazás - grafikus és információs anyagok, valamint számítógépes programok és adatbázisok készlete, amelyek biztosítják ezek elérhetőségét az interneten.
+
+2.4. A személyes adatok információs rendszere adatbázisokban és információs technológiákban és azok kezelését biztosító technikai eszközökben tárolt személyes adatok összessége.
+
+2.5. A személyes adatok depersonalizálása olyan cselekvés, amelynek eredményeként további információk felhasználása nélkül lehetetlen meghatározni a személyes adatok tulajdonjogát egy adott Felhasználó vagy a személyes adatok más alanya számára.
+
+2.6. A személyes adatok kezelése minden olyan művelet (művelet), vagy műveletek (műveletek) összessége, amelyeket automatizálási eszközökkel vagy anélkül hajtanak végre személyes adatokkal, ideértve a személyes adatok gyűjtését, rögzítését, rendszerezését, felhalmozását, tárolását, pontosítását (frissítését, megváltoztatását), kinyerését, felhasználását, továbbítását (terjesztését, szolgáltatását, hozzáférését), depersonalizálását, zárolását, törlését, megsemmisítését.
+
+2.7. Üzemeltető az az állami szerv, önkormányzati szerv, jogi személy vagy magánszemély, aki önállóan vagy más személlyel közösen megszervezi és/vagy végrehajtja a személyes adatok kezelését, valamint meghatározza a személyes adatok kezelésének célját, a kezelendő személyes adatok összetételét, valamint a személyes adatokkal végzett cselekményeket (műveleteket).
+
+2.8. A személyes adat minden olyan információ, amely közvetlenül vagy közvetve kapcsolódik az LRS webalkalmazás egy meghatározott vagy azonosítható Felhasználójához.
+
+2.9. Az adatalany által terjesztésre engedélyezett személyes adat olyan személyes adat, amelyhez az érintett korlátlan számú hozzáférést biztosít azáltal, hogy hozzájárul a személyes adatok feldolgozásához a személyes adatokról szóló törvényben előírt módon terjesztésre (a továbbiakban: terjesztésre engedélyezett személyes adat).
+
+2.10. Felhasználó az LRS webalkalmazás bármely látogatója.
+
+2.11. A személyes adatok megadása olyan tevékenység, amelynek célja a személyes adatok egy bizonyos személy vagy egy bizonyos csoportja számára történő közlése.
+
+2.12. A személyes adatok terjesztése minden olyan tevékenység, amelynek célja a személyes adatok korlátlan számú személy számára történő közlése (személyes adatok továbbítása), vagy a személyes adatok korlátlan számú megismertetése, ideértve a személyes adatok médiában való közzétételét, információs és távközlési hálózatokban való közzétételét, vagy a személyes adatokhoz való bármilyen más módon történő hozzáférést.
+
+2.13. A személyes adatok határokon átnyúló továbbítása a személyes adatok külföldi állam területére történő továbbítása külföldi állam hatósága, külföldi magánszemély vagy külföldi jogi személy részére.
+
+2.14. A személyes adatok megsemmisítése minden olyan intézkedés, amelynek eredményeként a személyes adatok helyrehozhatatlanul megsemmisülnek, és a személyes adatok tartalmának a személyes adatok információs rendszerében történő további helyreállítása lehetetlenné válik, és/vagy a személyes adatok anyagi adathordozói megsemmisülnek.
+
+3. Az Üzemeltető alapvető jogai és kötelezettségei
+
+3.1. Az üzemeltetőnek joga van:
+
+— megbízható információkat és/vagy személyes adatokat tartalmazó dokumentumokat kapni a személyes adatok alanyától;
+
+— abban az esetben, ha a személyes adatok alanya visszavonja a személyes adatok kezeléséhez adott hozzájárulását, valamint kérelmet küld a személyes adatok kezelésének megszüntetésére, az Üzemeltetőnek joga van a személyes adatok feldolgozását a személyes adatok alanyának hozzájárulása nélkül folytatni, ha fennáll a személyes adatokról szóló törvényben meghatározott okok;
+
+— önállóan határozza meg a szükséges és elegendő intézkedések összetételét és listáját a személyes adatokról szóló törvényben és az annak megfelelően elfogadott szabályozásban előírt kötelezettségek teljesítésének biztosításához, kivéve, ha a személyes adatokról szóló törvény vagy más szövetségi törvény másként rendelkezik.
+
+3.2. Az üzemeltető köteles:
+
+— a személyes adatok érintettjének kérésére tájékoztatást adni személyes adatainak kezeléséről;
+
+— megszervezi a személyes adatok feldolgozását az Orosz Föderáció hatályos jogszabályai által megállapított módon;
+
+— válaszolni a személyes adatok alanyainak és jogi képviselőiknek a fellebbezéseire és kérelmeire a személyes adatokról szóló törvény előírásainak megfelelően;
+
+— a személyes érintettek jogainak védelmére felhatalmazott szervnek, e szerv kérésére, a kérelem kézhezvételétől számított 10 napon belül bejelenti a szükséges információkat;
+
+— a jelen Szabályzat közzététele vagy más módon korlátlan hozzáférést biztosít a személyes adatok feldolgozásával kapcsolatban;
+
+— jogi, szervezési és technikai intézkedéseket hoz a személyes adatok illetéktelen vagy véletlen hozzáférése, megsemmisítése, módosítása, zárolása, másolása, rendelkezésre bocsátása, terjesztése, valamint a személyes adatokkal kapcsolatos egyéb jogellenes cselekmények elleni védelme érdekében;
+
+— a személyes adatok továbbításának (terjesztésének, szolgáltatásának, hozzáférésének) leállítása, a személyes adatok feldolgozásának leállítása és megsemmisítése a személyes adatokról szóló törvényben meghatározott módon és esetekben;
+
+— a személyes adatokról szóló törvényben meghatározott egyéb feladatok ellátása.
+
+4. A személyes adatok alanyainak alapvető jogai és kötelezettségei
+
+4.1. A személyes adatok alanyai jogosultak:
+
+— tájékoztatást kaphat személyes adatainak kezeléséről, kivéve a szövetségi törvények által előírt eseteket. A tájékoztatást az Üzemeltető a személyes adatok alanyának rendelkezésére bocsátja, hozzáférhető formában, és nem tartalmazhat más személyes adatalanyokra vonatkozó személyes adatot, kivéve azokat az eseteket, amikor az ilyen személyes adatok nyilvánosságra hozatalának jogalapja van. Az információk listáját és a megszerzésük módját a személyes adatokról szóló törvény határozza meg;
+
+— felszólíthatja az üzemeltetőt személyes adatainak pontosítására, zárolására vagy megsemmisítésére, ha a személyes adat hiányos, elavult, pontatlan, jogellenesen jutott vagy az adatkezelés megjelölt céljához nem szükséges, valamint jogainak védelme érdekében törvényben előírt intézkedéseket is megtenni;
+
+— előzetes hozzájárulás feltételét írja elő személyes adatoknak az áruk, építési beruházások és szolgáltatások piaci népszerűsítése céljából történő feldolgozásakor;
+
+— a személyes adatok kezeléséhez adott hozzájárulás visszavonására, valamint a személyes adatok kezelésének megszüntetésére irányuló kérelem elküldésére;
+
+— fellebbezni a felhatalmazott szervhez a személyes adatok alanyainak jogainak védelme érdekében, vagy bírósághoz fordulni az Üzemeltető személyes adatainak kezelése során elkövetett jogellenes cselekményei vagy mulasztása ellen;
+
+— az Orosz Föderáció jogszabályai által biztosított egyéb jogok gyakorlása.
+
+4.2. A személyes adatok alanyai kötelesek:
+
+— megbízható információkat nyújtson az Üzemeltetőnek önmagáról;
+
+— tájékoztatja az Üzemeltetőt személyes adatainak frissítéséről (frissítéséről, megváltoztatásáról).
+
+4.3. Azok a személyek, akik az Üzemeltetőnek hamis információkat adtak meg magukról vagy más személyes adatok alanyáról az utóbbi beleegyezése nélkül, az Orosz Föderáció jogszabályai szerint felelősek.
+
+5. A személyes adatok feldolgozásának elvei
+
+5.1. A személyes adatok kezelése jogszerű és tisztességes alapon történik.
+
+5.2. A személyes adatok kezelése meghatározott, előre meghatározott és jogszerű célok elérésére korlátozódik. A személyes adatok gyűjtésének céljaival összeegyeztethetetlen személyes adatok kezelése nem megengedett.
+
+5.3. Nem kombinálhatók olyan személyes adatokat tartalmazó adatbázisok, amelyek feldolgozása egymással össze nem egyeztethető célból történik.
+
+5.4. Csak azok a személyes adatok kerülnek feldolgozásra, amelyek megfelelnek az adatkezelés céljainak.
+
+5.5. A kezelt személyes adatok tartalma és mennyisége megfelel a megadott adatkezelési céloknak. A kezelt személyes adatok redundanciája az adatkezelés meghatározott céljaihoz képest nem megengedett.
+
+5.6. A személyes adatok kezelése során biztosítjuk a személyes adatok pontosságát, elegendőségét, és szükség esetén a személyes adatok kezelésének céljaival kapcsolatos relevanciáját. Az üzemeltető megteszi a szükséges intézkedéseket és/vagy gondoskodik azok megtételéről a hiányos vagy pontatlan adatok eltávolítása vagy tisztázása érdekében.
+
+5.7. A személyes adatok tárolása olyan formában történik, amely lehetővé teszi a személyes adatok alanyának azonosítását, legfeljebb a személyes adatok feldolgozásának céljaihoz szükséges ideig, kivéve, ha a személyes adatok tárolásának időtartamát szövetségi törvény írja elő, olyan megállapodás, amelynek a személyes adatok alanya részese, kedvezményezettje vagy kezese. A kezelt személyes adatok megsemmisítésre vagy anonimizálásra kerülnek a feldolgozás céljainak elérésekor vagy e célok elérése iránti igény elvesztése esetén, hacsak a szövetségi törvény másként nem rendelkezik.
+
+6. A személyes adatok kezelésének céljai
+
+Az adatkezelés célja, hogy a Felhasználó hozzáférést biztosítson az Alkalmazásban található szolgáltatásokhoz, információkhoz és/vagy anyagokhoz, valamint az Alkalmazás által a számára nyújtott szolgáltatásokhoz.
+
+Személyes adatok - e-mail cím, a felhasználó teljes éveinek száma, becenév, antropometriai adatok, fényképek.
+
+Jogalap - az Üzemeltető törvényi (alapító) dokumentumai.
+
+A személyes adatok kezelésének típusai - személyes adatok gyűjtése, rögzítése, rendszerezése, felhalmozása, tárolása, megsemmisítése és anonimizálása
+
+7. A személyes adatok kezelésének feltételei
+
+7.1. A személyes adatok feldolgozása a személyes adatok alanyának személyes adatai kezeléséhez való hozzájárulásával történik.
+
+7.2. A személyes adatok feldolgozása az Orosz Föderáció nemzetközi szerződésében vagy törvényében meghatározott célok eléréséhez, az Orosz Föderáció jogszabályai által az üzemeltetőre ruházott funkciók, hatáskörök és felelősségek végrehajtásához szükséges.
+
+7.3. A személyes adatok feldolgozása szükséges az igazságszolgáltatáshoz, bírósági cselekmény végrehajtásához, más szerv vagy tisztviselő cselekményéhez, amelyet az Orosz Föderáció végrehajtási eljárásokra vonatkozó jogszabályai szerint kell végrehajtani.
+
+7.4. A személyes adatok kezelése olyan megállapodás végrehajtásához szükséges, amelynek a személyes adatok alanya szerződő fél vagy kedvezményezettje vagy kezese, valamint olyan megállapodás megkötéséhez a személyes adatok alanya kezdeményezésére, vagy olyan megállapodás megkötéséhez, amelynek értelmében a személyes adatok alanya kedvezményezett vagy kezes lesz.
+
+7.5. A személyes adatok kezelése az üzemeltető vagy harmadik személyek jogainak és jogos érdekeinek gyakorlásához vagy társadalmilag jelentős célok eléréséhez szükséges, feltéve, hogy a személyes adatok alanya jogai és szabadságai nem sérülnek.
+
+7.6. A személyes adatok feldolgozása történik, amelyhez korlátlan számú személy hozzáférését a személyes adatok alanya vagy kérésére biztosítja (a továbbiakban: nyilvánosan elérhető személyes adat).
+
+7.7. Olyan személyes adatokat dolgozunk fel, amelyek a szövetségi törvényeknek megfelelően közzétételre vagy kötelező közzétételre vonatkoznak.
+
+8. A személyes adatok gyűjtésére, tárolására, továbbítására és egyéb feldolgozására vonatkozó eljárás
+
+Az Üzemeltető által kezelt személyes adatok biztonságát a személyes adatok védelmére vonatkozó hatályos jogszabályok előírásainak maradéktalan teljesítéséhez szükséges jogi, szervezési és technikai intézkedések végrehajtása biztosítja.
+
+8.1. Az üzemeltető gondoskodik a személyes adatok biztonságáról, és minden lehetséges intézkedést megtesz annak érdekében, hogy a személyes adatokhoz illetéktelen személyek ne férjenek hozzá.
+
+8.2. A Felhasználó személyes adatait harmadik félnek soha, semmilyen körülmények között nem adjuk át, kivéve a hatályos jogszabályok végrehajtásával kapcsolatos eseteket, vagy abban az esetben, ha a személyes adatok alanya hozzájárult ahhoz, hogy az Üzemeltető polgári jogi szerződésből eredő kötelezettségei teljesítése érdekében adatokat továbbítson harmadik személynek.
+
+8.3. Ha a személyes adatokban pontatlanságokat észlel, a Felhasználó önállóan frissítheti azokat az Üzemeltető supp.lrs@ya.ru e-mail címére „Személyes adatok frissítése” megjelöléssel.
+
+8.4. A személyes adatok feldolgozásának időtartamát a személyes adatok gyűjtésének céljának megvalósulása határozza meg, kivéve, ha a szerződés vagy a hatályos jogszabályok ettől eltérő időtartamot írnak elő. A Felhasználó bármikor visszavonhatja a személyes adatok kezeléséhez adott hozzájárulását, ha az Üzemeltető supp.lrs@ya.ru e-mail címére e-mailben értesíti az Üzemeltetőt „A személyes adatok kezeléséhez adott hozzájárulás visszavonása”.
+
+8.5. Minden olyan információt, amelyet harmadik fél szolgáltatásai gyűjtenek, beleértve a fizetési rendszereket, a kommunikációs és egyéb szolgáltatókat, ezek a személyek (Üzemeltetők) tárolják és dolgozzák fel a Felhasználói megállapodásukkal és az adatvédelmi szabályzatukkal összhangban. Személyes adatok tárgya és/vagy meghatározott dokumentumokkal. Az Üzemeltető nem vállal felelősséget harmadik személyek – ideértve a jelen bekezdésben meghatározott szolgáltatókat is – intézkedéseiért.
+
+8.6. A személyes adatok alanya által a terjesztésre engedélyezett személyes adatok továbbítására (kivéve a hozzáférés biztosítására), valamint a feldolgozásra vagy a kezelés feltételeire (kivéve a hozzáférésre) vonatkozó tilalmak nem vonatkoznak a személyes adatoknak az Orosz Föderáció jogszabályai által meghatározott állami, köz- és egyéb közérdekű feldolgozására.
+
+8.7. A személyes adatok kezelése során az üzemeltető gondoskodik a személyes adatok bizalmas kezeléséről.
+
+8.8. Az üzemeltető a személyes adatokat olyan formában tárolja, amely lehetővé teszi a személyes adatok alanyának azonosítását, legfeljebb a személyes adatok feldolgozásának céljaihoz szükséges ideig, kivéve, ha a személyes adatok tárolásának időtartamát szövetségi törvény írja elő, olyan megállapodás, amelynek a személyes adatok alanya részese, kedvezményezettje vagy kezessége.
+
+8.9. A személyes adatok kezelésének megszüntetésének feltétele lehet a személyes adatok kezelésének céljának megvalósulása, a személyes adatok alanyának hozzájárulásának lejárta, a személyes adatok érintett hozzájárulásának visszavonása vagy a személyes adatok kezelésének megszüntetésének követelménye, valamint a személyes adatok jogellenes kezelésének megállapítása.
+
+9. Az Üzemeltető által a kapott személyes adatokkal végzett műveletek listája
+
+9.1. Az üzemeltető a személyes adatokat gyűjti, rögzíti, rendszerezi, felhalmozza, tárolja, finomítja (frissíti, módosítja), kivonja, felhasználja, átadja (terjesztés, szolgáltatás, hozzáférés), személyteleníti, blokkolja, törli és megsemmisíti.
+
+9.2. Az üzemeltető a személyes adatok automatizált feldolgozását végzi a kapott információk fogadásával és/vagy információs és távközlési hálózatokon keresztül történő továbbítása nélkül.
+
+10. Személyes adatok határokon átnyúló továbbítása
+
+10.1. A személyes adatok határokon átnyúló továbbítására irányuló tevékenység megkezdése előtt az üzemeltető köteles a személyes adatok határokon átnyúló továbbítására irányuló szándékáról értesíteni a személyes adatok védelmére felhatalmazott szervet (az értesítést a személyes adatok kezelési szándékáról szóló értesítéstől külön kell megküldeni).
+
+10.2. A fenti bejelentés benyújtása előtt az üzemeltető köteles a vonatkozó információkat beszerezni olyan külföldi állam hatóságaitól, külföldi magánszemélyektől, külföldi jogi személyektől, akiknek a személyes adatok határokon átnyúló továbbítását tervezik.
+
+11. A személyes adatok bizalmas kezelése
+
+Az üzemeltető és a személyes adatokhoz hozzáféréssel rendelkező egyéb személyek kötelesek a személyes adatokat az érintett hozzájárulása nélkül harmadik félnek kiadni vagy terjeszteni, kivéve, ha a szövetségi törvény másként rendelkezik.
+
+12. Záró rendelkezések
+
+12.1. A felhasználó felvilágosítást kaphat a személyes adatainak feldolgozásával kapcsolatos érdeklődésére számot tartó kérdéseivel kapcsolatban, ha felveszi a kapcsolatot az Üzemeltetővel a supp.lrs@ya.ru e-mail címen.
+
+12.2. Ez a dokumentum tükrözi az Üzemeltető személyes adatok kezelési szabályzatában bekövetkezett változásokat. A szabályzat határozatlan ideig érvényes, amíg új verzióra nem cserélik.
+
+12.3. A szabályzat aktuális verziója ingyenesen elérhető az interneten az LRS webalkalmazásában a https://www.rustore.ru/catalog/app/com.lrs címen.

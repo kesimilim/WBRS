@@ -1,0 +1,179 @@
+Politica relativa al trattamento dei dati personali
+
+1. Disposizioni generali
+
+La presente politica di trattamento dei dati personali è redatta in conformità con i requisiti della legge federale del 27-07-2006. 152-FZ "Sui dati personali" (di seguito denominata Legge sui dati personali) e determina la procedura per il trattamento dei dati personali e le misure per garantire la sicurezza dei dati personali adottate da IP Pavlenko Dmitry Yuryevich (di seguito denominato Operatore) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. L'operatore pone come obiettivo e condizione più importante per lo svolgimento delle proprie attività il rispetto dei diritti e delle libertà delle persone e dei cittadini nel trattamento dei loro dati personali, compresa la tutela dei diritti alla privacy, dei segreti personali e familiari.
+
+1.2. La politica del presente Operatore relativa al trattamento dei dati personali (di seguito denominata Politica) si applica a tutte le informazioni che l'Operatore può ottenere sui visitatori dell'applicazione web LRS.
+
+2. Concetti di base utilizzati nella Politica
+
+2.1. Il trattamento automatizzato dei dati personali è il trattamento dei dati personali utilizzando la tecnologia informatica.
+
+2.2. Il blocco dei dati personali è una cessazione temporanea del trattamento dei dati personali (ad eccezione dei casi in cui il trattamento è necessario per chiarire i dati personali).
+
+2.3. Sito Web / Applicazione / Applicazione Web: un insieme di materiali grafici e informativi, nonché programmi per computer e database che ne garantiscono la disponibilità su Internet.
+
+2.4. Il sistema informativo dei dati personali è un insieme di dati personali contenuti in banche dati e tecnologie informatiche e mezzi tecnici che ne garantiscono il trattamento.
+
+2.5. La depersonalizzazione dei dati personali è un'azione a seguito della quale è impossibile determinare senza l'uso di informazioni aggiuntive la proprietà dei dati personali a un Utente specifico o altro soggetto di dati personali.
+
+2.6. Il trattamento dei dati personali è qualsiasi azione (operazione) o insieme di azioni (operazioni) eseguite con o senza l'uso di strumenti di automazione con dati personali, tra cui raccolta, registrazione, sistematizzazione, accumulazione, conservazione, chiarimento (aggiornamento, modifica), estrazione, utilizzo, trasferimento (distribuzione, fornitura, accesso), spersonalizzazione, blocco, cancellazione, distruzione dei dati personali.
+
+2.7. L'operatore è un ente statale, un ente comunale, una persona giuridica o una persona fisica che, in modo indipendente o insieme ad altre persone, organizza e/o esegue il trattamento dei dati personali, nonché determina le finalità del trattamento dei dati personali, la composizione dei dati personali da trattare e le azioni (operazioni) eseguite con i dati personali.
+
+2.8. Per dato personale si intende qualsiasi informazione relativa direttamente o indirettamente a un Utente specifico o identificabile dell'applicazione web LRS.
+
+2.9. I dati personali autorizzati dall'oggetto dei dati personali per la distribuzione sono dati personali, l'accesso di un numero illimitato di persone a cui viene fornito dall'oggetto dei dati personali dando il consenso al trattamento dei dati personali autorizzati dall'oggetto dei dati personali per la distribuzione secondo le modalità prescritte dalla Legge sui dati personali (di seguito denominati dati personali consentiti per la distribuzione).
+
+2.10. L'utente è qualsiasi visitatore dell'applicazione web LRS.
+
+2.11. Il conferimento dei dati personali è un'azione volta a comunicare i dati personali a una determinata persona o a un determinato gruppo di persone.
+
+2.12. La diffusione dei dati personali è qualsiasi azione diretta a comunicare i dati personali a un numero indefinito di persone (trasmissione di dati personali) o a far conoscere i dati personali a un numero illimitato di persone, compresa la pubblicazione di dati personali nei media, l'immissione in reti di informazione e telecomunicazione o l'accesso ai dati personali in qualsiasi altro modo.
+
+2.13. Il trasferimento transfrontaliero di dati personali è il trasferimento di dati personali nel territorio di uno stato estero a un'autorità di uno stato estero, a una persona fisica straniera o a una persona giuridica straniera.
+
+2.14. La distruzione dei dati personali è qualsiasi azione a seguito della quale i dati personali vengono distrutti irrimediabilmente con l'impossibilità di un ulteriore ripristino del contenuto dei dati personali nel sistema informativo dei dati personali e/o dei supporti materiali dei dati personali vengono distrutti.
+
+3. Diritti e responsabilità fondamentali dell'Operatore
+
+3.1. L'operatore ha il diritto:
+
+— ricevere dall'interessato informazioni attendibili e/o documenti contenenti dati personali;
+
+— nel caso in cui l'oggetto dei dati personali revochi il consenso al trattamento dei dati personali, nonché invii una domanda con una richiesta di cessare il trattamento dei dati personali, l'Operatore ha il diritto di continuare il trattamento dei dati personali senza il consenso dell'oggetto dei dati personali se sussistono i motivi specificati nella Legge sui dati personali;
+
+— determinare in modo indipendente la composizione e l'elenco delle misure necessarie e sufficienti per garantire l'adempimento degli obblighi previsti dalla Legge sui dati personali e dai regolamenti adottati in conformità con essa, salvo diversamente previsto dalla Legge sui dati personali o da altre leggi federali.
+
+3.2. L'operatore è obbligato:
+
+— fornire all'interessato, su sua richiesta, informazioni relative al trattamento dei suoi dati personali;
+
+— organizzare il trattamento dei dati personali secondo le modalità stabilite dall'attuale legislazione della Federazione Russa;
+
+— rispondere a ricorsi e richieste degli interessati e dei loro rappresentanti legali in conformità con i requisiti della Legge sui dati personali;
+
+— comunicare all'organismo autorizzato per la tutela dei diritti degli interessati, su richiesta di tale organismo, le informazioni necessarie entro 10 giorni dalla data di ricevimento di tale richiesta;
+
+— pubblicare o altrimenti fornire accesso illimitato alla presente Politica relativa al trattamento dei dati personali;
+
+— adottare misure legali, organizzative e tecniche per proteggere i dati personali da accessi non autorizzati o accidentali agli stessi, distruzione, modifica, blocco, copia, fornitura, distribuzione di dati personali, nonché da altre azioni illecite in relazione ai dati personali;
+
+— interrompere il trasferimento (distribuzione, fornitura, accesso) dei dati personali, interrompere il trattamento e distruggere i dati personali nei modi e nei casi previsti dalla Legge sui dati personali;
+
+— svolgere altri compiti previsti dalla Legge sui dati personali.
+
+4. Diritti e obblighi fondamentali degli interessati
+
+4.1. I soggetti cui si riferiscono i dati personali hanno il diritto:
+
+— ricevere informazioni relative al trattamento dei suoi dati personali, salvi i casi previsti dalle leggi federali. L'informativa viene fornita all'oggetto dei dati personali dall'Operatore in una forma accessibile e non deve contenere dati personali relativi ad altri soggetti titolari di dati personali, tranne nei casi in cui vi siano basi legali per la divulgazione di tali dati personali. L'elenco delle informazioni e la procedura per ottenerle sono stabilite dalla Legge sui dati personali;
+
+— richiedere all'operatore di chiarire i propri dati personali, bloccarli o distruggerli se i dati personali sono incompleti, obsoleti, inesatti, ottenuti illegalmente o non sono necessari per lo scopo dichiarato del trattamento, e inoltre adottare le misure previste dalla legge per proteggere i propri diritti;
+
+— imporre una condizione di previo consenso nel trattamento dei dati personali per finalità di promozione di beni, opere e servizi sul mercato;
+
+— revocare il consenso al trattamento dei dati personali, nonché inviare una richiesta di cessazione del trattamento dei dati personali;
+
+— ricorrere all'organismo autorizzato per la tutela dei diritti degli interessati o in tribunale contro azioni illecite o inerzia dell'Operatore nel trattamento dei suoi dati personali;
+
+— esercitare gli altri diritti previsti dalla legislazione della Federazione Russa.
+
+4.2. I soggetti cui si riferiscono i dati personali hanno l'obbligo di:
+
+— fornire all'Operatore informazioni affidabili su di te;
+
+— informare l'Operatore dell'aggiornamento (aggiornamento, modifica) dei tuoi dati personali.
+
+4.3. Le persone che hanno fornito all'Operatore informazioni false su se stesse o informazioni su un altro soggetto con dati personali senza il consenso di quest'ultimo sono responsabili ai sensi della legislazione della Federazione Russa.
+
+5. Principi per il trattamento dei dati personali
+
+5.1. Il trattamento dei dati personali avviene su basi legali e corrette.
+
+5.2. Il trattamento dei dati personali è limitato al raggiungimento di finalità determinate, predefinite e legittime. Non è consentito il trattamento dei dati personali incompatibile con le finalità della raccolta dei dati personali.
+
+5.3. Non è consentito cumulare banche dati contenenti dati personali il cui trattamento sia effettuato per finalità tra loro incompatibili.
+
+5.4. Sono oggetto di trattamento solo i dati personali rispondenti alle finalità del loro trattamento.
+
+5.5. Il contenuto e la quantità dei dati personali trattati corrispondono alle finalità dichiarate del trattamento. Non è consentita la ridondanza dei dati personali trattati rispetto alle finalità dichiarate del loro trattamento.
+
+5.6. Nel trattamento dei dati personali, è garantita l'esattezza dei dati personali, la loro sufficienza e, ove necessario, la pertinenza rispetto alle finalità del trattamento dei dati personali. L'operatore adotta le misure necessarie e/o garantisce che vengano adottate per rimuovere o chiarire dati incompleti o inesatti.
+
+5.7. La conservazione dei dati personali viene effettuata in una forma che consenta di identificare l'oggetto dei dati personali, non più di quanto richiesto dalle finalità del trattamento dei dati personali, a meno che il periodo di conservazione dei dati personali non sia stabilito dalla legge federale, un accordo di cui l'oggetto dei dati personali è parte, beneficiario o garante. I dati personali trattati vengono distrutti o resi anonimi al raggiungimento delle finalità del trattamento o in caso di venir meno della necessità di raggiungere tali finalità, salvo diversa disposizione della legge federale.
+
+6. Finalità del trattamento dei dati personali
+
+Lo scopo del trattamento è fornire all'Utente l'accesso ai servizi, alle informazioni e/o ai materiali contenuti nell'Applicazione e la fornitura di servizi all'Utente da parte dell'Applicazione.
+
+Dati personali - indirizzo email, numero di anni completi dell'utente, nickname, dati antropometrici, fotografie.
+
+Base giuridica: documenti statutari (costitutivi) dell'Operatore.
+
+Tipi di trattamento dei dati personali: raccolta, registrazione, sistematizzazione, accumulazione, conservazione, distruzione e anonimizzazione dei dati personali
+
+7. Condizioni per il trattamento dei dati personali
+
+7.1. Il trattamento dei dati personali viene effettuato con il consenso dell'interessato al trattamento dei suoi dati personali.
+
+7.2. Il trattamento dei dati personali è necessario per raggiungere gli obiettivi previsti da un trattato internazionale della Federazione Russa o dalla legge, per attuare le funzioni, i poteri e le responsabilità attribuiti dalla legislazione della Federazione Russa all'operatore.
+
+7.3. Il trattamento dei dati personali è necessario per l'amministrazione della giustizia, l'esecuzione di un atto giudiziario, un atto di un altro organo o funzionario, soggetto ad esecuzione in conformità con la legislazione della Federazione Russa sui procedimenti di esecuzione.
+
+7.4. Il trattamento dei dati personali è necessario per l'esecuzione di un contratto di cui l'oggetto dei dati personali è parte o beneficiario o garante, nonché per concludere un accordo su iniziativa dell'oggetto dei dati personali o un accordo in base al quale l'oggetto dei dati personali sarà beneficiario o garante.
+
+7.5. Il trattamento dei dati personali è necessario per esercitare i diritti e gli interessi legittimi dell'operatore o di terzi o per raggiungere obiettivi socialmente significativi, a condizione che i diritti e le libertà dell'interessato non siano violati.
+
+7.6. Il trattamento dei dati personali viene effettuato con l'accesso di un numero illimitato di persone a cui vengono forniti i dati personali dall'oggetto o su sua richiesta (di seguito denominati dati personali accessibili al pubblico).
+
+7.7. Trattiamo i dati personali soggetti a pubblicazione o divulgazione obbligatoria ai sensi della legge federale.
+
+8. La procedura per la raccolta, l'archiviazione, il trasferimento e altri tipi di trattamento dei dati personali
+
+La sicurezza dei dati personali trattati dall'Operatore è garantita mediante l'attuazione di misure legali, organizzative e tecniche necessarie per rispettare pienamente i requisiti della legislazione vigente in materia di protezione dei dati personali.
+
+8.1. L'operatore garantisce la sicurezza dei dati personali e adotta tutte le misure possibili per impedire l'accesso ai dati personali da parte di persone non autorizzate.
+
+8.2. I dati personali dell’Utente non verranno mai, in nessun caso, ceduti a terzi, ad eccezione dei casi legati all’attuazione della normativa vigente o nel caso in cui l’interessato dei dati personali abbia prestato consenso al Gestore a trasferire i dati a terzi per adempiere ad obblighi derivanti da un contratto di diritto civile.
+
+8.3. Se vengono rilevate inesattezze nei dati personali, l'Utente può aggiornarli autonomamente inviando una notifica all'Operatore all'indirizzo e-mail dell'Operatore supp.lrs@ya.ru contrassegnato con "Aggiornamento dei dati personali".
+
+8.4. Il periodo del trattamento dei dati personali è determinato dal conseguimento delle finalità per le quali i dati personali sono stati raccolti, salvo che un periodo diverso sia previsto dal contratto o dalla normativa vigente. L'Utente può in qualsiasi momento revocare il proprio consenso al trattamento dei dati personali inviando all'Operatore una notifica via e-mail all'indirizzo di posta elettronica dell'Operatore supp.lrs@ya.ru contrassegnata con “Revoca del consenso al trattamento dei dati personali”.
+
+8.5. Tutte le informazioni raccolte da servizi di terze parti, inclusi sistemi di pagamento, comunicazioni e altri fornitori di servizi, vengono archiviate ed elaborate da queste persone (Operatori) in conformità con il loro Accordo per gli utenti e l'Informativa sulla privacy. Oggetto dei dati personali e/o dei documenti specificati. L'operatore non è responsabile per le azioni di terzi, compresi i fornitori di servizi specificati in questo paragrafo.
+
+8.6. I divieti stabiliti dall'oggetto dei dati personali sul trasferimento (ad eccezione della fornitura dell'accesso), nonché sul trattamento o sulle condizioni per l'elaborazione (ad eccezione dell'accesso) dei dati personali consentiti per la distribuzione, non si applicano nei casi di trattamento dei dati personali nello stato, nel pubblico e in altri interessi pubblici determinati dalla legislazione della Federazione Russa.
+
+8.7. Durante il trattamento dei dati personali, l'operatore garantisce la riservatezza dei dati personali.
+
+8.8. L'operatore memorizza i dati personali in una forma che consenta di identificare l'oggetto dei dati personali, non più di quanto richiesto dalle finalità del trattamento dei dati personali, a meno che il periodo di conservazione dei dati personali non sia stabilito dalla legge federale, un accordo di cui l'oggetto dei dati personali è parte, beneficiario o garante.
+
+8.9. La condizione per la cessazione del trattamento dei dati personali può essere il raggiungimento degli scopi del trattamento dei dati personali, la scadenza del consenso dell'interessato, la revoca del consenso da parte dell'oggetto dei dati personali o l'obbligo di interrompere il trattamento dei dati personali, nonché l'identificazione del trattamento illecito dei dati personali.
+
+9. Elenco delle azioni eseguite dall'Operatore con i dati personali ricevuti
+
+9.1. L'operatore raccoglie, registra, sistematizza, accumula, archivia, perfeziona (aggiornamenti, modifiche), estrae, utilizza, trasferisce (distribuzione, fornitura, accesso), spersonalizza, blocca, cancella e distrugge i dati personali.
+
+9.2. L'operatore effettua il trattamento automatizzato dei dati personali con o senza ricezione e/o trasmissione delle informazioni ricevute tramite reti informatiche e di telecomunicazione.
+
+10. Trasferimento transfrontaliero di dati personali
+
+10.1. Prima di iniziare le attività per il trasferimento transfrontaliero di dati personali, l'operatore è tenuto a notificare all'organismo autorizzato per la tutela dei diritti degli interessati la sua intenzione di effettuare il trasferimento transfrontaliero di dati personali (tale notifica viene inviata separatamente dalla notifica dell'intenzione di trattare i dati personali).
+
+10.2. Prima di inviare la notifica di cui sopra, l'operatore è tenuto ad ottenere le informazioni pertinenti dalle autorità di uno stato estero, dalle persone fisiche straniere, dalle persone giuridiche straniere a cui è previsto il trasferimento transfrontaliero di dati personali.
+
+11. Riservatezza dei dati personali
+
+L'operatore e le altre persone che hanno accesso ai dati personali sono obbligati a non divulgare a terzi o diffondere i dati personali senza il consenso dell'interessato, salvo diversa disposizione della legge federale.
+
+12. Disposizioni finali
+
+12.1. L'utente può ricevere qualsiasi chiarimento su questioni di interesse relative al trattamento dei propri dati personali contattando l'Operatore tramite e-mail supp.lrs@ya.ru.
+
+12.2. Questo documento rifletterà eventuali modifiche alla politica di trattamento dei dati personali dell’Operatore. La polizza è valida a tempo indeterminato finché non viene sostituita da una nuova versione.
+
+12.3. La versione attuale della Politica è disponibile gratuitamente su Internet nell'applicazione web LRS all'indirizzo https://www.rustore.ru/catalog/app/com.lrs

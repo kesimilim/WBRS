@@ -1,0 +1,179 @@
+Politika u vezi sa obradom ličnih podataka
+
+1. Opšte odredbe
+
+Ova politika obrade podataka o ličnosti sastavljena je u skladu sa zahtevima Saveznog zakona br. 152-FZ od 27.07.2006. „O podacima o ličnosti” (u daljem tekstu: Zakon o podacima o ličnosti) i utvrđuje postupak obrade podataka o ličnosti i mere za obezbeđivanje njihove bezbednosti koje preduzima individualni preduzetnik Dmitrij Jurjevič Pavlenko (u daljem tekstu: Operator), INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Operator kao svoj najvažniji cilj i uslov obavljanja delatnosti postavlja poštovanje ljudskih i građanskih prava i sloboda pri obradi podataka o ličnosti, uključujući zaštitu prava na privatnost, ličnu i porodičnu tajnu.
+
+1.2. Ova politika Operatora u vezi sa obradom podataka o ličnosti (u daljem tekstu: Politika) primenjuje se na sve informacije koje Operator može dobiti o posetiocima veb aplikacije LRS.
+
+2. Osnovni koncepti koji se koriste u Politici
+
+2.1. Automatizovana obrada podataka o ličnosti znači obradu podataka o ličnosti uz pomoć računarske tehnologije.
+
+2.2. Blokiranje podataka o ličnosti znači privremeni prestanak obrade podataka o ličnosti, osim u slučajevima kada je obrada neophodna radi njihovog razjašnjenja.
+
+2.3. Veb-sajt / Aplikacija / Veb aplikacija znači skup grafičkih i informativnih materijala, kao i računarskih programa i baza podataka koji obezbeđuju njihovu dostupnost na internetu.
+
+2.4. Informacioni sistem podataka o ličnosti znači skup podataka o ličnosti sadržanih u bazama podataka i informacionih tehnologija i tehničkih sredstava koja omogućavaju njihovu obradu.
+
+2.5. Depersonalizacija podataka o ličnosti znači radnje usled kojih je bez dodatnih informacija nemoguće utvrditi da li podaci o ličnosti pripadaju određenom Korisniku ili drugom licu na koje se podaci odnose.
+
+2.6. Obrada podataka o ličnosti znači svaku radnju (operaciju) ili skup radnji (operacija) koje se vrše nad podacima o ličnosti, uz upotrebu sredstava automatizacije ili bez njih, uključujući prikupljanje, beleženje, sistematizaciju, akumulaciju, čuvanje, razjašnjenje (ažuriranje, izmenu), izdvajanje, korišćenje, prenos (širenje, pružanje, pristup), depersonalizaciju, blokiranje, brisanje i uništavanje podataka o ličnosti.
+
+2.7. Operator znači državni organ, opštinski organ, pravno ili fizičko lice koje samostalno ili zajedno sa drugim licima organizuje i/ili vrši obradu podataka o ličnosti, kao i određuje svrhe obrade, sastav podataka o ličnosti koji se obrađuju i radnje (operacije) koje se vrše nad tim podacima.
+
+2.8. Podaci o ličnosti znače svaku informaciju koja se neposredno ili posredno odnosi na određenog ili odredivog Korisnika veb aplikacije LRS.
+
+2.9. Podaci o ličnosti čije je širenje dozvolilo lice na koje se podaci odnose znače podatke o ličnosti kojima je to lice omogućilo pristup neograničenom broju lica davanjem saglasnosti za obradu podataka o ličnosti dozvoljenih za širenje na način predviđen Zakonom o podacima o ličnosti (u daljem tekstu: podaci o ličnosti dozvoljeni za širenje).
+
+2.10. Korisnik znači svakog posetioca veb aplikacije LRS.
+
+2.11. Davanje ličnih podataka su radnje koje imaju za cilj otkrivanje ličnih podataka određenom licu ili određenoj grupi ljudi.
+
+2.12. Širenje podataka o ličnosti je svaka radnja koja ima za cilj otkrivanje podataka o ličnosti neograničenom broju lica (prenos podataka o ličnosti) ili upoznavanje sa podacima o ličnosti neograničenom broju lica, uključujući objavljivanje podataka o ličnosti u medijima, objavljivanje u informacionim i telekomunikacionim mrežama, ili omogućavanje pristupa ličnim podacima na bilo koji drugi način.
+
+2.13. Prekogranični prenos podataka o ličnosti je prenos podataka o ličnosti na teritoriju strane države organu strane države, stranom fizičkom ili stranom pravnom licu.
+
+2.14. Uništavanje podataka o ličnosti je svaka radnja usled koje se lični podaci nepovratno uništavaju uz nemogućnost daljeg obnavljanja sadržaja ličnih podataka u informacionom sistemu podataka o ličnosti i/ili uništavaju materijalni medij ličnih podataka.
+
+3. Osnovna prava i odgovornosti Operatera
+
+3.1. Operater ima pravo:
+
+— primaju od subjekta ličnih podataka pouzdane informacije i/ili dokumente koji sadrže lične podatke;
+
+— u slučaju da subjekt podataka o ličnosti povuče saglasnost za obradu podataka o ličnosti, kao i da pošalje zahtev sa zahtevom za obustavu obrade podataka o ličnosti, Operater ima pravo da nastavi sa obradom podataka o ličnosti bez saglasnosti subjekta ličnih podataka ako za to postoje razlozi navedeni u Zakonu o ličnim podacima;
+
+— samostalno utvrđuje sastav i listu mera neophodnih i dovoljnih za obezbeđenje ispunjenja obaveza predviđenih Zakonom o podacima o ličnosti i propisima donetim u skladu sa njim, osim ako Zakonom o podacima o ličnosti ili drugim saveznim zakonima nije drugačije određeno.
+
+3.2. Operater je dužan:
+
+— pruži subjektu ličnih podataka, na njegov zahtev, informacije u vezi sa obradom njegovih ličnih podataka;
+
+— organizuje obradu ličnih podataka na način utvrđen važećim zakonodavstvom Ruske Federacije;
+
+— odgovara na žalbe i zahteve subjekata ličnih podataka i njihovih zakonskih zastupnika u skladu sa zahtevima Zakona o ličnim podacima;
+
+— prijavi nadležnom organu za zaštitu prava subjekata ličnih podataka, na zahtev ovog organa, potrebne informacije u roku od 10 dana od dana prijema takvog zahteva;
+
+— objaviti ili na drugi način omogućiti neograničen pristup ovoj Politici u vezi sa obradom ličnih podataka;
+
+— preduzima pravne, organizacione i tehničke mere za zaštitu podataka o ličnosti od neovlašćenog ili slučajnog pristupa njima, uništavanja, izmene, blokiranja, kopiranja, pružanja, distribucije podataka o ličnosti, kao i od drugih protivpravnih radnji u vezi sa podacima o ličnosti;
+
+— obustavi prenos (distribuciju, davanje, pristup) ličnih podataka, obustavi obradu i uništi podatke o ličnosti na način iu slučajevima predviđenim Zakonom o podacima o ličnosti;
+
+— obavlja i druge poslove predviđene Zakonom o podacima o ličnosti.
+
+4. Osnovna prava i obaveze subjekata ličnih podataka
+
+4.1. Subjekti ličnih podataka imaju pravo:
+
+— prima informacije u vezi sa obradom njegovih ličnih podataka, osim u slučajevima predviđenim saveznim zakonima. Informaciju subjektu ličnih podataka pruža Operator u pristupačnoj formi i ne bi trebalo da sadrži lične podatke koji se odnose na druge subjekte ličnih podataka, osim u slučajevima kada postoji zakonski osnov za otkrivanje takvih ličnih podataka. Spisak informacija i postupak za njihovo dobijanje utvrđeni su Zakonom o podacima o ličnosti;
+
+— zahtevaju od operatera da pojasni svoje lične podatke, blokira ih ili uništi ako su lični podaci nepotpuni, zastareli, netačni, nezakonito dobijeni ili nisu neophodni za navedenu svrhu obrade, kao i da preduzme mere predviđene zakonom radi zaštite njihovih prava;
+
+— nameću uslov prethodne saglasnosti prilikom obrade ličnih podataka u svrhu promocije roba, radova i usluga na tržištu;
+
+— da povuče saglasnost za obradu podataka o ličnosti, kao i da pošalje zahtev za prekid obrade podataka o ličnosti;
+
+— žalba nadležnom organu za zaštitu prava subjekata ličnih podataka ili sudu protiv nezakonitih radnji ili nečinjenja Operatera prilikom obrade njegovih ličnih podataka;
+
+— da ostvaruje druga prava predviđena zakonodavstvom Ruske Federacije.
+
+4.2. Subjekti ličnih podataka dužni su da:
+
+— pružite Operateru pouzdane informacije o sebi;
+
+— obavestite Operatera o ažuriranju (ažuriranju, promeni) Vaših ličnih podataka.
+
+4.3. Lica koja su Operatoru dala lažne informacije o sebi ili informacije o drugom subjektu ličnih podataka bez njegove saglasnosti, odgovorna su u skladu sa zakonodavstvom Ruske Federacije.
+
+5. Principi obrade ličnih podataka
+
+5.1. Obrada ličnih podataka se vrši na zakonit i pošten način.
+
+5.2. Obrada ličnih podataka je ograničena na postizanje specifičnih, unapred definisanih i legitimnih ciljeva. Nije dozvoljena obrada ličnih podataka koja nije u skladu sa svrhom prikupljanja ličnih podataka.
+
+5.3. Nije dozvoljeno kombinovanje baza podataka koje sadrže lične podatke, čija se obrada vrši u svrhe koje su međusobno nekompatibilne.
+
+5.4. Obradi su podložni samo lični podaci koji ispunjavaju svrhe njihove obrade.
+
+5.5. Sadržaj i obim ličnih podataka koji se obrađuju odgovaraju navedenim svrhama obrade. Redundantnost obrađenih ličnih podataka u odnosu na navedene svrhe njihove obrade nije dozvoljena.
+
+5.6. Prilikom obrade ličnih podataka obezbeđuje se tačnost podataka o ličnosti, njihova dovoljnost, a po potrebi i relevantnost u odnosu na svrhe obrade ličnih podataka. Operater preduzima neophodne mere i/ili obezbeđuje da se one preduzmu da ukloni ili razjasni nepotpune ili netačne podatke.
+
+5.7. Čuvanje ličnih podataka vrši se u obliku koji omogućava identifikaciju subjekta ličnih podataka, ne duže nego što je potrebno za potrebe obrade ličnih podataka, osim ako rok za čuvanje podataka o ličnosti nije utvrđen saveznim zakonom, ugovorom u kome je subjekt ličnih podataka strana, korisnik ili garant. Obrađeni lični podaci se uništavaju ili anonimiziraju po ostvarenju svrhe obrade ili u slučaju gubitka potrebe za postizanjem ovih ciljeva, osim ako saveznim zakonom nije drugačije određeno.
+
+6. Svrhe obrade ličnih podataka
+
+Svrha obrade je da se Korisniku omogući pristup uslugama, informacijama i/ili materijalima sadržanim u aplikaciji i pružanje usluga njemu putem aplikacije.
+
+Lični podaci - imejl adresa, broj punih godina korisnika, nadimak, antropometrijski podaci, fotografije.
+
+Pravni osnov - statutarni (konstitutivni) dokumenti Operatera.
+
+Vrste obrade ličnih podataka – prikupljanje, evidentiranje, sistematizacija, akumulacija, čuvanje, uništavanje i anonimizacija ličnih podataka
+
+7. Uslovi za obradu ličnih podataka
+
+7.1. Obrada podataka o ličnosti vrši se uz saglasnost subjekta ličnih podataka na obradu njegovih ličnih podataka.
+
+7.2. Obrada ličnih podataka je neophodna za postizanje ciljeva predviđenih međunarodnim ugovorom Ruske Federacije ili zakonom, za sprovođenje fun��cija, ovlašćenja i odgovornosti koje su zakonodavstvom Ruske Federacije dodeljene operateru.
+
+7.3. Obrada ličnih podataka je neophodna za sprovođenje pravde, izvršenje sudskog akta, akta drugog organa ili službenog lica, koji podležu izvršenju u skladu sa zakonodavstvom Ruske Federacije o izvršnom postupku.
+
+7.4. Obrada podataka o ličnosti je neophodna za izvršenje ugovora u kome je subjekt podataka o ličnosti strana ili korisnik ili jemac, kao i za zaključivanje ugovora na inicijativu subjekta ličnih podataka ili ugovora po kome će subjekt podataka o ličnosti biti korisnik ili jemac.
+
+7.5. Obrada podataka o ličnosti je neophodna za ostvarivanje prava i legitimnih interesa operatera ili trećih lica ili za postizanje društveno značajnih ciljeva, pod uslovom da se ne krše prava i slobode subjekta ličnih podataka.
+
+7.6. Sprovodi se obrada podataka o ličnosti, pristup neograničenom broju lica kojoj obezbeđuje subjekt ličnih podataka ili na njegov zahtev (u daljem tekstu: javno dostupni lični podaci).
+
+7.7. Obrađujemo lične podatke koji podležu objavljivanju ili obaveznom otkrivanju u skladu sa saveznim zakonom.
+
+8. Postupak prikupljanja, čuvanja, prenosa i drugih vidova obrade podataka o ličnosti
+
+Bezbednost podataka o ličnosti koje Operater obrađuje obezbeđuje se sprovođenjem zakonskih, organizacionih i tehničkih mera neophodnih za potpunu usklađenost sa zahtevima važećeg zakonodavstva u oblasti zaštite podataka o ličnosti.
+
+8.1. Operater obezbeđuje bezbednost ličnih podataka i preduzima sve moguće mere da spreči pristup ličnim podacima od strane neovlašćenih lica.
+
+8.2. Lični podaci Korisnika nikada, ni pod kojim okolnostima, neće biti preneti trećim licima, osim u slučajevima u vezi sa primenom važećeg zakonodavstva ili u slučaju kada je subjekt ličnih podataka dao saglasnost Operatoru da prenese podatke trećem licu radi ispunjavanja obaveza iz građanskopravnog ugovora.
+
+8.3. Ako se identifikuju netačnosti u ličnim podacima, Korisnik ih može samostalno ažurirati slanjem obaveštenja Operatoru na adresu e-pošte Operatora supp.lrs@ya.ru sa oznakom „Ažuriranje ličnih podataka“.
+
+8.4. Period obrade podataka o ličnosti određuje se ostvarenjem svrhe za koju su podaci o ličnosti prikupljeni, osim ako ugovorom ili važećim zakonodavstvom nije predviđen drugačiji rok. Korisnik može u bilo kom trenutku povući svoju saglasnost za obradu ličnih podataka slanjem obaveštenja Operatoru putem elektronske pošte na adresu e-pošte Operatora supp.lrs@ya.ru sa naznakom „Povlačenje pristanka na obradu ličnih podataka“.
+
+8.5. Sve informacije koje prikupljaju usluge trećih strana, uključujući platne sisteme, komunikacione i druge pružaoce usluga, ove osobe (Operateri) čuvaju i obrađuju u skladu sa njihovim korisničkim ugovorom i Politikom privatnosti. Predmet ličnih podataka i/ili sa navedenim dokumentima. Operater nije odgovoran za radnje trećih lica, uključujući pružaoce usluga navedenih u ovom stavu.
+
+8.6. Zabrane koje je ustanovio subjekt ličnih podataka o prenosu (osim za omogućavanje pristupa), kao io obradi ili uslovima obrade (osim za dobijanje pristupa) ličnih podataka dozvoljenih za distribuciju, ne primenjuju se u slučajevima obrade ličnih podataka u državnom, javnom i drugom javnom interesu utvrđenom zakonodavstvom Ruske Federacije.
+
+8.7. Prilikom obrade ličnih podataka, operater obezbeđuje poverljivost ličnih podataka.
+
+8.8. Operater čuva lične podatke u obliku koji omogućava identifikaciju subjekta ličnih podataka, ne duže nego što je potrebno za potrebe obrade ličnih podataka, osim ako je rok za čuvanje ličnih podataka utvrđen saveznim zakonom, ugovorom u kome je subjekt ličnih podataka strana, korisnik ili garant.
+
+8.9. Uslov za prestanak obrade podataka o ličnosti može biti ostvarenje svrhe obrade podataka o ličnosti, prestanak važenja saglasnosti subjekta ličnih podataka, povlačenje saglasnosti subjekta ličnih podataka ili zahtev za prekid obrade podataka o ličnosti, kao i utvrđivanje nezakonite obrade podataka o ličnosti.
+
+9. Spisak radnji koje obavlja Operater sa primljenim ličnim podacima
+
+9.1. Operater prikuplja, evidentira, sistematizuje, akumulira, skladišti, dorađuje (ažurira, menja), izdvaja, koristi, prenosi (distribucija, pružanje, pristup), depersonalizuje, blokira, briše i uništava lične podatke.
+
+9.2. Operater vrši automatizovanu obradu ličnih podataka sa ili bez prijema i/ili prenosa primljenih informacija putem informacionih i telekomunikacionih mreža.
+
+10. Prekogranični prenos ličnih podataka
+
+10.1. Operater je dužan da pre otpočinjanja aktivnosti prekograničnog prenosa podataka o ličnosti obavesti nadležni organ za zaštitu prava subjekata ličnih podataka o svojoj nameri da izvrši prekogranični prenos podataka o ličnosti (takvo obaveštenje se šalje odvojeno od obaveštenja o nameri da obradi podatke o ličnosti).
+
+10.2. Pre dostavljanja navedenog obaveštenja, operater je dužan da pribavi relevantne informacije od organa strane države, stranih fizičkih lica, stranih pravnih lica kojima se planira prekogranični prenos podataka o ličnosti.
+
+11. Poverljivost ličnih podataka
+
+Operater i druga lica koja imaju pristup ličnim podacima dužni su da ne otkrivaju trećim licima ili distribuiraju lične podatke bez saglasnosti nosioca ličnih podataka, osim ako saveznim zakonom nije drugačije određeno.
+
+12. Završne odredbe
+
+12.1. Korisnik može dobiti sva pojašnjenja o pitanjima od interesa u vezi sa obradom njegovih ličnih podataka tako što će kontaktirati Operatera putem e-pošte supp.lrs@ya.ru.
+
+12.2. Ovaj dokument će odražavati sve promene u politici obrade ličnih podataka Operatera. Politika važi neograničeno dok je ne zameni nova verzija.
+
+12.3. Aktuelna verzija Politike je besplatno dostupna na Internetu u veb aplikaciji LRS na adresi https://www.rustore.ru/catalog/app/com.lrs

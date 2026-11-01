@@ -1,0 +1,179 @@
+Zásady týkajúce sa spracovania osobných údajov
+
+1. Všeobecné ustanovenia
+
+Tieto zásady spracovania osobných údajov sú vypracované v súlade s požiadavkami federálneho zákona z 27.07.2006. č. 152-FZ „O osobných údajoch“ (ďalej len zákon o osobných údajoch) a určuje postup pri spracúvaní osobných údajov a opatrenia na zaistenie bezpečnosti osobných údajov prijaté IP Pavlenko Dmitrij Jurjevič (ďalej len Prevádzkovateľ) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Prevádzkovateľ si ako najdôležitejší cieľ a podmienku pre výkon svojej činnosti stanovuje dodržiavanie práv a slobôd fyzických osôb a občanov pri spracúvaní ich osobných údajov, vrátane ochrany práv na súkromie, osobné a rodinné tajomstvo.
+
+1.2. Tieto Zásady Prevádzkovateľa týkajúce sa spracúvania osobných údajov (ďalej len Zásady) sa vzťahujú na všetky informácie, ktoré môže Prevádzkovateľ získať o návštevníkoch webovej aplikácie LRS.
+
+2. Základné pojmy používané v politike
+
+2.1. Automatizované spracúvanie osobných údajov je spracúvanie osobných údajov pomocou výpočtovej techniky.
+
+2.2. Blokovanie osobných údajov je dočasné zastavenie spracúvania osobných údajov (okrem prípadov, kedy je spracúvanie nevyhnutné na objasnenie osobných údajov).
+
+2.3. Webová stránka / Aplikácia / Webová aplikácia - súbor grafických a informačných materiálov, ako aj počítačových programov a databáz, ktoré zabezpečujú ich dostupnosť na internete.
+
+2.4. Informačný systém osobných údajov je súbor osobných údajov obsiahnutých v databázach a informačných technológiách a technických prostriedkoch, ktoré zabezpečujú ich spracúvanie.
+
+2.5. Depersonalizácia osobných údajov sú úkony, v dôsledku ktorých nie je možné bez použitia dodatočných informácií určiť vlastníctvo osobných údajov konkrétnemu Užívateľovi alebo inému subjektu osobných údajov.
+
+2.6. Spracovanie osobných údajov je akýkoľvek úkon (operácia) alebo súbor úkonov (operácií) vykonávaných s použitím alebo bez použitia nástrojov automatizácie s osobnými údajmi, vrátane zhromažďovania, zaznamenávania, systematizácie, zhromažďovania, uchovávania, objasňovania (aktualizácie, zmeny), extrakcie, používania, prenosu (distribúcie, poskytovania, prístupu), depersonalizácie, blokovania, vymazania, likvidácie osobných údajov.
+
+2.7. Prevádzkovateľ je štátny orgán, orgán obce, právnická osoba alebo fyzická osoba, ktorá samostatne alebo spoločne s inými osobami organizuje a/alebo vykonáva spracúvanie osobných údajov, ako aj určuje účely spracúvania osobných údajov, skladbu osobných údajov, ktoré sa majú spracúvať, a úkony (operácie) vykonávané s osobnými údajmi.
+
+2.8. Osobné údaje sú akékoľvek informácie týkajúce sa priamo alebo nepriamo konkrétneho alebo identifikovateľného Používateľa webovej aplikácie LRS.
+
+2.9. Osobnými údajmi oprávnenými subjektom osobných údajov na distribúciu sú osobné údaje, ku ktorým má subjekt osobných údajov prístup neobmedzeného počtu osôb udelením súhlasu so spracovaním osobných údajov poverených subjektom osobných údajov na šírenie spôsobom ustanoveným zákonom o osobných údajoch (ďalej len osobné údaje povolené na šírenie).
+
+2.10. Používateľom je každý návštevník webovej aplikácie LRS.
+
+2.11. Poskytovanie osobných údajov sú úkony zamerané na sprístupnenie osobných údajov určitej osobe alebo určitej skupine osôb.
+
+2.12. Šírenie osobných údajov je akýkoľvek úkon, ktorého cieľom je sprístupnenie osobných údajov neurčitému počtu osôb (prenos osobných údajov) alebo oboznámenie sa s osobnými údajmi neobmedzenému počtu osôb, vrátane zverejňovania osobných údajov v médiách, zverejňovania v informačných a telekomunikačných sieťach, alebo sprístupňovania osobných údajov iným spôsobom.
+
+2.13. Cezhraničný prenos osobných údajov je prenos osobných údajov na územie cudzieho štátu orgánu cudzieho štátu, zahraničnej fyzickej osobe alebo zahraničnej právnickej osobe.
+
+2.14. Zničenie osobných údajov je akýkoľvek úkon, v dôsledku ktorého sú osobné údaje nenávratne zničené s nemožnosťou ďalšej obnovy obsahu osobných údajov v informačnom systéme osobných údajov a/alebo sú zničené hmotné nosiče osobných údajov.
+
+3. Základné práva a povinnosti Prevádzkovateľa
+
+3.1. Prevádzkovateľ má právo:
+
+— dostávať od subjektu osobných údajov spoľahlivé informácie a/alebo dokumenty obsahujúce osobné údaje;
+
+— v prípade, že subjekt osobných údajov odvolá súhlas so spracovaním osobných údajov, ako aj odošle žiadosť so žiadosťou o ukončenie spracovania osobných údajov, má Prevádzkovateľ právo pokračovať v spracovaní osobných údajov aj bez súhlasu subjektu osobných údajov, ak sú na to dôvody uvedené v zákone o osobných údajoch;
+
+— samostatne určiť zloženie a zoznam opatrení potrebných a dostatočných na zabezpečenie plnenia povinností ustanovených zákonom o osobných údajoch a predpismi prijatými v súlade s ním, ak zákon o osobných údajoch alebo iné federálne zákony neustanovujú inak.
+
+3.2. Prevádzkovateľ je povinný:
+
+— poskytnúť subjektu osobných údajov na jeho žiadosť informácie o spracúvaní jeho osobných údajov;
+
+— organizovať spracúvanie osobných údajov spôsobom stanoveným platnou legislatívou Ruskej federácie;
+
+— reagovať na odvolania a žiadosti dotknutých osôb a ich zákonných zástupcov v súlade s požiadavkami zákona o osobných údajoch;
+
+— oznámiť oprávnenému orgánu ochrany práv dotknutých osôb na požiadanie tohto orgánu potrebné informácie do 10 dní odo dňa doručenia takejto žiadosti;
+
+— zverejňovať alebo inak poskytovať neobmedzený prístup k týmto Zásadám týkajúcim sa spracovania osobných údajov;
+
+— prijať právne, organizačné a technické opatrenia na ochranu osobných údajov pred neoprávneným alebo náhodným prístupom k nim, zničením, úpravou, blokovaním, kopírovaním, poskytovaním, distribúciou osobných údajov, ako aj pred iným protiprávnym konaním v súvislosti s osobnými údajmi;
+
+— zastaviť prenos (šírenie, poskytovanie, sprístupňovanie) osobných údajov, prestať spracúvať a zlikvidovať osobné údaje spôsobom a v prípadoch ustanovených zákonom o osobných údajoch;
+
+— plniť ďalšie povinnosti ustanovené zákonom o osobných údajoch.
+
+4. Základné práva a povinnosti dotknutých osôb
+
+4.1. Subjekty osobných údajov majú právo:
+
+— dostávať informácie týkajúce sa spracovania jeho osobných údajov, s výnimkou prípadov ustanovených federálnymi zákonmi. Informácie poskytuje prevádzkovateľ subjektu osobných údajov v prístupnej forme, pričom by nemali obsahovať osobné údaje týkajúce sa iných subjektov osobných údajov, s výnimkou prípadov, keď existujú zákonné dôvody na sprístupnenie týchto osobných údajov. Zoznam informácií a postup ich získavania ustanovuje zákon o osobných údajoch;
+
+— požadovať, aby prevádzkovateľ objasnil jeho osobné údaje, zablokoval ich alebo ich zlikvidoval, ak sú osobné údaje neúplné, neaktuálne, nepresné, získané nezákonne alebo nie sú potrebné na uvedený účel spracúvania, a tiež prijal zákonom ustanovené opatrenia na ochranu svojich práv;
+
+— uložiť podmienku predchádzajúceho súhlasu pri spracúvaní osobných údajov na účely propagácie tovarov, prác a služieb na trhu;
+
+— odvolať súhlas so spracovaním osobných údajov, ako aj zaslať žiadosť o ukončenie spracovania osobných údajov;
+
+— proti protiprávnemu konaniu alebo nečinnosti Prevádzkovateľa pri spracúvaní jeho osobných údajov sa obrátiť na oprávnený orgán ochrany práv dotknutých osôb alebo na súde;
+
+— vykonávať ďalšie práva ustanovené právnymi predpismi Ruskej federácie.
+
+4.2. Subjekty osobných údajov sú povinné:
+
+— poskytnúť Prevádzkovateľovi spoľahlivé informácie o sebe;
+
+— informovať Prevádzkovateľa o aktualizácii (aktualizácii, zmene) Vašich osobných údajov.
+
+4.3. Osoby, ktoré poskytli Prevádzkovateľovi nepravdivé informácie o sebe alebo informácie o inom subjekte osobných údajov bez jeho súhlasu, sú zodpovedné v súlade s právnymi predpismi Ruskej federácie.
+
+5. Zásady spracovania osobných údajov
+
+5.1. Spracúvanie osobných údajov sa vykonáva na zákonnom a spravodlivom základe.
+
+5.2. Spracúvanie osobných údajov je obmedzené na dosiahnutie konkrétnych, vopred definovaných a legitímnych účelov. Spracúvanie osobných údajov, ktoré je nezlučiteľné s účelmi zhromažďovania osobných údajov, nie je povolené.
+
+5.3. Nie je dovolené kombinovať databázy obsahujúce osobné údaje, ktorých spracovanie sa vykonáva na účely, ktoré sú navzájom nezlučiteľné.
+
+5.4. Predmetom spracúvania sú iba osobné údaje, ktoré spĺňajú účel ich spracúvania.
+
+5.5. Obsah a objem spracúvaných osobných údajov zodpovedá uvedeným účelom spracúvania. Nadbytočnosť spracúvaných osobných údajov vo vzťahu k uvedeným účelom ich spracúvania nie je povolená.
+
+5.6. Pri spracúvaní osobných údajov je zabezpečená presnosť osobných údajov, ich dostatočnosť, prípadne relevantnosť vo vzťahu k účelom spracúvania osobných údajov. Prevádzkovateľ prijme potrebné opatrenia a/alebo zabezpečí ich prijatie na odstránenie alebo objasnenie neúplných alebo nepresných údajov.
+
+5.7. Uchovávanie osobných údajov sa vykonáva vo forme, ktorá umožňuje identifikovať subjekt osobných údajov, nie dlhšie, ako to vyžadujú účely spracúvania osobných údajov, pokiaľ lehotu na uchovávanie osobných údajov neustanovuje federálny zákon, zmluva, ktorej zmluvnou stranou, príjemcom alebo ručiteľom je subjekt osobných údajov. Spracovávané osobné údaje sa zlikvidujú alebo anonymizujú po dosiahnutí účelov spracovania alebo v prípade straty potreby dosiahnuť tieto účely, pokiaľ federálny zákon neustanovuje inak.
+
+6. Účely spracúvania osobných údajov
+
+Účelom spracúvania je poskytnúť Používateľovi prístup k službám, informáciám a/alebo materiálom obsiahnutým v Aplikácii a poskytovanie služieb mu Aplikáciou.
+
+Osobné údaje - emailová adresa, počet celých rokov užívateľa, prezývka, antropometrické údaje, fotografie.
+
+Právny základ - štatutárne (ustanovujúce) dokumenty Prevádzkovateľa.
+
+Druhy spracúvania osobných údajov – zhromažďovanie, zaznamenávanie, systematizácia, zhromažďovanie, uchovávanie, ničenie a anonymizácia osobných údajov
+
+7. Podmienky spracovania osobných údajov
+
+7.1. Spracúvanie osobných údajov sa vykonáva so súhlasom subjektu osobných údajov so spracovaním jeho osobných údajov.
+
+7.2. Spracúvanie osobných údajov je nevyhnutné na dosiahnutie cieľov stanovených medzinárodnou zmluvou Ruskej federácie alebo zákonom, na realizáciu funkcií, právomocí a zodpovedností, ktoré legislatíva Ruskej federácie prideľuje prevádzkovateľovi.
+
+7.3. Spracúvanie osobných údajov je nevyhnutné na výkon spravodlivosti, výkon súdneho úkonu, úkon iného orgánu alebo úradníka, ktorý podlieha výkonu v súlade s právnymi predpismi Ruskej federácie o exekučnom konaní.
+
+7.4. Spracúvanie osobných údajov je nevyhnutné na uzavretie zmluvy, ktorej zmluvnou stranou je subjekt osobných údajov alebo príjemcom alebo ručiteľom, ako aj na uzavretie zmluvy z podnetu subjektu osobných údajov alebo zmluvy, na základe ktorej bude subjektom osobných údajov príjemca alebo ručiteľ.
+
+7.5. Spracúvanie osobných údajov je nevyhnutné na uplatnenie práv a oprávnených záujmov prevádzkovateľa alebo tretích osôb alebo na dosiahnutie spoločensky významných cieľov za predpokladu, že nedôjde k porušovaniu práv a slobôd subjektu osobných údajov.
+
+7.6. Spracúvanie osobných údajov sa vykonáva, prístup neobmedzeného počtu osôb, ktoré poskytuje subjekt osobných údajov alebo na jeho žiadosť (ďalej len verejne dostupné osobné údaje).
+
+7.7. Spracovávame osobné údaje, ktoré podliehajú zverejneniu alebo povinnému zverejneniu v súlade s federálnym zákonom.
+
+8. Postup pri zhromažďovaní, uchovávaní, prenose a iných druhoch spracovania osobných údajov
+
+Bezpečnosť osobných údajov spracúvaných Prevádzkovateľom je zabezpečená vykonávaním právnych, organizačných a technických opatrení nevyhnutných na úplný súlad s požiadavkami platnej legislatívy v oblasti ochrany osobných údajov.
+
+8.1. Prevádzkovateľ zaisťuje bezpečnosť osobných údajov a prijíma všetky možné opatrenia, aby zabránil prístupu k osobným údajom neoprávneným osobám.
+
+8.2. Osobné údaje Užívateľa nebudú za žiadnych okolností nikdy, za žiadnych okolností, odovzdané tretím osobám, s výnimkou prípadov súvisiacich s implementáciou aktuálnej legislatívy alebo v prípade, ak subjekt osobných údajov udelil Prevádzkovateľovi súhlas na prenos údajov tretej strane za účelom splnenia povinností vyplývajúcich z občianskoprávnej zmluvy.
+
+8.3. Ak sa zistia nepresnosti v osobných údajoch, Používateľ ich môže nezávisle aktualizovať zaslaním oznámenia Prevádzkovateľovi na e-mailovú adresu Prevádzkovateľa supp.lrs@ya.ru s označením „Aktualizácia osobných údajov“.
+
+8.4. Doba spracúvania osobných údajov je určená dosiahnutím účelov, na ktoré boli osobné údaje zhromaždené, pokiaľ zmluva alebo platná legislatíva neustanovuje inú dobu. Používateľ môže svoj súhlas so spracovaním osobných údajov kedykoľvek odvolať zaslaním oznámenia Prevádzkovateľovi prostredníctvom e-mailu na e-mailovú adresu Prevádzkovateľa supp.lrs@ya.ru s označením „Odvolanie súhlasu so spracovaním osobných údajov“.
+
+8.5. Všetky informácie, ktoré zhromažďujú služby tretích strán, vrátane platobných systémov, komunikácií a iných poskytovateľov služieb, tieto osoby (prevádzkovatelia) uchovávajú a spracúvajú v súlade s ich zmluvou o používaní a zásadami ochrany osobných údajov. Subjekt osobných údajov a/alebo s určenými dokumentmi. Prevádzkovateľ nezodpovedá za konanie tretích osôb, vrátane poskytovateľov služieb uvedených v tomto odseku.
+
+8.6. Zákazy, ktoré subjekt osobných údajov ukladá na prenos (okrem poskytnutia prístupu), ako aj na spracúvanie alebo podmienky spracúvania (okrem získania prístupu) osobných údajov povolených na šírenie, neplatia v prípadoch spracúvania osobných údajov v štátnom, verejnom a inom verejnom záujme určenom právnymi predpismi Ruskej federácie.
+
+8.7. Pri spracúvaní osobných údajov prevádzkovateľ dbá na dôvernosť osobných údajov.
+
+8.8. Prevádzkovateľ uchováva osobné údaje vo forme umožňujúcej identifikáciu subjektu osobných údajov najdlhšie, ako to vyžadujú účely spracúvania osobných údajov, pokiaľ lehotu uchovávania osobných údajov neustanovuje federálny zákon, zmluva, ktorej zmluvnou stranou, príjemcom alebo ručiteľom je subjekt osobných údajov.
+
+8.9. Podmienkou ukončenia spracúvania osobných údajov môže byť dosiahnutie účelov spracúvania osobných údajov, uplynutie platnosti súhlasu dotknutej osoby, odvolanie súhlasu zo strany dotknutej osoby alebo požiadavka na ukončenie spracúvania osobných údajov, ako aj identifikácia protiprávneho spracúvania osobných údajov.
+
+9. Zoznam úkonov, ktoré Prevádzkovateľ vykonal s prijatými osobnými údajmi
+
+9.1. Prevádzkovateľ osobné údaje zhromažďuje, eviduje, systematizuje, zhromažďuje, uchováva, spresňuje (aktualizuje, mení), extrahuje, používa, prenáša (distribúcia, poskytovanie, sprístupňovanie), depersonalizuje, blokuje, vymazáva a likviduje osobné údaje.
+
+9.2. Prevádzkovateľ vykonáva automatizované spracovanie osobných údajov s alebo bez prijímania a/alebo odosielania prijatých informácií prostredníctvom informačných a telekomunikačných sietí.
+
+10. Cezhraničný prenos osobných údajov
+
+10.1. Pred začatím činností na cezhraničný prenos osobných údajov je prevádzkovateľ povinný oznámiť oprávnenému orgánu na ochranu práv dotknutých osôb svoj zámer vykonávať cezhraničný prenos osobných údajov (toto oznámenie sa zasiela oddelene od oznámenia zámeru spracúvať osobné údaje).
+
+10.2. Pred podaním vyššie uvedeného oznámenia je prevádzkovateľ povinný získať príslušné informácie od orgánov cudzieho štátu, zahraničných fyzických osôb, zahraničných právnických osôb, ktorým sa plánuje cezhraničný prenos osobných údajov.
+
+11. Dôvernosť osobných údajov
+
+Prevádzkovateľ a ďalšie osoby, ktoré majú prístup k osobným údajom, sú povinní bez súhlasu dotknutej osoby osobné údaje nezverejňovať tretím osobám ani nešíriť, pokiaľ federálny zákon neustanovuje inak.
+
+12. Záverečné ustanovenia
+
+12.1. Používateľ môže objasniť otázky, ktoré ho zaujímajú v súvislosti so spracovaním jeho osobných údajov, kontaktovaním prevádzkovateľa prostredníctvom e-mailu supp.lrs@ya.ru.
+
+12.2. Tento dokument bude odrážať všetky zmeny v zásadách spracovania osobných údajov Prevádzkovateľa. Politika je platná na dobu neurčitú, kým nebude nahradená novou verziou.
+
+12.3. Aktuálna verzia Zásad je voľne dostupná na internete vo webovej aplikácii LRS na https://www.rustore.ru/catalog/app/com.lrs

@@ -120,6 +120,27 @@ flutter:
   assets:
     - assets/l10n/
     - assets/legal/en/
+    - assets/legal/de/
+    - assets/legal/es/
+    - assets/legal/fr/
+    - assets/legal/it/
+    - assets/legal/pt/
+    - assets/legal/el/
+    - assets/legal/sr/
+    - assets/legal/pl/
+    - assets/legal/sl/
+    - assets/legal/sk/
+    - assets/legal/cs/
+    - assets/legal/bg/
+    - assets/legal/ro/
+    - assets/legal/mk/
+    - assets/legal/hu/
+    - assets/legal/sv/
+    - assets/legal/nb/
+    - assets/legal/fi/
+    - assets/legal/da/
+    - assets/legal/nl/
+    - assets/legal/is/
     - assets/attribution/translated-by-google.png
     - assets/licenses/
     - assets/final_design/

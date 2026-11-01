@@ -1,0 +1,179 @@
+Beleid met betrekking tot de verwerking van persoonsgegevens
+
+1. Algemene bepalingen
+
+Dit beleid voor de verwerking van persoonsgegevens is opgesteld in overeenstemming met de vereisten van de federale wet van 27-07-2006. Nr. 152-FZ "Over persoonlijke gegevens" (hierna de wet op persoonlijke gegevens genoemd) en bepaalt de procedure voor het verwerken van persoonlijke gegevens en maatregelen om de veiligheid van persoonlijke gegevens te garanderen, genomen door IP Pavlenko Dmitry Yuryevich (hierna de operator genoemd) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. De exploitant stelt als belangrijkste doel en voorwaarde voor het uitvoeren van zijn activiteiten de naleving van de rechten en vrijheden van individuen en burgers bij de verwerking van hun persoonsgegevens, inclusief de bescherming van het recht op privacy en persoonlijke en familiegeheimen.
+
+1.2. Het beleid van deze Operator ten aanzien van de verwerking van persoonsgegevens (hierna: het Beleid) is van toepassing op alle informatie die de Operator kan verkrijgen over bezoekers van de LRS-webapplicatie.
+
+2. Basisconcepten die in het Beleid worden gebruikt
+
+2.1. Geautomatiseerde verwerking van persoonsgegevens is de verwerking van persoonsgegevens met behulp van computertechnologie.
+
+2.2. Het blokkeren van persoonsgegevens is een tijdelijke stopzetting van de verwerking van persoonsgegevens (behalve in gevallen waarin verwerking noodzakelijk is om persoonsgegevens te verduidelijken).
+
+2.3. Website / Applicatie / Webapplicatie - een reeks grafisch en informatiemateriaal, evenals computerprogramma's en databases die hun beschikbaarheid op internet garanderen.
+
+2.4. Informatiesysteem voor persoonlijke gegevens is een reeks persoonlijke gegevens die zijn opgenomen in databases en informatietechnologieën en technische middelen die de verwerking ervan garanderen.
+
+2.5. Depersonalisatie van persoonsgegevens zijn handelingen waardoor het onmogelijk is om zonder het gebruik van aanvullende informatie de eigendom van persoonsgegevens van een specifieke Gebruiker of ander onderwerp van persoonsgegevens vast te stellen.
+
+2.6. Verwerking van persoonlijke gegevens is elke actie (bewerking) of reeks acties (bewerkingen) die wordt uitgevoerd met of zonder het gebruik van automatiseringstools met persoonlijke gegevens, inclusief het verzamelen, vastleggen, systematiseren, accumuleren, opslaan, verduidelijken (bijwerken, wijzigen), extractie, gebruik, overdracht (distributie, verstrekking, toegang), depersonalisatie, blokkering, verwijdering, vernietiging van persoonlijke gegevens.
+
+2.7. Exploitant is een overheidsinstantie, gemeentelijk orgaan, rechtspersoon of individu die, zelfstandig of samen met andere personen, de verwerking van persoonsgegevens organiseert en/of uitvoert, alsmede de doeleinden van de verwerking van persoonsgegevens, de samenstelling van de te verwerken persoonsgegevens en handelingen (bewerkingen) die met persoonsgegevens worden uitgevoerd, bepaalt.
+
+2.8. Persoonsgegevens zijn alle informatie die direct of indirect betrekking heeft op een specifieke of identificeerbare Gebruiker van de LRS-webapplicatie.
+
+2.9. Persoonsgegevens die door de betrokkene voor verspreiding van persoonsgegevens zijn geautoriseerd, zijn persoonsgegevens, waaraan een onbeperkt aantal personen toegang wordt verleend door de betrokkene van persoonsgegevens door toestemming te geven voor de verwerking van persoonsgegevens die zijn toegestaan door de betrokkene voor verspreiding van persoonsgegevens op de manier voorgeschreven door de Wet op de Persoonsgegevens (hierna te noemen persoonsgegevens die mogen worden verspreid).
+
+2.10. Gebruiker is iedere bezoeker van de LRS-webapplicatie.
+
+2.11. Het verstrekken van persoonsgegevens zijn handelingen die erop gericht zijn persoonsgegevens aan een bepaalde persoon of een bepaalde groep mensen bekend te maken.
+
+2.12. Verspreiding van persoonsgegevens is iedere handeling die gericht is op het bekendmaken van persoonsgegevens aan een onbepaald aantal personen (doorgifte van persoonsgegevens) of op het vertrouwd maken met persoonsgegevens aan een onbeperkt aantal personen, met inbegrip van de publicatie van persoonsgegevens in de media, plaatsing in informatie- en telecommunicatienetwerken, of het op enige andere wijze verlenen van toegang tot persoonsgegevens.
+
+2.13. Grensoverschrijdende overdracht van persoonsgegevens is de overdracht van persoonsgegevens naar het grondgebied van een vreemde staat aan een autoriteit van een buitenlandse staat, een buitenlandse natuurlijke persoon of een buitenlandse rechtspersoon.
+
+2.14. Vernietiging van persoonsgegevens is elke handeling waardoor persoonsgegevens onherroepelijk worden vernietigd, met de onmogelijkheid van verder herstel van de inhoud van persoonsgegevens in het persoonsgegevensinformatiesysteem en/of materiële media van persoonsgegevens worden vernietigd.
+
+3. Basisrechten en verantwoordelijkheden van de Operator
+
+3.1. De exploitant heeft het recht:
+
+— van de betrokkene betrouwbare informatie en/of documenten met persoonsgegevens ontvangt;
+
+— in het geval dat de betrokkene de toestemming voor de verwerking van persoonsgegevens intrekt, evenals een aanvraag verzendt met het verzoek om de verwerking van persoonsgegevens te beëindigen, heeft de Operator het recht om de verwerking van persoonsgegevens voort te zetten zonder de toestemming van de betrokkene, als er in de Wet op de Persoonsgegevens gronden zijn gespecificeerd;
+
+— onafhankelijk de samenstelling en de lijst bepalen van maatregelen die nodig en voldoende zijn om de nakoming van de verplichtingen voorzien door de Wet op de Persoonsgegevens en de in overeenstemming daarmee aangenomen regelgeving te garanderen, tenzij anders bepaald door de Wet op de Persoonsgegevens of andere federale wetten.
+
+3.2. De exploitant is verplicht:
+
+— de betrokkene op zijn verzoek informatie verstrekken over de verwerking van zijn persoonsgegevens;
+
+— het organiseren van de verwerking van persoonsgegevens op de manier zoals vastgelegd in de huidige wetgeving van de Russische Federatie;
+
+— reageren op oproepen en verzoeken van betrokkenen en hun wettelijke vertegenwoordigers in overeenstemming met de vereisten van de Wet op Persoonsgegevens;
+
+— op verzoek van deze instantie de bevoegde instantie voor de bescherming van de rechten van de betrokkenen de nodige informatie verstrekken binnen 10 dagen vanaf de datum van ontvangst van een dergelijk verzoek;
+
+— dit Beleid met betrekking tot de verwerking van persoonsgegevens publiceren of anderszins onbeperkte toegang verlenen;
+
+— juridische, organisatorische en technische maatregelen nemen om persoonsgegevens te beschermen tegen ongeoorloofde of onbedoelde toegang daartoe, vernietiging, wijziging, blokkering, kopiëren, verstrekking, verspreiding van persoonsgegevens, evenals tegen andere onwettige handelingen met betrekking tot persoonsgegevens;
+
+— het stopzetten van de overdracht (distributie, verstrekking, toegang) van persoonsgegevens, het stopzetten van de verwerking en het vernietigen van persoonsgegevens op de wijze en in de gevallen waarin de Wet Persoonsgegevens voorziet;
+
+— andere taken uitvoeren waarin de Wet Persoonsgegevens voorziet.
+
+4. Basisrechten en plichten van betrokkenen op persoonsgegevens
+
+4.1. Betrokkenen van persoonsgegevens hebben het recht:
+
+— informatie ontvangen over de verwerking van zijn persoonsgegevens, behalve in de gevallen waarin de federale wetgeving voorziet. De informatie wordt door de Operator aan het onderwerp van persoonlijke gegevens verstrekt in een toegankelijke vorm en mag geen persoonlijke gegevens bevatten met betrekking tot andere onderwerpen van persoonlijke gegevens, behalve in gevallen waarin er wettelijke gronden zijn voor de openbaarmaking van dergelijke persoonlijke gegevens. De lijst met informatie en de procedure om deze te verkrijgen zijn vastgelegd in de Wet op de Persoonsgegevens;
+
+— van de exploitant eisen dat hij zijn persoonsgegevens opheldert, blokkeert of vernietigt als de persoonsgegevens onvolledig, verouderd, onnauwkeurig, illegaal verkregen zijn of niet noodzakelijk zijn voor het aangegeven doel van de verwerking, en ook maatregelen neemt waarin de wet voorziet om zijn rechten te beschermen;
+
+— een voorwaarde van voorafgaande toestemming opleggen bij de verwerking van persoonsgegevens met het doel goederen, werken en diensten op de markt te promoten;
+
+— het intrekken van de toestemming voor de verwerking van persoonsgegevens, alsmede het sturen van een verzoek tot beëindiging van de verwerking van persoonsgegevens;
+
+— een beroep doen op de bevoegde instantie voor de bescherming van de rechten van betrokkenen of bij de rechtbank tegen onrechtmatig handelen of nalaten van de Operator bij de verwerking van zijn persoonsgegevens;
+
+— om andere rechten uit te oefenen waarin de wetgeving van de Russische Federatie voorziet.
+
+4.2. Onderwerpen van persoonsgegevens zijn verplicht om:
+
+— de Operator betrouwbare informatie over uzelf verstrekken;
+
+— de Operator informeren over het bijwerken (bijwerken, wijzigen) van uw persoonlijke gegevens.
+
+4.3. Personen die de Operator valse informatie over zichzelf of informatie over een ander onderwerp van persoonlijke gegevens hebben verstrekt zonder diens toestemming, zijn aansprakelijk in overeenstemming met de wetgeving van de Russische Federatie.
+
+5. Principes voor de verwerking van persoonsgegevens
+
+5.1. De verwerking van persoonsgegevens gebeurt op een wettelijke en eerlijke basis.
+
+5.2. De verwerking van persoonsgegevens is beperkt tot het verwezenlijken van specifieke, vooraf gedefinieerde en legitieme doeleinden. Verwerking van persoonsgegevens die onverenigbaar is met de doeleinden van het verzamelen van persoonsgegevens is niet toegestaan.
+
+5.3. Het is niet toegestaan om databases met persoonsgegevens waarvan de verwerking plaatsvindt voor doeleinden die onverenigbaar zijn met elkaar te combineren.
+
+5.4. Alleen persoonsgegevens die voldoen aan de doeleinden van hun verwerking zijn onderworpen aan verwerking.
+
+5.5. De inhoud en het volume van de verwerkte persoonsgegevens komen overeen met de aangegeven doeleinden van de verwerking. Redundantie van verwerkte persoonsgegevens met betrekking tot de aangegeven doeleinden van de verwerking ervan is niet toegestaan.
+
+5.6. Bij de verwerking van persoonsgegevens worden de juistheid van de persoonsgegevens, de toereikendheid ervan en, waar nodig, de relevantie met betrekking tot de doeleinden van de verwerking van persoonsgegevens gewaarborgd. De exploitant neemt de nodige maatregelen en/of zorgt ervoor dat deze worden genomen om onvolledige of onjuiste gegevens te verwijderen of te verduidelijken.
+
+5.7. De opslag van persoonsgegevens wordt uitgevoerd in een vorm die het mogelijk maakt het onderwerp van de persoonsgegevens te identificeren, niet langer dan vereist voor de doeleinden van de verwerking van persoonsgegevens, tenzij de periode voor het opslaan van persoonsgegevens is vastgelegd door de federale wet, een overeenkomst waarbij het onderwerp van de persoonsgegevens een partij, begunstigde of garant is. De verwerkte persoonsgegevens worden vernietigd of geanonimiseerd bij het bereiken van de doeleinden van de verwerking of in geval van verlies van de noodzaak om deze doeleinden te bereiken, tenzij anders bepaald door de federale wetgeving.
+
+6. Doeleinden van de verwerking van persoonsgegevens
+
+Het doel van de verwerking is om de Gebruiker toegang te verlenen tot diensten, informatie en/of materialen die in de Applicatie zijn opgenomen en om hem diensten te verlenen door de Applicatie.
+
+Persoonlijke gegevens - e-mailadres, aantal volledige jaren van de gebruiker, bijnaam, antropometrische gegevens, foto's.
+
+Juridische basis - wettelijke (bestanddeel)documenten van de Operator.
+
+Soorten verwerking van persoonlijke gegevens - verzameling, registratie, systematisering, accumulatie, opslag, vernietiging en anonimisering van persoonlijke gegevens
+
+7. Voorwaarden voor het verwerken van persoonsgegevens
+
+7.1. De verwerking van persoonsgegevens wordt uitgevoerd met toestemming van de persoon die de persoonsgegevens verwerkt voor de verwerking van zijn persoonsgegevens.
+
+7.2. De verwerking van persoonsgegevens is noodzakelijk om de doelstellingen te bereiken waarin een internationaal verdrag van de Russische Federatie of de wet voorziet, om de functies, bevoegdheden en verantwoordelijkheden uit te voeren die door de wetgeving van de Russische Federatie aan de exploitant zijn toegewezen.
+
+7.3. De verwerking van persoonsgegevens is noodzakelijk voor de rechtsbedeling, de uitvoering van een gerechtelijke handeling, een handeling van een andere instantie of functionaris, onder voorbehoud van uitvoering in overeenstemming met de wetgeving van de Russische Federatie inzake handhavingsprocedures.
+
+7.4. De verwerking van persoonsgegevens is noodzakelijk voor de uitvoering van een overeenkomst waarbij de betrokkene partij of begunstigde of garant is, alsmede voor het sluiten van een overeenkomst op initiatief van de betrokkene of een overeenkomst waarbij de betrokkene begunstigde of garant zal zijn.
+
+7.5. De verwerking van persoonsgegevens is noodzakelijk om de rechten en legitieme belangen van de exploitant of derden uit te oefenen of om maatschappelijk belangrijke doelen te bereiken, op voorwaarde dat de rechten en vrijheden van het onderwerp van de persoonsgegevens niet worden geschonden.
+
+7.6. De verwerking van persoonsgegevens wordt uitgevoerd, waarbij de toegang van een onbeperkt aantal personen wordt verleend door de persoon van wie de persoonsgegevens zijn of op zijn verzoek (hierna openbaar beschikbare persoonsgegevens genoemd).
+
+7.7. Wij verwerken persoonlijke gegevens die onderworpen zijn aan publicatie of verplichte openbaarmaking in overeenstemming met de federale wetgeving.
+
+8. De procedure voor het verzamelen, opslaan, overdragen en andere vormen van verwerking van persoonsgegevens
+
+De veiligheid van de door de Operator verwerkte persoonsgegevens wordt gewaarborgd door het implementeren van wettelijke, organisatorische en technische maatregelen die nodig zijn om volledig te voldoen aan de vereisten van de huidige wetgeving op het gebied van de bescherming van persoonsgegevens.
+
+8.1. De exploitant draagt zorg voor de veiligheid van persoonsgegevens en neemt alle mogelijke maatregelen om toegang tot persoonsgegevens door onbevoegden te voorkomen.
+
+8.2. De persoonlijke gegevens van de Gebruiker zullen onder geen enkele omstandigheid worden overgedragen aan derden, met uitzondering van gevallen die verband houden met de implementatie van de huidige wetgeving of in het geval waarin het onderwerp van de persoonlijke gegevens toestemming heeft gegeven aan de Operator om gegevens over te dragen aan een derde partij om te voldoen aan verplichtingen uit hoofde van een civielrechtelijk contract.
+
+8.3. Als er onjuistheden in de persoonlijke gegevens worden vastgesteld, kan de Gebruiker deze zelfstandig bijwerken door een melding naar de Operator te sturen naar het e-mailadres van de Operator supp.lrs@ya.ru met de vermelding 'Persoonlijke gegevens bijwerken'.
+
+8.4. De periode voor de verwerking van persoonsgegevens wordt bepaald door het bereiken van de doeleinden waarvoor de persoonsgegevens zijn verzameld, tenzij het contract of de huidige wetgeving een andere periode bepaalt. De Gebruiker kan op elk moment zijn toestemming voor de verwerking van persoonlijke gegevens intrekken door de Operator een kennisgeving per e-mail te sturen naar het e-mailadres van de Operator supp.lrs@ya.ru met de vermelding "Intrekking van toestemming voor de verwerking van persoonlijke gegevens."
+
+8.5. Alle informatie die wordt verzameld door diensten van derden, inclusief betalingssystemen, communicatie- en andere dienstverleners, wordt door deze personen (operatoren) opgeslagen en verwerkt in overeenstemming met hun gebruikersovereenkomst en privacybeleid. Betreft persoonsgegevens en/of met gespecificeerde documenten. De exploitant is niet verantwoordelijk voor de acties van derden, inclusief de in deze paragraaf genoemde dienstverleners.
+
+8.6. De door het subject van persoonlijke gegevens vastgestelde verboden op de overdracht (behalve voor het verlenen van toegang), evenals op de verwerking of voorwaarden voor verwerking (behalve voor het verkrijgen van toegang) van persoonlijke gegevens die zijn toegestaan voor distributie, zijn niet van toepassing in gevallen van verwerking van persoonlijke gegevens in de staats-, publieke en andere publieke belangen bepaald door de wetgeving van de Russische Federatie.
+
+8.7. Bij de verwerking van persoonsgegevens waarborgt de exploitant de vertrouwelijkheid van persoonsgegevens.
+
+8.8. De exploitant bewaart persoonsgegevens in een vorm die het mogelijk maakt het onderwerp van de persoonsgegevens te identificeren, niet langer dan vereist voor de doeleinden van de verwerking van persoonsgegevens, tenzij de periode voor het opslaan van persoonsgegevens is vastgelegd door de federale wet, een overeenkomst waarbij het onderwerp van de persoonsgegevens een partij, begunstigde of garant is.
+
+8.9. De voorwaarde voor het beëindigen van de verwerking van persoonsgegevens kan het bereiken van de doeleinden van de verwerking van persoonsgegevens zijn, het verlopen van de toestemming van de persoon op wie de persoonsgegevens betrekking hebben, de intrekking van de toestemming door de persoon op wie de persoonsgegevens betrekking hebben of een vereiste om de verwerking van persoonsgegevens te beëindigen, evenals de identificatie van onrechtmatige verwerking van persoonsgegevens.
+
+9. Lijst met acties die door de Operator zijn uitgevoerd met ontvangen persoonlijke gegevens
+
+9.1. De exploitant verzamelt, registreert, systematiseert, accumuleert, bewaart, verfijnt (updates, wijzigingen), extraheert, gebruikt, draagt over (distributie, verstrekking, toegang), depersonaliseert, blokkeert, verwijdert en vernietigt persoonlijke gegevens.
+
+9.2. De exploitant voert een geautomatiseerde verwerking van persoonsgegevens uit, al dan niet met ontvangst en/of verzending van de ontvangen informatie via informatie- en telecommunicatienetwerken.
+
+10. Grensoverschrijdende overdracht van persoonsgegevens
+
+10.1. Alvorens activiteiten voor grensoverschrijdende overdracht van persoonsgegevens te starten, is de exploitant verplicht om de bevoegde instantie voor de bescherming van de rechten van betrokkenen op de hoogte te stellen van zijn voornemen om grensoverschrijdende overdracht van persoonsgegevens uit te voeren (een dergelijke kennisgeving wordt afzonderlijk verzonden van de kennisgeving van het voornemen om persoonsgegevens te verwerken).
+
+10.2. Voordat de bovenstaande kennisgeving wordt ingediend, is de exploitant verplicht relevante informatie te verkrijgen van de autoriteiten van een buitenlandse staat, buitenlandse natuurlijke personen en buitenlandse rechtspersonen aan wie de grensoverschrijdende overdracht van persoonsgegevens is gepland.
+
+11. Vertrouwelijkheid van persoonlijke gegevens
+
+De exploitant en andere personen die toegang hebben tot persoonlijke gegevens zijn verplicht om persoonlijke gegevens niet aan derden bekend te maken of te verspreiden zonder de toestemming van de betrokkene, tenzij anders bepaald door de federale wetgeving.
+
+12. Slotbepalingen
+
+12.1. De gebruiker kan opheldering krijgen over interessante vragen met betrekking tot de verwerking van zijn persoonlijke gegevens door contact op te nemen met de Operator via e-mail supp.lrs@ya.ru.
+
+12.2. Dit document weerspiegelt alle wijzigingen in het beleid voor de verwerking van persoonsgegevens van de Operator. Het beleid is voor onbepaalde tijd geldig totdat het wordt vervangen door een nieuwe versie.
+
+12.3. De huidige versie van het Beleid is gratis beschikbaar op internet in de LRS-webapplicatie op https://www.rustore.ru/catalog/app/com.lrs

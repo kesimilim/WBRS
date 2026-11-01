@@ -1,0 +1,179 @@
+Zásady týkající se zpracování osobních údajů
+
+1. Obecná ustanovení
+
+Tyto zásady zpracování osobních údajů jsou vypracovány v souladu s požadavky federálního zákona ze dne 27.07.2006. č. 152-FZ „O osobních údajích“ (dále jen zákon o osobních údajích) a určuje postup při zpracování osobních údajů a opatření k zajištění bezpečnosti osobních údajů přijatá IP Pavlenko Dmitrij Yuryevich (dále jen Provozovatel) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Provozovatel si jako svůj nejdůležitější cíl a podmínku pro výkon své činnosti stanoví dodržování práv a svobod fyzických osob a občanů při zpracování jejich osobních údajů, včetně ochrany práv na soukromí, osobní a rodinné tajemství.
+
+1.2. Tyto zásady Provozovatele týkající se zpracování osobních údajů (dále jen Zásady) se vztahují na veškeré informace, které může Provozovatel získat o návštěvnících webové aplikace LRS.
+
+2. Základní pojmy používané v Politice
+
+2.1. Automatizované zpracování osobních údajů je zpracování osobních údajů pomocí výpočetní techniky.
+
+2.2. Blokování osobních údajů je dočasné zastavení zpracování osobních údajů (kromě případů, kdy je zpracování nezbytné pro upřesnění osobních údajů).
+
+2.3. Web / Aplikace / Webová aplikace - soubor grafických a informačních materiálů a také počítačových programů a databází, které zajišťují jejich dostupnost na internetu.
+
+2.4. Informační systém osobních údajů je soubor osobních údajů obsažených v databázích a informačních technologiích a technických prostředcích, které zajišťují jejich zpracování.
+
+2.5. Depersonalizace osobních údajů jsou úkony, v jejichž důsledku nelze bez použití dalších informací určit vlastnictví osobních údajů konkrétnímu Uživateli nebo jinému subjektu osobních údajů.
+
+2.6. Zpracování osobních údajů je jakákoliv akce (operace) nebo soubor úkonů (operací) prováděná s použitím nebo bez použití automatizačních nástrojů s osobními údaji, včetně shromažďování, evidence, systematizace, shromažďování, uchovávání, upřesňování (aktualizace, změna), vytěžování, použití, přenosu (distribuce, poskytování, zpřístupnění), depersonalizace, blokování, vymazání, zničení osobních údajů.
+
+2.7. Provozovatel je státní orgán, orgán obce, právnická nebo fyzická osoba, která samostatně nebo společně s jinými osobami organizuje a/nebo provádí zpracování osobních údajů, jakož i určování účelů zpracování osobních údajů, složení osobních údajů, které mají být zpracovány, a úkony (operace) prováděné s osobními údaji.
+
+2.8. Osobní údaje jsou jakékoli informace týkající se přímo nebo nepřímo konkrétního nebo identifikovatelného Uživatele webové aplikace LRS.
+
+2.9. Osobními údaji oprávněnými subjektem osobních údajů k distribuci jsou osobní údaje, ke kterým má subjekt osobních údajů přístup neomezeného počtu osob udělením souhlasu se zpracováním osobních údajů oprávněným subjektem osobních údajů k šíření způsobem stanoveným zákonem o osobních údajích (dále jen osobní údaje povolené k šíření).
+
+2.10. Uživatelem je každý návštěvník webové aplikace LRS.
+
+2.11. Poskytování osobních údajů jsou úkony zaměřené na zpřístupnění osobních údajů určité osobě nebo určité skupině osob.
+
+2.12. Šíření osobních údajů je jakékoli jednání směřující ke zpřístupnění osobních údajů neurčitému počtu osob (předání osobních údajů) nebo k seznámení se s osobními údaji neomezenému počtu osob, včetně zveřejňování osobních údajů ve sdělovacích prostředcích, zveřejňování v informačních a telekomunikačních sítích nebo zprostředkování přístupu k osobním údajům jakýmkoli jiným způsobem.
+
+2.13. Přeshraniční předání osobních údajů je předání osobních údajů na území cizího státu orgánu cizího státu, zahraniční fyzické osobě nebo zahraniční právnické osobě.
+
+2.14. Zničení osobních údajů je jakékoli jednání, v jehož důsledku jsou osobní údaje nenávratně zničeny s nemožností další obnovy obsahu osobních údajů v informačním systému osobních údajů a/nebo jsou zničeny hmotné nosiče osobních údajů.
+
+3. Základní práva a povinnosti Provozovatele
+
+3.1. Provozovatel má právo:
+
+— přijímat od subjektu osobních údajů spolehlivé informace a/nebo dokumenty obsahující osobní údaje;
+
+— v případě, že subjekt osobních údajů odvolá souhlas se zpracováním osobních údajů, jakož i zašle žádost s žádostí o ukončení zpracování osobních údajů, má Provozovatel právo pokračovat ve zpracování osobních údajů bez souhlasu subjektu osobních údajů, pokud jsou pro to důvody uvedené v zákoně o osobních údajích;
+
+— nezávisle určit skladbu a seznam opatření nezbytných a dostatečných k zajištění plnění povinností stanovených zákonem o osobních údajích a předpisy přijatými v souladu s ním, pokud zákon o osobních údajích nebo jiné spolkové zákony nestanoví jinak.
+
+3.2. Provozovatel je povinen:
+
+— poskytnout subjektu osobních údajů na jeho žádost informace o zpracování jeho osobních údajů;
+
+— organizovat zpracování osobních údajů způsobem stanoveným platnými právními předpisy Ruské federace;
+
+— reagovat na odvolání a žádosti subjektů osobních údajů a jejich zákonných zástupců v souladu s požadavky zákona o osobních údajích;
+
+— ohlásit oprávněnému orgánu ochrany práv subjektů osobních údajů na žádost tohoto orgánu potřebné informace do 10 dnů ode dne doručení takové žádosti;
+
+— zveřejňovat nebo jinak poskytovat neomezený přístup k těmto Zásadám týkajícím se zpracování osobních údajů;
+
+— přijímat právní, organizační a technická opatření k ochraně osobních údajů před neoprávněným nebo nahodilým přístupem k nim, zničením, úpravou, blokováním, kopírováním, poskytováním, šířením osobních údajů, jakož i před jiným protiprávním jednáním v souvislosti s osobními údaji;
+
+— zastavit přenos (distribuci, poskytování, zpřístupnění) osobních údajů, zastavit zpracování a zlikvidovat osobní údaje způsobem a v případech stanovených zákonem o osobních údajích;
+
+— plnit další povinnosti stanovené zákonem o osobních údajích.
+
+4. Základní práva a povinnosti subjektů osobních údajů
+
+4.1. Subjekty osobních údajů mají právo:
+
+— dostávat informace o zpracování jeho osobních údajů, s výjimkou případů stanovených federálními zákony. Informace jsou poskytovány subjektu osobních údajů Provozovatelem v přístupné podobě a neměly by obsahovat osobní údaje týkající se jiných subjektů osobních údajů, s výjimkou případů, kdy pro zveřejnění těchto osobních údajů existují zákonné důvody. Seznam informací a postup jejich získávání stanoví zákon o osobních údajích;
+
+— požadovat, aby provozovatel upřesnil jeho osobní údaje, zablokoval je nebo je zlikvidoval, pokud jsou osobní údaje neúplné, neaktuální, nepřesné, získané nezákonně nebo nejsou nezbytné pro stanovený účel zpracování, a dále přijal zákonem stanovená opatření k ochraně svých práv;
+
+— uložit podmínku předchozího souhlasu při zpracování osobních údajů za účelem propagace zboží, prací a služeb na trhu;
+
+— odvolat souhlas se zpracováním osobních údajů, jakož i zaslat žádost o ukončení zpracování osobních údajů;
+
+— obrátit se na oprávněný orgán ochrany práv subjektů osobních údajů nebo u soudu proti protiprávnímu jednání či nečinnosti Provozovatele při zpracování jeho osobních údajů;
+
+— vykonávat další práva stanovená právními předpisy Ruské federace.
+
+4.2. Subjekty osobních údajů jsou povinny:
+
+— poskytovat Provozovateli spolehlivé informace o sobě;
+
+— informovat Provozovatele o aktualizaci (aktualizaci, změně) Vašich osobních údajů.
+
+4.3. Osoby, které poskytly Provozovateli nepravdivé informace o sobě nebo informace o jiném subjektu osobních údajů bez jeho souhlasu, jsou odpovědné v souladu s právními předpisy Ruské federace.
+
+5. Zásady zpracování osobních údajů
+
+5.1. Zpracování osobních údajů je prováděno na zákonném a spravedlivém základě.
+
+5.2. Zpracování osobních údajů je omezeno na dosažení konkrétních, předem definovaných a legitimních účelů. Zpracování osobních údajů, které je neslučitelné s účely shromažďování osobních údajů, není povoleno.
+
+5.3. Není dovoleno spojovat databáze obsahující osobní údaje, jejichž zpracování je prováděno pro účely, které jsou vzájemně neslučitelné.
+
+5.4. Předmětem zpracování jsou pouze osobní údaje, které splňují účely jejich zpracování.
+
+5.5. Obsah a objem zpracovávaných osobních údajů odpovídá uvedeným účelům zpracování. Nadbytečnost zpracovávaných osobních údajů ve vztahu k uvedeným účelům jejich zpracování není povolena.
+
+5.6. Při zpracování osobních údajů je zabezpečena přesnost osobních údajů, jejich dostatečnost a případně relevance ve vztahu k účelům zpracování osobních údajů. Provozovatel přijme nezbytná opatření a/nebo zajistí jejich přijetí k odstranění nebo objasnění neúplných nebo nepřesných údajů.
+
+5.7. Uchovávání osobních údajů se provádí formou, která umožňuje identifikovat subjekt osobních údajů, ne déle, než to vyžadují účely zpracování osobních údajů, pokud není lhůta pro uložení osobních údajů stanovena federálním zákonem, smlouvou, jejíž smluvní stranou, příjemcem nebo ručitelem je subjekt osobních údajů. Zpracovávané osobní údaje jsou zničeny nebo anonymizovány při dosažení účelů zpracování nebo v případě ztráty potřeby dosáhnout těchto účelů, pokud federální zákon nestanoví jinak.
+
+6. Účely zpracování osobních údajů
+
+Účelem zpracování je poskytnout Uživateli přístup ke službám, informacím a/nebo materiálům obsaženým v Aplikaci a poskytování služeb mu Aplikací.
+
+Osobní údaje - emailová adresa, počet celých let uživatele, přezdívka, antropometrické údaje, fotografie.
+
+Právní základ - statutární (ustavující) dokumenty Provozovatele.
+
+Druhy zpracování osobních údajů - shromažďování, evidence, systemizace, shromažďování, uchovávání, ničení a anonymizace osobních údajů
+
+7. Podmínky zpracování osobních údajů
+
+7.1. Zpracování osobních údajů je prováděno se souhlasem subjektu osobních údajů se zpracováním jeho osobních údajů.
+
+7.2. Zpracování osobních údajů je nezbytné k dosažení cílů stanovených mezinárodní smlouvou Ruské federace nebo zákonem, k realizaci funkcí, pravomocí a odpovědností, které právní předpisy Ruské federace ukládají provozovateli.
+
+7.3. Zpracování osobních údajů je nezbytné pro výkon spravedlnosti, provedení soudního úkonu, úkonu jiného orgánu nebo úřední osoby, podléhající výkonu v souladu s právními předpisy Ruské federace o exekučním řízení.
+
+7.4. Zpracování osobních údajů je nezbytné pro uzavření smlouvy, jejíž smluvní stranou je subjekt osobních údajů nebo příjemcem či ručitelem, jakož i pro uzavření smlouvy z podnětu subjektu osobních údajů nebo smlouvy, na základě které bude subjektem osobních údajů příjemce nebo ručitel.
+
+7.5. Zpracování osobních údajů je nezbytné pro výkon práv a oprávněných zájmů provozovatele nebo třetích osob nebo pro dosažení společensky významných cílů, pokud nedojde k porušování práv a svobod subjektu osobních údajů.
+
+7.6. Zpracování osobních údajů je prováděno, přístup neomezeného počtu osob, které poskytuje subjekt osobních údajů nebo na jeho žádost (dále jen veřejně dostupné osobní údaje).
+
+7.7. Zpracováváme osobní údaje, které podléhají zveřejnění nebo povinnému zveřejnění v souladu s federálním zákonem.
+
+8. Postup pro shromažďování, uchovávání, předávání a další druhy zpracování osobních údajů
+
+Bezpečnost osobních údajů zpracovávaných Provozovatelem je zajištěna provedením právních, organizačních a technických opatření nezbytných k plnému souladu s požadavky aktuální legislativy v oblasti ochrany osobních údajů.
+
+8.1. Provozovatel zajišťuje bezpečnost osobních údajů a přijímá veškerá možná opatření k zamezení přístupu k osobním údajům neoprávněným osobám.
+
+8.2. Osobní údaje Uživatele nebudou nikdy za žádných okolností předány třetím osobám, s výjimkou případů souvisejících s implementací aktuální legislativy nebo v případě, kdy subjekt osobních údajů udělil Provozovateli souhlas s předáním údajů třetí osobě za účelem plnění povinností vyplývajících z občanskoprávní smlouvy.
+
+8.3. Pokud jsou zjištěny nepřesnosti v osobních údajích, může je Uživatel nezávisle aktualizovat zasláním oznámení Provozovateli na e-mailovou adresu Provozovatele supp.lrs@ya.ru označenou jako „Aktualizace osobních údajů“.
+
+8.4. Doba zpracování osobních údajů je dána dosažením účelů, pro které byly osobní údaje shromážděny, nestanoví-li smlouva nebo platná legislativa jiná doba. Uživatel může svůj souhlas se zpracováním osobních údajů kdykoli odvolat zasláním oznámení Provozovateli prostřednictvím e-mailu na e-mailovou adresu Provozovatele supp.lrs@ya.ru s označením „Odvolání souhlasu se zpracováním osobních údajů“.
+
+8.5. Veškeré informace, které shromažďují služby třetích stran, včetně platebních systémů, komunikací a dalších poskytovatelů služeb, jsou těmito osobami (provozovateli) ukládány a zpracovávány v souladu s jejich Uživatelskou smlouvou a Zásadami ochrany osobních údajů. Subjekt osobních údajů a/nebo se stanovenými dokumenty. Provozovatel nenese odpovědnost za jednání třetích osob, včetně poskytovatelů služeb uvedených v tomto odstavci.
+
+8.6. Zákazy stanovené subjektem osobních údajů o předávání (s výjimkou poskytnutí přístupu), jakož i o zpracování nebo podmínkách zpracování (s výjimkou získání přístupu) osobních údajů povolených k distribuci, neplatí v případech zpracování osobních údajů ve státním, veřejném a jiném veřejném zájmu stanoveném právními předpisy Ruské federace.
+
+8.7. Při zpracování osobních údajů provozovatel zajišťuje důvěrnost osobních údajů.
+
+8.8. Provozovatel uchovává osobní údaje ve formě, která umožňuje identifikovat subjekt osobních údajů, ne déle, než to vyžadují účely zpracování osobních údajů, ledaže dobu uchovávání osobních údajů stanoví federální zákon, smlouva, jejíž smluvní stranou, příjemcem nebo ručitelem je subjekt osobních údajů.
+
+8.9. Podmínkou ukončení zpracování osobních údajů může být dosažení účelů zpracování osobních údajů, vypršení platnosti souhlasu subjektu osobních údajů, odvolání souhlasu subjektem osobních údajů nebo požadavek na ukončení zpracování osobních údajů, jakož i zjištění protiprávního zpracování osobních údajů.
+
+9. Seznam úkonů, které Provozovatel s přijatými osobními údaji provedl
+
+9.1. Provozovatel osobní údaje shromažďuje, eviduje, systematizuje, shromažďuje, uchovává, upřesňuje (aktualizuje, mění), extrahuje, používá, předává (distribuce, poskytování, zpřístupňování), depersonalizuje, blokuje, maže a likviduje osobní údaje.
+
+9.2. Provozovatel provádí automatizované zpracování osobních údajů s nebo bez přijímání a/nebo předávání přijatých informací prostřednictvím informačních a telekomunikačních sítí.
+
+10. Přeshraniční přenos osobních údajů
+
+10.1. Před zahájením činností k přeshraničnímu předávání osobních údajů je provozovatel povinen oznámit oprávněnému orgánu ochrany práv subjektů osobních údajů svůj záměr provádět přeshraniční předávání osobních údajů (tato oznámení se zasílá odděleně od oznámení záměru zpracovávat osobní údaje).
+
+10.2. Před podáním výše uvedeného oznámení je provozovatel povinen získat příslušné informace od orgánů cizího státu, zahraničních fyzických osob, zahraničních právnických osob, kterým je plánován přeshraniční přenos osobních údajů.
+
+11. Důvěrnost osobních údajů
+
+Provozovatel a další osoby, které mají přístup k osobním údajům, jsou povinny bez souhlasu subjektu osobních údajů nesdělovat třetím osobám a nešířit osobní údaje, pokud federální zákon nestanoví jinak.
+
+12. Závěrečná ustanovení
+
+12.1. Uživatel může obdržet jakékoli vysvětlení ohledně otázek, které ho zajímají ohledně zpracování jeho osobních údajů, kontaktováním Provozovatele prostřednictvím e-mailu supp.lrs@ya.ru.
+
+12.2. Tento dokument bude odrážet veškeré změny zásad zpracování osobních údajů Provozovatele. Zásady jsou platné po neomezenou dobu, dokud nebudou nahrazeny novou verzí.
+
+12.3. Aktuální verze Zásad je volně dostupná na internetu ve webové aplikaci LRS na adrese https://www.rustore.ru/catalog/app/com.lrs

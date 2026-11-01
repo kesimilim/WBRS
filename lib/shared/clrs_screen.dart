@@ -1,5 +1,6 @@
 import 'clrs_brand.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'lrs_theme.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
 import 'timeweb_bottom_navigation.dart';
@@ -217,11 +218,13 @@ class ClrsDocumentPage extends StatefulWidget {
     required this.title,
     required this.asset,
     this.localizedAssets = const {},
+    this.googleTranslatedLanguages = const {},
   });
   final String title, asset;
 
   /// Complete, bundled translations only. The source document stays intact.
   final Map<String, String> localizedAssets;
+  final Set<String> googleTranslatedLanguages;
   @override
   State<ClrsDocumentPage> createState() => _ClrsDocumentPageState();
 }
@@ -230,6 +233,11 @@ class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
   late Future<String> _text;
   AssetBundle? _bundle;
   String? _language, _asset;
+  bool _showOriginal = false;
+  bool get _hasTranslation => widget.localizedAssets.containsKey(_language);
+  String get _selectedAsset => _showOriginal
+      ? widget.asset
+      : widget.localizedAssets[_language] ?? widget.asset;
   bool get _originalFallback =>
       _language != 'ru' &&
       widget.localizedAssets.isNotEmpty &&
@@ -239,19 +247,21 @@ class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
     super.didChangeDependencies();
     final bundle = DefaultAssetBundle.of(context);
     final language = ClrsLocalizations.of(context).locale.languageCode;
-    final asset = widget.localizedAssets[language] ?? widget.asset;
+    if (_language != language) _showOriginal = false;
+    _language = language;
+    final asset = _selectedAsset;
     if (_bundle != bundle || _asset != asset) {
       _bundle = bundle;
       _asset = asset;
       _text = _loadText();
     }
-    _language = language;
   }
 
   @override
   void didUpdateWidget(covariant ClrsDocumentPage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final asset = widget.localizedAssets[_language] ?? widget.asset;
+    if (oldWidget.asset != widget.asset) _showOriginal = false;
+    final asset = _selectedAsset;
     if (_asset != asset) {
       _asset = asset;
       _text = _loadText();
@@ -311,6 +321,57 @@ class _ClrsDocumentPageState extends State<ClrsDocumentPage> {
             child: Column(
               children: [
                 const ClrsBrandHeader(),
+                if (_hasTranslation)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
+                      onPressed: () => setState(() {
+                        _showOriginal = !_showOriginal;
+                        _asset = _selectedAsset;
+                        _text = _loadText();
+                      }),
+                      child: Text(
+                        context.tr(
+                          _showOriginal
+                              ? 'Показать перевод'
+                              : 'Показать оригинал',
+                        ),
+                      ),
+                    ),
+                  ),
+                if (!_showOriginal &&
+                    widget.googleTranslatedLanguages.contains(_language))
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(context.tr('Автоматический перевод')),
+                        Semantics(
+                          label: 'Translated by Google',
+                          button: true,
+                          child: InkWell(
+                            onTap: () async {
+                              try {
+                                await launchUrl(
+                                  Uri.parse('https://translate.google.com'),
+                                  mode: LaunchMode.externalApplication,
+                                );
+                              } catch (_) {
+                                // The document and attribution remain available offline.
+                              }
+                            },
+                            child: Image.asset(
+                              'assets/attribution/translated-by-google.png',
+                              width: 122,
+                              height: 16,
+                              alignment: Alignment.centerLeft,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_originalFallback)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 12),

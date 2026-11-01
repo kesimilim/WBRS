@@ -1,0 +1,179 @@
+Stefna varðandi vinnslu persónuupplýsinga
+
+1. Almenn ákvæði
+
+Þessi stefna um vinnslu persónuupplýsinga er samin í samræmi við kröfur alríkislaga frá 27.07.2006. nr. 152-FZ „Um persónuupplýsingar“ (hér eftir nefnd lög um persónuupplýsingar) og ákvarðar málsmeðferð við vinnslu persónuupplýsinga og ráðstafanir til að tryggja öryggi persónuupplýsinga sem IP Pavlenko Dmitry Yuryevich (hér eftir nefndur rekstraraðili) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Rekstraraðili setur það sem mikilvægasta markmið og skilyrði fyrir framkvæmd starfsemi sinnar að virða réttindi og frelsi einstaklinga og borgara við vinnslu persónuupplýsinga þeirra, þ.
+
+1.2. Stefna þessa rekstraraðila varðandi vinnslu persónuupplýsinga (hér eftir nefnd stefnan) gildir um allar upplýsingar sem rekstraraðili getur fengið um gesti LRS vefforritsins.
+
+2. Grunnhugtök sem notuð eru í stefnunni
+
+2.1. Sjálfvirk vinnsla persónuupplýsinga er vinnsla persónuupplýsinga með tölvutækni.
+
+2.2. Lokun persónuupplýsinga er tímabundin stöðvun á vinnslu persónuupplýsinga (nema í þeim tilvikum þar sem vinnsla er nauðsynleg til að skýra persónuupplýsingar).
+
+2.3. Vefsíða / forrit / vefforrit - safn af grafískum og upplýsingaefni, auk tölvuforrita og gagnagrunna sem tryggja aðgengi þeirra á netinu.
+
+2.4. Persónuupplýsingakerfi er safn persónuupplýsinga sem er að finna í gagnagrunnum og upplýsingatækni og tæknilegum aðferðum sem tryggja vinnslu þeirra.
+
+2.5. Afpersónuvernd persónuupplýsinga eru aðgerðir sem leiðir af því að ómögulegt er að ákvarða eignarhald persónuupplýsinga á tilteknum notanda eða öðru efni persónuupplýsinga án þess að nota viðbótarupplýsingar.
+
+2.6. Vinnsla persónuupplýsinga er sérhver aðgerð (aðgerð) eða mengi aðgerða (aðgerða) sem framkvæmdar eru með eða án notkunar sjálfvirkniverkfæra með persónuupplýsingum, þar með talið söfnun, skráning, kerfissetningu, uppsöfnun, geymsla, skýring (uppfærsla, breyting), útdráttur, notkun, flutningur (dreifing, útvegun, aðgangur), afpersónun, lokun, eyðing, eyðilegging persónuupplýsinga.
+
+2.7. Rekstraraðili er ríkisaðili, sveitarfélag, lögaðili eða einstaklingur sem, sjálfstætt eða í sameiningu með öðrum, skipuleggur og/eða annast vinnslu persónuupplýsinga ásamt því að ákvarða tilgang vinnslu persónuupplýsinga, samsetningu persónuupplýsinga sem vinna skal og aðgerðir (aðgerðir) sem gerðar eru með persónuupplýsingum.
+
+2.8. Persónuupplýsingar eru allar upplýsingar sem tengjast beint eða óbeint tiltekinn eða auðkennanlegan notanda LRS vefforritsins.
+
+2.9. Persónuupplýsingar sem viðfangsefni persónuupplýsinga heimilar til dreifingar eru persónuupplýsingar, aðgangur ótakmarkaðs fjölda einstaklinga sem einstaklingur persónuupplýsinga veitir með því að veita samþykki fyrir vinnslu persónuupplýsinga sem einstaklingur persónuupplýsinga heimilar til dreifingar á þann hátt sem lög um persónuupplýsingar mæla fyrir um (hér eftir nefnd persónuupplýsingar sem heimilt er að dreifa).
+
+2.10. Notandi er hver sem er gestur LRS vefforritsins.
+
+2.11. Að veita persónuupplýsingar eru aðgerðir sem miða að því að miðla persónuupplýsingum til ákveðins einstaklings eða tiltekins hóps fólks.
+
+2.12. Miðlun persónuupplýsinga er hvers kyns aðgerð sem miðar að því að miðla persónuupplýsingum til ótiltekins fjölda einstaklinga (flutningur persónuupplýsinga) eða að kynna persónuupplýsingum til ótakmarkaðs fjölda einstaklinga, þar með talið birtingu persónuupplýsinga í fjölmiðlum, birtingu í upplýsinga- og fjarskiptanetum eða veita aðgang að persónuupplýsingum á annan hátt.
+
+2.13. Flutningur persónuupplýsinga yfir landamæri er flutningur persónuupplýsinga til yfirráðasvæðis erlends ríkis til yfirvalds erlends ríkis, erlends einstaklings eða erlends lögaðila.
+
+2.14. Eyðing persónuupplýsinga er hvers kyns aðgerð sem leiðir til þess að persónuupplýsingum er eytt með óafturkræfum hætti með ómöguleika á frekari endurheimt á innihaldi persónuupplýsinga í persónuupplýsingakerfinu og/eða efnislegum miðlum persónuupplýsinga er eytt.
+
+3. Grunnréttindi og skyldur rekstraraðila
+
+3.1. Rekstraraðili hefur rétt til:
+
+— fá frá efni persónuupplýsinga áreiðanlegar upplýsingar og/eða skjöl sem innihalda persónuupplýsingar;
+
+— í því tilviki að einstaklingur sem persónuupplýsingar dregur til baka samþykki fyrir vinnslu persónuupplýsinga, sem og sendir umsókn með beiðni um að hætta vinnslu persónuupplýsinga, hefur rekstraraðilinn rétt á að halda áfram vinnslu persónuupplýsinga án samþykkis einstaklings sem persónuupplýsingarnar eru til staðar ef ástæður eru tilgreindar í lögum um persónuupplýsingar;
+
+— ákvarða sjálfstætt samsetningu og lista yfir nauðsynlegar og fullnægjandi ráðstafanir til að tryggja að þær skyldur sem kveðið er á um í lögum um persónuupplýsingar og reglugerðum sem samþykktar eru í samræmi við þau sé fullnægt, nema kveðið sé á um annað í lögum um persónuupplýsingar eða öðrum sambandslögum.
+
+3.2. Rekstraraðili er skylt að:
+
+— veita einstaklingi persónuupplýsinga, að beiðni hans, upplýsingar um vinnslu persónuupplýsinga hans;
+
+— skipuleggja vinnslu persónuupplýsinga á þann hátt sem kveðið er á um í gildandi lögum Rússlands;
+
+— bregðast við kærum og beiðnum frá einstaklingum og löglegum fulltrúum þeirra í samræmi við kröfur persónuupplýsingalaga;
+
+— tilkynna til viðurkenndra aðila til að vernda réttindi einstaklinga, að beiðni þessarar aðila, nauðsynlegar upplýsingar innan 10 daga frá viðtökudegi slíkrar beiðni;
+
+— birta eða veita á annan hátt ótakmarkaðan aðgang að þessari stefnu varðandi vinnslu persónuupplýsinga;
+
+— grípa til lagalegra, skipulagslegra og tæknilegra ráðstafana til að vernda persónuupplýsingar gegn óheimilum eða óvart aðgangi að þeim, eyðingu, breytingum, lokun, afritun, útvegun, dreifingu persónuupplýsinga, svo og gegn öðrum ólögmætum aðgerðum í tengslum við persónuupplýsingar;
+
+— stöðva flutning (dreifingu, útvegun, aðgang) persónuupplýsinga, hætta vinnslu og eyða persónuupplýsingum á þann hátt og í þeim tilvikum sem lög um persónuupplýsingar kveða á um;
+
+— sinna öðrum skyldum sem kveðið er á um í persónuupplýsingalögum.
+
+4. Grunnréttindi og skyldur persónuupplýsinga
+
+4.1. Einstaklingar persónuupplýsinga eiga rétt á:
+
+— fá upplýsingar um vinnslu persónuupplýsinga hans, nema í þeim tilvikum sem alríkislög kveða á um. Upplýsingarnar eru veittar einstaklingi persónuupplýsinga af rekstraraðila á aðgengilegu formi og þær ættu ekki að innihalda persónuupplýsingar sem varða önnur efni persónuupplýsinga, nema í þeim tilvikum þar sem lagalegar forsendur eru fyrir birtingu slíkra persónuupplýsinga. Listi yfir upplýsingar og málsmeðferð við öflun þeirra er sett í lögum um persónuupplýsingar;
+
+— krefjast þess að rekstraraðili skýri persónuupplýsingar sínar, lokar þeim eða eyði þeim ef persónuupplýsingarnar eru ófullnægjandi, úreltar, ónákvæmar, fengnar með ólöglegum hætti eða eru ekki nauðsynlegar í tilgreindum tilgangi vinnslunnar, og grípi einnig til ráðstafana sem kveðið er á um í lögum til að vernda réttindi þeirra;
+
+— setja skilyrði um fyrirframsamþykki við vinnslu persónuupplýsinga í þeim tilgangi að kynna vörur, verk og þjónustu á markaði;
+
+— að afturkalla samþykki fyrir vinnslu persónuupplýsinga, svo og að senda beiðni um að stöðva vinnslu persónuupplýsinga;
+
+— áfrýja til viðurkennds aðila til að vernda réttindi persónuupplýsinga eða fyrir dómstólum gegn ólögmætum aðgerðum eða aðgerðarleysi rekstraraðila við vinnslu persónuupplýsinga hans;
+
+— að nýta önnur réttindi sem kveðið er á um í löggjöf rússneska sambandsríkisins.
+
+4.2. Einstaklingum persónuupplýsinga er skylt að:
+
+— veita rekstraraðilanum áreiðanlegar upplýsingar um sjálfan þig;
+
+— upplýsa rekstraraðilann um uppfærslu (uppfærslu, breytingu) á persónuupplýsingum þínum.
+
+4.3. Einstaklingar sem veittu rekstraraðilanum rangar upplýsingar um sjálfan sig eða upplýsingar um annað efni persónuupplýsinga án samþykkis þess síðarnefnda eru ábyrgir í samræmi við löggjöf rússneska sambandsríkisins.
+
+5. Meginreglur um vinnslu persónuupplýsinga
+
+5.1. Vinnsla persónuupplýsinga fer fram á löglegum og sanngjörnum grundvelli.
+
+5.2. Vinnsla persónuupplýsinga er takmörkuð við að ná tilteknum, fyrirfram skilgreindum og lögmætum tilgangi. Vinnsla persónuupplýsinga sem er ósamrýmanleg þeim tilgangi að safna persónuupplýsingum er óheimil.
+
+5.3. Óheimilt er að sameina gagnagrunna sem innihalda persónuupplýsingar en vinnsla þeirra fer fram í tilgangi sem er ósamrýmanleg hver öðrum.
+
+5.4. Aðeins persónuupplýsingar sem uppfylla tilgang vinnslu þeirra eru háðar vinnslu.
+
+5.5. Innihald og magn persónuupplýsinga sem unnið er með samsvarar tilgreindum tilgangi vinnslunnar. Óheimilt er að afþakka unnar persónuupplýsingar í tengslum við tilgreindan tilgang vinnslu þeirra.
+
+5.6. Við vinnslu persónuupplýsinga er tryggð nákvæmni persónuupplýsinga, nægjanleika þeirra og, ef nauðsyn krefur, mikilvægi í tengslum við tilgang vinnslu persónuupplýsinga. Rekstraraðili gerir nauðsynlegar ráðstafanir og/eða tryggir að þær séu gerðar til að fjarlægja eða skýra ófullnægjandi eða ónákvæm gögn.
+
+5.7. Geymsla persónuupplýsinga fer fram á því formi sem gerir kleift að bera kennsl á viðfang persónuupplýsinga, ekki lengur en tilgangur vinnslu persónuupplýsinga krefst, nema tími til að geyma persónuupplýsingar sé ákveðinn í alríkislögum, samningi sem viðfang persónuupplýsinga er aðili, rétthafi eða ábyrgðaraðili. Unnum persónuupplýsingum er eytt eða nafnleynd þegar tilgangi vinnslu er náð eða ef þörf er á að ná þessum tilgangi missir, nema annað sé ákveðið í sambandslögum.
+
+6. Tilgangur með vinnslu persónuupplýsinga
+
+Tilgangur vinnslunnar er að veita notanda aðgang að þjónustu, upplýsingum og/eða efni sem er að finna í umsókninni og veita honum þjónustu með umsókninni.
+
+Persónuupplýsingar - netfang, fjöldi heilra ára notandans, gælunafn, mannfræðileg gögn, ljósmyndir.
+
+Lagalegur grundvöllur - lögbundin (samþykkt) skjöl rekstraraðila.
+
+Tegundir vinnslu persónuupplýsinga - söfnun, skráning, kerfissetning, söfnun, geymsla, eyðing og nafnleynd persónuupplýsinga
+
+7. Skilyrði fyrir vinnslu persónuupplýsinga
+
+7.1. Vinnsla persónuupplýsinga fer fram með samþykki persónuupplýsinga til vinnslu persónuupplýsinga hans.
+
+7.2. Vinnsla persónuupplýsinga er nauðsynleg til að ná þeim markmiðum sem kveðið er á um í alþjóðlegum sáttmála rússneska sambandsríkisins eða lögum, til að framkvæma þær aðgerðir, völd og ábyrgð sem löggjöf rússneska sambandsríkisins felur rekstraraðilanum.
+
+7.3. Vinnsla persónuupplýsinga er nauðsynleg fyrir réttarframkvæmd, framkvæmd dómstóla, athöfn annars aðila eða embættismanns, með fyrirvara um framkvæmd í samræmi við löggjöf rússneska sambandsríkisins um fullnustumál.
+
+7.4. Vinnsla persónuupplýsinga er nauðsynleg vegna framkvæmdar samnings sem einstaklingur persónuupplýsinga er aðili að eða rétthafi eða ábyrgðaraðili, svo og til að gera samning að frumkvæði persónuupplýsinga eða samnings um að einstaklingur persónuupplýsinga verði rétthafi eða ábyrgðaraðili.
+
+7.5. Vinnsla persónuupplýsinga er nauðsynleg til að neyta réttinda og lögmætra hagsmuna rekstraraðila eða þriðja aðila eða til að ná samfélagslega mikilvægum markmiðum, að því tilskildu að ekki sé brotið á réttindum og frelsi einstaklings sem persónuupplýsingar eru.
+
+7.6. Vinnsla persónuupplýsinga fer fram, aðgangur ótakmarkaðs fjölda einstaklinga er veittur af viðfangsefni persónuupplýsinga eða að beiðni hans (hér eftir nefnt opinberlega aðgengilegar persónuupplýsingar).
+
+7.7. Við vinnum persónuupplýsingar sem eru háðar birtingu eða skyldubirtingu í samræmi við alríkislög.
+
+8. Verklag við söfnun, geymslu, flutning og annars konar vinnslu persónuupplýsinga
+
+Öryggi persónuupplýsinga sem rekstraraðili vinnur er tryggt með því að innleiða lagalegar, skipulagslegar og tæknilegar ráðstafanir sem nauðsynlegar eru til að uppfylla að fullu kröfur gildandi laga á sviði persónuverndar.
+
+8.1. Rekstraraðili tryggir öryggi persónuupplýsinga og gerir allar mögulegar ráðstafanir til að koma í veg fyrir aðgang óviðkomandi að persónuupplýsingum.
+
+8.2. Persónuupplýsingar notanda verða aldrei, undir nokkrum kringumstæðum, fluttar til þriðja aðila, að undanskildum tilvikum sem tengjast innleiðingu gildandi laga eða í því tilviki þar sem efni persónuupplýsinganna hefur gefið rekstraraðila samþykki til að flytja gögn til þriðja aðila til að uppfylla skyldur samkvæmt einkaréttarlegum samningi.
+
+8.3. Ef ónákvæmni í persónuupplýsingum er auðkennd getur notandinn uppfært þær sjálfstætt með því að senda tilkynningu til rekstraraðila á netfang rekstraraðilans supp.lrs@ya.ru merkt „Uppfæra persónuupplýsingar“.
+
+8.4. Tímabil vinnslu persónuupplýsinga ræðst af því að ná þeim tilgangi sem persónuupplýsingunum var safnað fyrir nema annað tímabil sé kveðið á um í samningi eða gildandi lögum. Notandinn getur hvenær sem er afturkallað samþykki sitt fyrir vinnslu persónuupplýsinga með því að senda rekstraraðila tilkynningu með tölvupósti á netfang rekstraraðilans supp.lrs@ya.ru merkt "Afturköllun samþykkis fyrir vinnslu persónuupplýsinga."
+
+8.5. Allar upplýsingar sem er safnað af þjónustu þriðja aðila, þar á meðal greiðslukerfum, fjarskipta- og öðrum þjónustuaðilum, eru geymdar og unnar af þessum aðilum (rekstraraðilum) í samræmi við notendasamning þeirra og persónuverndarstefnu. Efni persónuupplýsinga og/eða með tilgreindum skjölum. Rekstraraðili ber ekki ábyrgð á aðgerðum þriðja aðila, þar með talið þjónustuveitenda sem tilgreindir eru í þessari málsgrein.
+
+8.6. Bann sem sett eru af efni persónuupplýsinga við flutning (nema að veita aðgang), svo og um vinnslu eða skilyrði fyrir vinnslu (nema til að fá aðgang) persónuupplýsinga sem leyfðar eru til dreifingar, eiga ekki við um vinnslu persónuupplýsinga í ríkinu, almannahagsmunum og öðrum almannahagsmunum sem ákvarðast af löggjöf Rússlands.
+
+8.7. Við vinnslu persónuupplýsinga tryggir rekstraraðilinn trúnað persónuupplýsinga.
+
+8.8. Rekstraraðili geymir persónuupplýsingar á því formi sem gerir kleift að bera kennsl á viðfang persónuupplýsinga, ekki lengur en krafist er af tilgangi vinnslu persónuupplýsinga, nema tímabil til að geyma persónuupplýsingar sé ákveðið í alríkislögum, samningi sem viðfang persónuupplýsinga er aðili, rétthafi eða ábyrgðaraðili.
+
+8.9. Skilyrði þess að vinnslu persónuupplýsinga sé hætt getur verið að markmiðum með vinnslu persónuupplýsinga sé náð, samþykki einstaklings sem persónuupplýsingarnar rennur út, afturköllun einstaklings á samþykki persónuupplýsinga eða krafa um að hætta vinnslu persónuupplýsinga, svo og auðkenning á ólögmætri vinnslu persónuupplýsinga.
+
+9. Listi yfir aðgerðir sem rekstraraðili framkvæmir með mótteknum persónuupplýsingum
+
+9.1. Rekstraraðili safnar, skráir, kerfisbundið, safnar, geymir, betrumbætir (uppfærir, breytir), dregur út, notar, flytur (dreifing, útvegun, aðgangur), afpersónum, lokar, eyðir og eyðir persónuupplýsingum.
+
+9.2. Rekstraraðili framkvæmir sjálfvirka vinnslu persónuupplýsinga með eða án þess að taka við og/eða senda mótteknar upplýsingar um upplýsinga- og fjarskiptanet.
+
+10. Flutningur persónuupplýsinga yfir landamæri
+
+10.1. Áður en starfsemi vegna flutnings persónuupplýsinga yfir landamæri hefst er rekstraraðila skylt að tilkynna viðurkenndum aðila til að vernda réttindi persónuupplýsinga um fyrirætlan sína um að framkvæma flutning persónuupplýsinga yfir landamæri (slík tilkynning er send aðskilið frá tilkynningu um áform um að vinna persónuupplýsingar).
+
+10.2. Áður en framangreind tilkynning er send er rekstraraðila skylt að afla viðeigandi upplýsinga frá yfirvöldum í erlendu ríki, erlendum einstaklingum, erlendum lögaðilum sem fyrirhugað er að flytja persónuupplýsingar til yfir landamæri.
+
+11. Trúnaður um persónuupplýsingar
+
+Rekstraraðili og öðrum einstaklingum sem hafa aðgang að persónuupplýsingum er skylt að birta ekki til þriðja aðila eða dreifa persónuupplýsingum án samþykkis persónuupplýsinga, nema annað sé ákveðið í sambandslögum.
+
+12. Lokaákvæði
+
+12.1. Notandinn getur fengið allar útskýringar á áhugaverðum spurningum varðandi vinnslu persónuupplýsinga hans með því að hafa samband við rekstraraðila með tölvupósti supp.lrs@ya.ru.
+
+12.2. Þetta skjal mun endurspegla allar breytingar á stefnu rekstraraðila um vinnslu persónuupplýsinga. Stefnan gildir ótímabundið þar til ný útgáfa er skipt út fyrir hana.
+
+12.3. Núverandi útgáfa stefnunnar er ókeypis aðgengileg á netinu í LRS vefforritinu á https://www.rustore.ru/catalog/app/com.lrs

@@ -114,7 +114,7 @@ void main() {
       expect(translated.split('\n').length, source.split('\n').length);
       for (final pattern in [
         r'https?://\S+',
-        r'[A-Za-z0-9.]+@[A-Za-z0-9.]+',
+        r'[A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
         r'\b[0-9]{2,}\b',
       ]) {
         List<String> details(String text) =>
@@ -141,7 +141,7 @@ void main() {
     expect(english.split('\n\n').length, original.split('\n\n').length);
     for (final pattern in [
       r'https?://\S+',
-      r'[A-Za-z0-9.]+@[A-Za-z0-9.]+',
+      r'[A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
       r'\b[0-9]{2,}\b',
     ]) {
       List<String> details(String text) =>
@@ -204,18 +204,157 @@ void main() {
         await tester.pumpAndSettle();
         expect(
           tester.widget<SelectableText>(find.byType(SelectableText)).data,
-          source,
+          privacy
+              ? File('assets/legal/de/policy.txt').readAsStringSync()
+              : source,
         );
         expect(
           find.text(
             catalogs['de']!['Перевод документа на выбранный язык пока недоступен. Показан русский оригинал.']
                 as String,
           ),
-          findsOneWidget,
+          privacy ? findsNothing : findsOneWidget,
         );
         expect(tester.takeException(), isNull);
         expect(find.byType(ClrsDocumentPage), findsOneWidget);
       },
     );
   }
+  test(
+    'every policy translation matches the current source and preserves its details',
+    () {
+      final source = File('assets/policy.txt').readAsStringSync();
+      final manifest =
+          jsonDecode(
+                File('assets/legal/policy_manifest.json').readAsStringSync(),
+              )
+              as Map<String, dynamic>;
+      expect(
+        manifest['sourceSha256'],
+        sha256.convert(utf8.encode(source)).toString(),
+      );
+      final documents = manifest['documents'] as Map<String, dynamic>;
+      expect(documents.keys.toSet(), ClrsLocalizations.codes.toSet());
+      final clauses = RegExp(r'^([0-9]+(?:\.[0-9]+)*)\.? ', multiLine: true);
+      for (final code in ClrsLocalizations.codes) {
+        final entry = documents[code] as Map<String, dynamic>;
+        final text = File(entry['asset'] as String).readAsStringSync();
+        expect(
+          entry['sha256'],
+          sha256.convert(utf8.encode(text)).toString(),
+          reason: code,
+        );
+        expect(
+          text.trim().split('\n\n').length,
+          source.trim().split('\n\n').length,
+          reason: code,
+        );
+        expect(
+          clauses.allMatches(text).map((m) => m[1]).toList(),
+          clauses.allMatches(source).map((m) => m[1]).toList(),
+          reason: code,
+        );
+        for (final pattern in [
+          r'https?://\S+',
+          r'[A-Za-z0-9_.+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}',
+          r'\b[0-9]{2,}\b',
+        ]) {
+          List<String> details(String value) =>
+              RegExp(pattern).allMatches(value).map((m) => m[0]!).toList()
+                ..sort();
+          expect(details(text), details(source), reason: '$code $pattern');
+        }
+        expect(text, isNot(contains('[[900')), reason: code);
+        if (code != 'ru') expect(text, isNot(source), reason: code);
+        expect(
+          File('pubspec.yaml').readAsStringSync(),
+          contains('assets/legal/${code == 'ru' ? 'en' : code}/'),
+        );
+      }
+    },
+  );
+  testWidgets(
+    'all 23 policy languages open offline, toggle original, and reset on language change',
+    (tester) async {
+      final semantics = tester.ensureSemantics();
+      final language = ValueNotifier('en');
+      addTearDown(language.dispose);
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ValueListenableBuilder<String>(
+          valueListenable: language,
+          builder: (_, code, __) => DefaultAssetBundle(
+            bundle: _LegalBundle(),
+            child: MaterialApp(
+              locale: ClrsLocalizations.localeFor(code),
+              supportedLocales: ClrsLocalizations.supportedLocales,
+              localizationsDelegates: [
+                _CatalogDelegate(catalogs),
+                ...ClrsLocalizations.delegates.skip(1),
+              ],
+              theme: LrsTheme.theme,
+              builder: (context, child) => MediaQuery(
+                data: MediaQuery.of(
+                  context,
+                ).copyWith(textScaler: const TextScaler.linear(2)),
+                child: child!,
+              ),
+              home: const Politica(),
+            ),
+          ),
+        ),
+      );
+      final russian = File('assets/policy.txt').readAsStringSync();
+      for (final code in ClrsLocalizations.codes) {
+        language.value = code;
+        await tester.pumpAndSettle();
+        final expected = code == 'ru'
+            ? russian
+            : File('assets/legal/$code/policy.txt').readAsStringSync();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          expected,
+          reason: code,
+        );
+        expect(tester.takeException(), isNull, reason: code);
+        if (code != 'ru' && code != 'en') {
+          expect(
+            find.text(catalogs[code]!['Автоматический перевод'] as String),
+            findsOneWidget,
+          );
+          expect(find.bySemanticsLabel('Translated by Google'), findsOneWidget);
+        }
+        if (code == 'ru') continue;
+        final originalButton = find.text(
+          catalogs[code]!['Показать оригинал'] as String,
+        );
+        await tester.ensureVisible(originalButton);
+        await tester.tap(originalButton);
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          russian,
+          reason: code,
+        );
+        expect(find.bySemanticsLabel('Translated by Google'), findsNothing);
+        final translationButton = find.text(
+          catalogs[code]!['Показать перевод'] as String,
+        );
+        await tester.ensureVisible(translationButton);
+        await tester.tap(translationButton);
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          expected,
+          reason: code,
+        );
+        await tester.ensureVisible(originalButton);
+        await tester.tap(originalButton);
+        await tester.pumpAndSettle();
+      }
+      semantics.dispose();
+    },
+  );
 }

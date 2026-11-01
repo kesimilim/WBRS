@@ -1,0 +1,179 @@
+Polityka dotycząca przetwarzania danych osobowych
+
+1. Postanowienia ogólne
+
+Niniejsza polityka przetwarzania danych osobowych została opracowana zgodnie z wymogami ustawy federalnej z dnia 27.07.2006. Nr 152-FZ „O danych osobowych” (dalej: Ustawa o danych osobowych) i określa tryb przetwarzania danych osobowych oraz środki zapewniające bezpieczeństwo danych osobowych podejmowane przez IP Pavlenko Dmitry Yuryevich (zwany dalej Operatorem) INN: 366514852674, OGRN/OGRNIP: 323366800022544.
+
+1.1. Operator za swój najważniejszy cel i warunek prowadzenia swojej działalności stawia poszanowanie praw i wolności jednostki i obywatela przy przetwarzaniu jej danych osobowych, w tym ochronę prawa do prywatności oraz tajemnicy osobistej i rodzinnej.
+
+1.2. Niniejsza polityka Operatora dotycząca przetwarzania danych osobowych (zwana dalej Polityką) dotyczy wszelkich informacji, jakie Operator może uzyskać na temat osób odwiedzających aplikację internetową LRS.
+
+2. Podstawowe pojęcia stosowane w Polityce
+
+2.1. Zautomatyzowane przetwarzanie danych osobowych to przetwarzanie danych osobowych za pomocą technologii komputerowej.
+
+2.2. Zablokowanie danych osobowych oznacza czasowe zaprzestanie przetwarzania danych osobowych (z wyjątkiem przypadków, gdy przetwarzanie jest niezbędne w celu wyjaśnienia danych osobowych).
+
+2.3. Strona internetowa / Aplikacja / Aplikacja internetowa - zbiór materiałów graficznych i informacyjnych oraz programów komputerowych i baz danych zapewniających ich dostępność w Internecie.
+
+2.4. System informacyjny danych osobowych to zbiór danych osobowych zawartych w bazach danych oraz technologiach informatycznych i środkach technicznych zapewniających ich przetwarzanie.
+
+2.5. Depersonalizacja danych osobowych to działania, w wyniku których bez wykorzystania dodatkowych informacji nie da się ustalić własności danych osobowych konkretnego Użytkownika lub innego podmiotu danych osobowych.
+
+2.6. Przetwarzanie danych osobowych to każda czynność (operacja) lub zestaw działań (operacji) wykonywana z użyciem lub bez użycia narzędzi automatyzacji danych osobowych, obejmująca gromadzenie, utrwalanie, systematyzowanie, gromadzenie, przechowywanie, wyjaśnianie (aktualizacja, zmiana), wydobywanie, wykorzystywanie, przekazywanie (dystrybucja, udostępnianie, dostęp), depersonalizacja, blokowanie, usuwanie, niszczenie danych osobowych.
+
+2.7. Operator to organ państwowy, samorządowy, osoba prawna lub osoba fizyczna, która samodzielnie lub wspólnie z innymi osobami organizuje i/lub dokonuje przetwarzania danych osobowych, a także ustala cele przetwarzania danych osobowych, skład przetwarzanych danych osobowych oraz czynności (operacje) dokonywane na danych osobowych.
+
+2.8. Dane osobowe to wszelkie informacje odnoszące się bezpośrednio lub pośrednio do konkretnego lub możliwego do zidentyfikowania Użytkownika aplikacji internetowej LRS.
+
+2.9. Dane osobowe dopuszczone przez podmiot danych osobowych do rozpowszechniania to dane osobowe, do których dostęp nieograniczonej liczby osób zapewnia podmiot danych osobowych poprzez wyrażenie zgody na przetwarzanie danych osobowych, do których upoważnił podmiot danych osobowych do rozpowszechniania w sposób określony w ustawie o danych osobowych (zwane dalej danymi osobowymi dopuszczonymi do rozpowszechniania).
+
+2.10. Użytkownikiem jest każdy odwiedzający aplikację internetową LRS.
+
+2.11. Podanie danych osobowych to działania mające na celu udostępnienie danych osobowych określonej osobie lub określonej grupie osób.
+
+2.12. Rozpowszechnianie danych osobowych to każde działanie mające na celu udostępnienie danych osobowych nieokreślonej liczbie osób (przekazanie danych osobowych) lub zaznajomienie się z danymi osobowymi nieograniczonej liczbie osób, w tym publikacja danych osobowych w środkach masowego przekazu, zamieszczenie w sieciach informacyjnych i telekomunikacyjnych lub zapewnienie dostępu do danych osobowych w inny sposób.
+
+2.13. Transgraniczne przekazywanie danych osobowych to przekazanie danych osobowych na terytorium państwa obcego organowi państwa obcego, zagranicznej osobie fizycznej lub zagranicznej osobie prawnej.
+
+2.14. Niszczenie danych osobowych to każde działanie, w wyniku którego dane osobowe ulegają nieodwracalnemu zniszczeniu i uniemożliwiają dalsze odtworzenie treści danych osobowych w systemie informatycznym danych osobowych i/lub materialnym nośnikom danych osobowych.
+
+3. Podstawowe prawa i obowiązki Operatora
+
+3.1. Operator ma prawo:
+
+— otrzymać od podmiotu danych osobowych wiarygodne informacje i/lub dokumenty zawierające dane osobowe;
+
+— w przypadku cofnięcia przez podmiot danych osobowych zgody na przetwarzanie danych osobowych, a także przesłania wniosku z żądaniem zaprzestania przetwarzania danych osobowych, Operator ma prawo kontynuować przetwarzanie danych osobowych bez zgody podmiotu danych osobowych, jeżeli zachodzą podstawy określone w Ustawie o danych osobowych;
+
+— samodzielnie ustala skład i listę środków niezbędnych i wystarczających do zapewnienia wypełnienia obowiązków przewidzianych w ustawie o danych osobowych i przepisach przyjętych na jej podstawie, chyba że ustawa o danych osobowych lub inne przepisy federalne stanowią inaczej.
+
+3.2. Operator jest zobowiązany:
+
+— udzielić osobie, której dane dotyczą, na jej żądanie, informacji dotyczących przetwarzania jej danych osobowych;
+
+— organizować przetwarzanie danych osobowych w sposób określony przez obowiązujące ustawodawstwo Federacji Rosyjskiej;
+
+— odpowiadania na odwołania i wnioski osób, których dane dotyczą, oraz ich przedstawicieli prawnych, zgodnie z wymogami Ustawy o danych osobowych;
+
+— zgłosić uprawnionemu organowi ochrony praw osób, których dane dotyczą, na żądanie tego organu, niezbędnych informacji w terminie 10 dni od dnia otrzymania takiego żądania;
+
+— publikować lub w inny sposób zapewniać nieograniczony dostęp do niniejszej Polityki dotyczącej przetwarzania danych osobowych;
+
+— podjąć środki prawne, organizacyjne i techniczne mające na celu ochronę danych osobowych przed nieuprawnionym lub przypadkowym dostępem do nich, zniszczeniem, modyfikacją, zablokowaniem, kopiowaniem, udostępnieniem, rozpowszechnianiem danych osobowych, a także przed innymi niezgodnymi z prawem działaniami w stosunku do danych osobowych;
+
+— zaprzestania przekazywania (rozpowszechniania, udostępniania, udostępniania) danych osobowych, zaprzestania przetwarzania oraz zniszczenia danych osobowych w sposób i w przypadkach przewidzianych przez Ustawę o danych osobowych;
+
+— wykonywać inne obowiązki przewidziane w Ustawie o danych osobowych.
+
+4. Podstawowe prawa i obowiązki osób, których dane osobowe dotyczą
+
+4.1. Podmioty danych osobowych mają prawo:
+
+— otrzymać informację dotyczącą przetwarzania jego danych osobowych, z wyjątkiem przypadków przewidzianych przez przepisy federalne. Informacja jest przekazywana podmiotowi danych osobowych przez Operatora w przystępnej formie i nie powinna zawierać danych osobowych dotyczących innych podmiotów danych osobowych, z wyjątkiem przypadków, gdy zachodzą podstawy prawne do udostępnienia tych danych osobowych. Wykaz informacji i tryb ich uzyskiwania określa ustawa o danych osobowych;
+
+— żądania od Operatora wyjaśnienia jego danych osobowych, ich zablokowania lub zniszczenia, jeżeli dane osobowe są niekompletne, nieaktualne, niedokładne, uzyskane niezgodnie z prawem lub nie są niezbędne do podanego celu przetwarzania, a także podjęcia przewidzianych prawem środków w celu ochrony swoich praw;
+
+— nakładać warunku uprzedniej zgody na przetwarzanie danych osobowych w celu promocji towarów, robót i usług na rynku;
+
+— wycofania zgody na przetwarzanie danych osobowych, a także przesłania żądania zaprzestania przetwarzania danych osobowych;
+
+— skargi do uprawnionego organu w sprawie ochrony praw osób, których dane dotyczą, lub przed sądem przeciwko bezprawnym działaniom lub bierności Operatora przy przetwarzaniu jego danych osobowych;
+
+— do korzystania z innych praw przewidzianych przez ustawodawstwo Federacji Rosyjskiej.
+
+4.2. Podmioty danych osobowych mają obowiązek:
+
+— przekazywać Operatorowi rzetelne informacje o sobie;
+
+— informować Operatora o aktualizacji (aktualizacji, zmianie) swoich danych osobowych.
+
+4.3. Osoby, które przekazały Operatorowi fałszywe informacje o sobie lub informacje o innym przedmiocie danych osobowych bez jego zgody, ponoszą odpowiedzialność zgodnie z ustawodawstwem Federacji Rosyjskiej.
+
+5. Zasady przetwarzania danych osobowych
+
+5.1. Przetwarzanie danych osobowych odbywa się w sposób zgodny z prawem i rzetelny.
+
+5.2. Przetwarzanie danych osobowych ogranicza się do osiągnięcia konkretnych, z góry określonych i prawnie uzasadnionych celów. Przetwarzanie danych osobowych niezgodne z celami gromadzenia danych osobowych jest niedozwolone.
+
+5.3. Niedopuszczalne jest łączenie baz danych zawierających dane osobowe, których przetwarzanie odbywa się w celach niezgodnych ze sobą.
+
+5.4. Przetwarzaniu podlegają wyłącznie dane osobowe, które odpowiadają celom ich przetwarzania.
+
+5.5. Treść i ilość przetwarzanych danych osobowych odpowiada podanym celom przetwarzania. Redundancja przetwarzanych danych osobowych w związku z określonymi celami ich przetwarzania jest niedopuszczalna.
+
+5.6. Podczas przetwarzania danych osobowych zapewnia się prawidłowość danych osobowych, ich wystarczalność oraz, w razie potrzeby, przydatność w odniesieniu do celów przetwarzania danych osobowych. Operator podejmuje niezbędne środki i/lub zapewnia ich podjęcie w celu usunięcia lub wyjaśnienia niekompletnych lub niedokładnych danych.
+
+5.7. Przechowywanie danych osobowych odbywa się w formie umożliwiającej identyfikację przedmiotu danych osobowych, nie dłużej niż jest to wymagane ze względu na cele przetwarzania danych osobowych, chyba że okres przechowywania danych osobowych określa ustawa federalna, umowa, której podmiot danych osobowych jest stroną, beneficjentem lub gwarantem. Przetwarzane dane osobowe są niszczone lub anonimizowane po osiągnięciu celów przetwarzania lub w przypadku utraty konieczności realizacji tych celów, chyba że prawo federalne stanowi inaczej.
+
+6. Cele przetwarzania danych osobowych
+
+Celem przetwarzania jest zapewnienie Użytkownikowi dostępu do usług, informacji i/lub materiałów zawartych w Aplikacji oraz świadczenie mu usług za pośrednictwem Aplikacji.
+
+Dane osobowe - adres e-mail, liczba pełnych lat użytkownika, pseudonim, dane antropometryczne, zdjęcia.
+
+Podstawa prawna - dokumenty ustawowe (konstytucyjne) Operatora.
+
+Rodzaje przetwarzania danych osobowych – zbieranie, utrwalanie, systematyzacja, gromadzenie, przechowywanie, niszczenie i anonimizacja danych osobowych
+
+7. Warunki przetwarzania danych osobowych
+
+7.1. Przetwarzanie danych osobowych odbywa się za zgodą podmiotu danych osobowych na przetwarzanie jego danych osobowych.
+
+7.2. Przetwarzanie danych osobowych jest niezbędne do osiągnięcia celów przewidzianych w umowie międzynarodowej Federacji Rosyjskiej lub prawie, w celu realizacji funkcji, uprawnień i obowiązków przypisanych operatorowi przez ustawodawstwo Federacji Rosyjskiej.
+
+7.3. Przetwarzanie danych osobowych jest niezbędne do wymierzania sprawiedliwości, wykonania czynności sądowej, czynności innego organu lub urzędnika, pod warunkiem wykonania zgodnie z ustawodawstwem Federacji Rosyjskiej dotyczącym postępowania egzekucyjnego.
+
+7.4. Przetwarzanie danych osobowych jest niezbędne do wykonania umowy, której podmiot danych osobowych jest stroną, beneficjentem lub gwarantem, a także do zawarcia umowy z inicjatywy podmiotu danych osobowych lub umowy, w ramach której podmiot danych osobowych będzie beneficjentem lub gwarantem.
+
+7.5. Przetwarzanie danych osobowych jest niezbędne do realizacji praw i prawnie uzasadnionych interesów Operatora lub osób trzecich lub do osiągnięcia ważnych społecznie celów, pod warunkiem nienaruszenia praw i wolności podmiotu danych osobowych.
+
+7.6. Przetwarzanie danych osobowych odbywa się przy dostępie nieograniczonej liczby osób, do których podmiot danych osobowych zapewnia podmiot danych osobowych lub na jego żądanie (zwane dalej publicznie dostępnymi danymi osobowymi).
+
+7.7. Przetwarzamy dane osobowe, które podlegają publikacji lub obowiązkowemu ujawnieniu zgodnie z prawem federalnym.
+
+8. Tryb gromadzenia, przechowywania, przekazywania i innych rodzajów przetwarzania danych osobowych
+
+Bezpieczeństwo danych osobowych przetwarzanych przez Operatora zapewniane jest poprzez wdrożenie środków prawnych, organizacyjnych i technicznych niezbędnych do pełnego spełnienia wymagań obowiązujących przepisów prawa w zakresie ochrony danych osobowych.
+
+8.1. Operator dba o bezpieczeństwo danych osobowych i podejmuje wszelkie możliwe środki, aby uniemożliwić dostęp do danych osobowych osobom nieupoważnionym.
+
+8.2. Dane osobowe Użytkownika w żadnym wypadku nie będą przekazywane podmiotom trzecim, za wyjątkiem przypadków związanych z realizacją obowiązującego prawa lub w przypadku, gdy podmiot danych osobowych wyraził zgodę Operatorowi na przekazanie danych osobie trzeciej w celu wykonania zobowiązań wynikających z umowy cywilnoprawnej.
+
+8.3. W przypadku wykrycia nieścisłości w danych osobowych Użytkownik może je samodzielnie zaktualizować, wysyłając powiadomienie do Operatora na adres e-mail Operatora supp.lrs@ya.ru z dopiskiem „Aktualizacja danych osobowych”.
+
+8.4. O okresie przetwarzania danych osobowych decyduje realizacja celów, dla których dane osobowe zostały zebrane, chyba że umowa lub obowiązujące przepisy prawa przewidują inny okres. Użytkownik może w każdej chwili cofnąć zgodę na przetwarzanie danych osobowych poprzez przesłanie Operatorowi powiadomienia drogą elektroniczną na adres e-mail Operatora supp.lrs@ya.ru z dopiskiem „Wycofanie zgody na przetwarzanie danych osobowych”.
+
+8.5. Wszystkie informacje gromadzone przez usługi stron trzecich, w tym systemy płatności, dostawców usług komunikacyjnych i innych, są przechowywane i przetwarzane przez te osoby (Operatorzy) zgodnie z ich Umową Użytkownika i Polityką Prywatności. Przedmiot danych osobowych i/lub określonych dokumentów. Operator nie ponosi odpowiedzialności za działania osób trzecich, w tym usługodawców wymienionych w niniejszym paragrafie.
+
+8.6. ustanowione przez podmiot danych osobowych zakazy przekazywania (z wyjątkiem zapewnienia dostępu), a także przetwarzania lub warunków przetwarzania (z wyjątkiem uzyskiwania dostępu) danych osobowych dopuszczonych do rozpowszechniania, nie mają zastosowania w przypadku przetwarzania danych osobowych w interesie państwowym, publicznym i innym interesie publicznym określonym przez ustawodawstwo Federacji Rosyjskiej.
+
+8.7. Przetwarzając dane osobowe, Operator zapewnia poufność danych osobowych.
+
+8.8. Operator przechowuje dane osobowe w formie umożliwiającej identyfikację przedmiotu danych osobowych, nie dłużej niż jest to wymagane ze względu na cele przetwarzania danych osobowych, chyba że okres przechowywania danych osobowych określa ustawa federalna, umowa, której podmiot danych osobowych jest stroną, beneficjentem lub gwarantem.
+
+8.9. Warunkiem zakończenia przetwarzania danych osobowych może być osiągnięcie celów przetwarzania danych osobowych, wygaśnięcie zgody podmiotu danych osobowych, cofnięcie zgody przez podmiot danych osobowych lub żądanie zaprzestania przetwarzania danych osobowych, a także stwierdzenie niezgodności z prawem przetwarzania danych osobowych.
+
+9. Lista czynności wykonywanych przez Operatora na otrzymanych danych osobowych
+
+9.1. Operator zbiera, rejestruje, systematyzuje, gromadzi, przechowuje, udoskonala (aktualizuje, zmienia), wyodrębnia, wykorzystuje, przekazuje (dystrybucję, udostępnianie, dostęp), depersonalizuje, blokuje, usuwa i niszczy dane osobowe.
+
+9.2. Operator dokonuje zautomatyzowanego przetwarzania danych osobowych z otrzymywaniem i/lub przesyłaniem otrzymanych informacji za pośrednictwem sieci informacyjnych i telekomunikacyjnych lub bez nich.
+
+10. Transgraniczny transfer danych osobowych
+
+10.1. Przed rozpoczęciem czynności w zakresie transgranicznego przekazywania danych osobowych operator ma obowiązek powiadomić uprawniony organ do spraw ochrony praw osób, których dane dotyczą, o zamiarze dokonania transgranicznego przekazywania danych osobowych (zgłoszenie takie przesyłane jest oddzielnie od powiadomienia o zamiarze przetwarzania danych osobowych).
+
+10.2. Przed złożeniem powyższego zgłoszenia operator ma obowiązek uzyskać stosowną informację od organów państwa obcego, osób fizycznych, zagranicznych osób prawnych, do których planowane jest transgraniczne przekazywanie danych osobowych.
+
+11. Poufność danych osobowych
+
+Operator i inne osoby mające dostęp do danych osobowych są zobowiązane do nieujawniania osobom trzecim ani rozpowszechniania danych osobowych bez zgody osoby, której dane dotyczą, chyba że prawo federalne stanowi inaczej.
+
+12. Postanowienia końcowe
+
+12.1. Użytkownik może otrzymać wszelkie wyjaśnienia dotyczące interesujących go kwestii związanych z przetwarzaniem jego danych osobowych, kontaktując się z Operatorem za pośrednictwem poczty elektronicznej supp.lrs@ya.ru.
+
+12.2. W dokumencie tym zostaną uwzględnione wszelkie zmiany w polityce przetwarzania danych osobowych Operatora. Polityka obowiązuje bezterminowo do czasu zastąpienia jej nową wersją.
+
+12.3. Aktualna wersja Polityki jest ogólnodostępna w Internecie w aplikacji internetowej LRS pod adresem https://www.rustore.ru/catalog/app/com.lrs

@@ -7,5 +7,6 @@ class Politica extends StatelessWidget {
   Widget build(BuildContext context) => const ClrsDocumentPage(
     title: 'Политика конфиденциальности',
     asset: 'assets/policy.txt',
+    localizedAssets: {'en': 'assets/legal/en/policy.txt'},
   );
 }

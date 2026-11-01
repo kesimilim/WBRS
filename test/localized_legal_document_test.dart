@@ -130,60 +130,92 @@ void main() {
       expect(translated, contains('7.8. Automatic renewal.'));
     },
   );
-  testWidgets(
-    'open agreement reloads full bundled text after a language change',
-    (tester) async {
-      final code = ValueNotifier('ru');
-      final bundle = _LegalBundle();
-      addTearDown(code.dispose);
-      tester.view.physicalSize = const Size(360, 800);
-      tester.view.devicePixelRatio = 1;
-      addTearDown(tester.view.reset);
-      await tester.pumpWidget(
-        ValueListenableBuilder<String>(
-          valueListenable: code,
-          builder: (_, value, __) => DefaultAssetBundle(
-            bundle: bundle,
-            child: MaterialApp(
-              locale: Locale(value),
-              supportedLocales: ClrsLocalizations.supportedLocales,
-              localizationsDelegates: [
-                _CatalogDelegate(catalogs),
-                ...ClrsLocalizations.delegates.skip(1),
-              ],
-              theme: LrsTheme.theme,
-              home: const Rules(),
+  test('English privacy policy preserves all clauses and literal details', () {
+    final original = File('assets/policy.txt').readAsStringSync();
+    final english = File('assets/legal/en/policy.txt').readAsStringSync();
+    final clauses = RegExp(r'^([0-9]+(?:\.[0-9]+)*)\.? ', multiLine: true);
+    expect(
+      clauses.allMatches(english).map((m) => m[1]).toList(),
+      clauses.allMatches(original).map((m) => m[1]).toList(),
+    );
+    expect(english.split('\n\n').length, original.split('\n\n').length);
+    for (final pattern in [
+      r'https?://\S+',
+      r'[A-Za-z0-9.]+@[A-Za-z0-9.]+',
+      r'\b[0-9]{2,}\b',
+    ]) {
+      List<String> details(String text) =>
+          RegExp(pattern).allMatches(text).map((m) => m[0]!).toList()..sort();
+      expect(details(english), details(original), reason: pattern);
+    }
+    expect(english, contains('12.3.'));
+    expect(english, contains('Dmitry Yuryevich Pavlenko'));
+  });
+  for (final privacy in [false, true]) {
+    final source = File(
+      privacy ? 'assets/policy.txt' : 'assets/agreement.txt',
+    ).readAsStringSync();
+    final translated = File(
+      privacy ? 'assets/legal/en/policy.txt' : 'assets/legal/en/agreement.txt',
+    ).readAsStringSync();
+    testWidgets(
+      'open ${privacy ? "privacy policy" : "agreement"} reloads full bundled text after a language change',
+      (tester) async {
+        final code = ValueNotifier('ru');
+        final bundle = _LegalBundle();
+        addTearDown(code.dispose);
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(
+          ValueListenableBuilder<String>(
+            valueListenable: code,
+            builder: (_, value, __) => DefaultAssetBundle(
+              bundle: bundle,
+              child: MaterialApp(
+                locale: Locale(value),
+                supportedLocales: ClrsLocalizations.supportedLocales,
+                localizationsDelegates: [
+                  _CatalogDelegate(catalogs),
+                  ...ClrsLocalizations.delegates.skip(1),
+                ],
+                theme: LrsTheme.theme,
+                home: privacy ? const Politica() : const Rules(),
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      expect(
-        tester.widget<SelectableText>(find.byType(SelectableText)).data,
-        source,
-      );
-      code.value = 'en';
-      await tester.pumpAndSettle();
-      expect(
-        tester.widget<SelectableText>(find.byType(SelectableText)).data,
-        translated,
-      );
-      expect(find.text('User agreement'), findsOneWidget);
-      code.value = 'de';
-      await tester.pumpAndSettle();
-      expect(
-        tester.widget<SelectableText>(find.byType(SelectableText)).data,
-        source,
-      );
-      expect(
-        find.text(
-          catalogs['de']!['Перевод документа на выбранный язык пока недоступен. Показан русский оригинал.']
-              as String,
-        ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-      expect(find.byType(ClrsDocumentPage), findsOneWidget);
-    },
-  );
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          source,
+        );
+        code.value = 'en';
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          translated,
+        );
+        expect(
+          find.text(privacy ? 'Privacy policy' : 'User agreement'),
+          findsOneWidget,
+        );
+        code.value = 'de';
+        await tester.pumpAndSettle();
+        expect(
+          tester.widget<SelectableText>(find.byType(SelectableText)).data,
+          source,
+        );
+        expect(
+          find.text(
+            catalogs['de']!['Перевод документа на выбранный язык пока недоступен. Показан русский оригинал.']
+                as String,
+          ),
+          findsOneWidget,
+        );
+        expect(tester.takeException(), isNull);
+        expect(find.byType(ClrsDocumentPage), findsOneWidget);
+      },
+    );
+  }
 }

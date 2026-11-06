@@ -12,6 +12,32 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
   TimewebProfilePhotoSource? _source;
   bool _busy = false, _restoring = true, _reloadRequired = false;
   String? _notice;
+  DateTime? _scheduledAt;
+
+  Future<void> _pickScheduleTime() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(now.add(const Duration(hours: 1))),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
   TimewebAppRuntime get _runtime => widget.runtime!;
   bool get _current => mounted && _lease.isCurrent;
   bool get _pending => _flow?.needsCheck ?? false;
@@ -218,7 +244,11 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
       final action = deleting
           ? TimewebSocialAction.deletePost(widget.post!)
           : widget.post == null
-          ? TimewebSocialAction.publish(_text.text, mediaIds: _media)
+          ? TimewebSocialAction.publish(
+              _text.text,
+              mediaIds: _media,
+              scheduledAt: _scheduledAt,
+            )
           : TimewebSocialAction.updatePost(widget.post!, _text.text, _media);
       await _accept(await _flow!.submit(action));
     } catch (_) {
@@ -334,6 +364,27 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
                       ),
                   ],
                 ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _locked ? null : _pickScheduleTime,
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        _scheduledAt == null
+                            ? context.tr('Опубликовать сейчас')
+                            : context.tr('Запланировано на: ${_scheduledAt.toString().substring(0, 16)}'),
+                      ),
+                    ),
+                  ),
+                  if (_scheduledAt != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _scheduledAt = null),
+                    ),
+                ],
+              ),
               const SizedBox(height: 12),
               ImagePickerGrid(
                 existingUrls: const [],

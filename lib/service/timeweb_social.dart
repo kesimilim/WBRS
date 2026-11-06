@@ -109,11 +109,15 @@ Future<void> _executeDonation(_PeopleFlight f, int amountMinor) async {
 final class TimewebSocialAction {
   TimewebSocialAction._(this.payload);
   final Map<String, dynamic> payload;
-  factory TimewebSocialAction.publish(String text, {List<String>? mediaIds}) =>
-      TimewebSocialAction.fromPayload({
+  factory TimewebSocialAction.publish(
+    String text, {
+    List<String>? mediaIds,
+    DateTime? scheduledAt,
+  }) => TimewebSocialAction.fromPayload({
         'kind': 'publish',
         'text': text,
         if (mediaIds != null) 'mediaIds': mediaIds,
+        if (scheduledAt != null) 'scheduled_at': scheduledAt.toUtc().toIso8601String(),
       });
   factory TimewebSocialAction.updatePost(
     TimewebSocialItem post,

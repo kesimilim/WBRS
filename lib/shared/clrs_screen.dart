@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'clrs_brand.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -46,7 +47,9 @@ class _ClrsScaffoldState extends State<ClrsScaffold> {
           child: Transform.scale(
             scale: widget.backgroundScale,
             alignment: Alignment.bottomCenter,
-            child: Image.asset(widget.backgroundAsset, fit: BoxFit.cover),
+            child: widget.backgroundAsset.startsWith('assets/')
+                ? Image.asset(widget.backgroundAsset, fit: BoxFit.cover)
+                : Image.file(File(widget.backgroundAsset), fit: BoxFit.cover),
           ),
         ),
         Theme(

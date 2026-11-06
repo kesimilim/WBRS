@@ -19,6 +19,8 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/group_avatar.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/paged_firestore_history.dart';
+import 'package:wbrs/app/helper/chat_wallpaper_helper.dart';
+import 'package:wbrs/app/widgets/chat_wallpaper_picker.dart';
 
 import '../edit_meet/edit_meet.dart';
 
@@ -96,6 +98,12 @@ class _ChatPageState extends State<ChatPage> {
   DocumentReference<Map<String, dynamic>> get _meetRef =>
       firebaseFirestore.collection('meets').doc(widget.groupId);
   bool get _muted => _mutedUsers.contains(_ownerUid);
+  String _wallpaper = ChatWallpaperHelper.defaultWallpaper;
+
+  Future<void> _loadWallpaper() async {
+    final wp = await ChatWallpaperHelper.getWallpaper(widget.groupId);
+    if (mounted) setState(() => _wallpaper = wp);
+  }
 
   @override
   void initState() {
@@ -110,6 +118,7 @@ class _ChatPageState extends State<ChatPage> {
     _restoreMessage();
     _setMessageStream();
     _loadMeeting();
+    _loadWallpaper();
   }
 
   Future<void> _restoreMessage() async {
@@ -832,7 +841,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/family_main.jpg',
+    backgroundAsset: _wallpaper,
     bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom == 0
         ? const MyBottomNavigationBar()
         : null,
@@ -844,6 +853,13 @@ class _ChatPageState extends State<ChatPage> {
           ? 44 : 56 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
       title: const FittedBox(fit: BoxFit.scaleDown, child: ClrsLogo(size: 34)),
       actions: [
+        IconButton(
+          tooltip: context.tr('Изменить обои чата'),
+          icon: const Icon(Icons.wallpaper),
+          onPressed: () => showChatWallpaperPicker(context, widget.groupId, () {
+            _loadWallpaper();
+          }),
+        ),
         IconButton(
           tooltip: context.tr(
             _muted ? 'Включить уведомления' : 'Выключить уведомления',

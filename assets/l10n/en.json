@@ -954,8 +954,9 @@
   "Обои изменены на этом устройстве": "Wallpaper updated on this device",
   "Обои успешно сброшены": "Wallpaper successfully reset",
   "Обои сброшены на этом устройстве": "Wallpaper reset on this device",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable on the server. Try publishing immediately.",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable. Try publishing immediately.",
   "Опубликовать сейчас": "Publish now",
   "Запланировано на:": "Scheduled for:",
-  "Время публикации": "Publishing time"
+  "Время публикации": "Publishing time",
+  "Выберите время публикации": "Choose publishing time"
 }

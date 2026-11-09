@@ -14,6 +14,8 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/timeweb_bottom_navigation.dart';
+import 'package:wbrs/app/helper/chat_wallpaper_helper.dart';
+import 'package:wbrs/app/widgets/chat_wallpaper_picker.dart';
 
 /// The caller opens a fresh member-authorized flow before adopting this route.
 class TimewebMeetingChatPageView extends StatefulWidget {
@@ -74,9 +76,18 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
   bool get _memberLocked => _leaveFlow == null || _leaving || _leaveFlow!.needsCheck;
 
   String? _translationOwner() => _current ? '${_lease!.identity.uid}/${_lease!.epoch}' : null;
+  String _wallpaper = ChatWallpaperHelper.defaultWallpaper;
+
+  Future<void> _loadWallpaper() async {
+    final chatId = widget.meeting.meetingId;
+    final wp = await ChatWallpaperHelper.getWallpaper(chatId);
+    if (mounted) setState(() => _wallpaper = wp);
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadWallpaper();
     // This service must exist even if the route's actor changed before first build.
     _translator =
         widget.translationFactory?.call(_translationOwner) ??
@@ -580,7 +591,7 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
   );
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/wallpaper/8.jpg',
+    backgroundAsset: _wallpaper,
     backgroundScale: 1.42,
     bottomNavigationBar: TimewebNavigationScope.maybeOf(context)?.showBar == true
         ? const TimewebBottomNavigationBar()
@@ -590,6 +601,16 @@ class _TimewebMeetingChatPageViewState extends State<TimewebMeetingChatPageView>
       toolbarHeight: 72 * MediaQuery.textScalerOf(context).scale(1).clamp(1, 2),
       title: const Align(alignment: Alignment.centerLeft, child: ClrsLogo(size: 34)),
       actions: [
+        IconButton(
+          tooltip: context.tr('Изменить обои чата'),
+          icon: const Icon(Icons.wallpaper),
+          onPressed: () => showChatWallpaperPicker(
+            context,
+            widget.meeting.meetingId,
+            _loadWallpaper,
+            runtime: _runtime,
+          ),
+        ),
         IconButton(
           key: const ValueKey('native-meeting-chat-participants'),
           tooltip: context.tr('Участники встречи'),

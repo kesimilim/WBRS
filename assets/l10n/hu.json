@@ -941,13 +941,14 @@
   "Проверить исходную операцию": "Eredmény ellenőrzése",
   "Подарить Подарок ❤️": "Ajándék küldése ❤️",
   "Автоматический перевод": "Gépi fordítás",
-  "Выберите обои для чата": "Choose chat wallpaper",
-  "Выбрать из галереи": "Choose from gallery",
-  "Обои успешно изменены": "Wallpaper successfully updated",
-  "Обои изменены на этом устройстве": "Wallpaper updated on this device",
-  "Обои успешно сброшены": "Wallpaper successfully reset",
-  "Обои сброшены на этом устройстве": "Wallpaper reset on this device",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable on the server. Try publishing immediately.",
-  "Опубликовать сейчас": "Publish now",
-  "Запланировано на:": "Scheduled for:"
+  "Выберите обои для чата": "Csevegés háttérkép választása",
+  "Выбрать из галереи": "Választás a galériából",
+  "Обои успешно изменены": "Háttérkép sikeresen frissítve",
+  "Обои изменены на этом устройстве": "Háttérkép frissítve ezen az eszközön",
+  "Обои успешно сброшены": "Háttérkép sikeresen visszaállítva",
+  "Обои сброшены на этом устройстве": "Háttérkép visszaállítva ezen az eszközön",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "A időzített közzététel átmenetileg nem érhető el. Próbáld meg azonnal közzétenni.",
+  "Опубликовать сейчас": "Közzététel most",
+  "Запланировано на:": "Időzítve:",
+  "Время публикации": "Közzététel ideje"
 }

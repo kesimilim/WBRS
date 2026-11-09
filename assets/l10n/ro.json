@@ -961,7 +961,8 @@
   "Обои изменены на этом устройстве": "Fundal actualizat pe acest dispozitiv",
   "Обои успешно сброшены": "Fundal resetat cu succes",
   "Обои сброшены на этом устройстве": "Fundal resetat pe acest dispozitiv",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Publicarea programată este indisponibilă temporar pe server. Încearcă să publici imediat.",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "Publicarea programată este indisponibilă temporar. Încearcă să publici imediat.",
   "Опубликовать сейчас": "Publică acum",
-  "Запланировано на:": "Programat pentru:"
+  "Запланировано на:": "Programat pentru:",
+  "Время публикации": "Ora publicării"
 }

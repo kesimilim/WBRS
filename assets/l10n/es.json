@@ -954,7 +954,8 @@
   "Обои изменены на этом устройстве": "Fondo actualizado en este dispositivo",
   "Обои успешно сброшены": "Fondo restablecido con éxito",
   "Обои сброшены на этом устройстве": "Fondo restablecido en este dispositivo",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "La publicación programada no está disponible temporalmente en el servidor. Intenta publicar ahora.",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "La publicación programada no está disponible temporalmente. Intenta publicar ahora.",
   "Опубликовать сейчас": "Publicar ahora",
-  "Запланировано на:": "Programado para:"
+  "Запланировано на:": "Programado para:",
+  "Время публикации": "Hora de publicación"
 }

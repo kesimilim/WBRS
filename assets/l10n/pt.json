@@ -951,10 +951,11 @@
   "Выберите обои для чата": "Escolher fundo do chat",
   "Выбрать из галереи": "Escolher da galeria",
   "Обои успешно изменены": "Fundo atualizado com sucesso",
-  "Обои изменены на этом устройстве": "Fondo atualizado neste dispositivo",
-  "Обои успешно сброшены": "Fondo redefinido com sucesso",
-  "Обои сброшены на этом устройстве": "Fondo redefinido neste dispositivo",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "A publicação agendada está temporariamente indisponível no servidor. Tente publicar agora.",
+  "Обои изменены на этом устройстве": "Fundo atualizado neste dispositivo",
+  "Обои успешно сброшены": "Fundo redefinido com sucesso",
+  "Обои сброшены на этом устройстве": "Fundo redefinido neste dispositivo",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "A publicação agendada está temporariamente indisponível. Tente publicar agora.",
   "Опубликовать сейчас": "Publicar agora",
-  "Запланировано на:": "Agendado para:"
+  "Запланировано на:": "Agendado para:",
+  "Время публикации": "Hora de publicação"
 }

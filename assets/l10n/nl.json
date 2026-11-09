@@ -948,13 +948,14 @@
   "Проверить исходную операцию": "Resultaat controleren",
   "Подарить Подарок ❤️": "Cadeau geven ❤️",
   "Автоматический перевод": "Automatische vertaling",
-  "Выберите обои для чата": "Choose chat wallpaper",
-  "Выбрать из галереи": "Choose from gallery",
-  "Обои успешно изменены": "Wallpaper successfully updated",
-  "Обои изменены на этом устройстве": "Wallpaper updated on this device",
-  "Обои успешно сброшены": "Wallpaper successfully reset",
-  "Обои сброшены на этом устройстве": "Wallpaper reset on this device",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable on the server. Try publishing immediately.",
-  "Опубликовать сейчас": "Publish now",
-  "Запланировано на:": "Scheduled for:"
+  "Выберите обои для чата": "Kies chatachtergrond",
+  "Выбрать из галереи": "Kies uit galerij",
+  "Обои успешно изменены": "Achtergrond succesvol bijgewerkt",
+  "Обои изменены на этом устройстве": "Achtergrond bijgewerkt op dit apparaat",
+  "Обои успешно сброшены": "Achtergrond succesvol gereset",
+  "Обои сброшены на этом устройстве": "Achtergrond gereset op dit apparaat",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "Geplande publicatie is tijdelijk niet beschikbaar. Probeer direct te publiceren.",
+  "Опубликовать сейчас": "Nu publiceren",
+  "Запланировано на:": "Gepland voor:",
+  "Время публикации": "Publicatietijd"
 }

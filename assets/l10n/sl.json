@@ -962,13 +962,14 @@
   "Проверить исходную операцию": "Preveri rezultat",
   "Подарить Подарок ❤️": "Podari darilo ❤️",
   "Автоматический перевод": "Samodejni prevod",
-  "Выберите обои для чата": "Choose chat wallpaper",
-  "Выбрать из галереи": "Choose from gallery",
-  "Обои успешно изменены": "Wallpaper successfully updated",
-  "Обои изменены на этом устройстве": "Wallpaper updated on this device",
-  "Обои успешно сброшены": "Wallpaper successfully reset",
-  "Обои сброшены на этом устройстве": "Wallpaper reset on this device",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable on the server. Try publishing immediately.",
-  "Опубликовать сейчас": "Publish now",
-  "Запланировано на:": "Scheduled for:"
+  "Выберите обои для чата": "Izberi ozadje klepeta",
+  "Выбрать из галереи": "Izberi iz galerije",
+  "Обои успешно изменены": "Ozadje uspešno posodobljeno",
+  "Обои изменены на этом устройстве": "Ozadje posodobljeno na tej napravi",
+  "Обои успешно сброшены": "Ozadje uspešno ponastavljeno",
+  "Обои сброшены на этом устройстве": "Ozadje ponastavljeno na tej napravi",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "Načrtovana objava je začasno nedostopna. Poskusite objaviti takoj.",
+  "Опубликовать сейчас": "Objavi zdaj",
+  "Запланировано на:": "Načrtovano za:",
+  "Время публикации": "Čas objave"
 }

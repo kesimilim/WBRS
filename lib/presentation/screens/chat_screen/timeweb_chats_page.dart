@@ -14,6 +14,8 @@ import 'package:wbrs/shared/clrs_brand.dart';
 import 'package:wbrs/shared/clrs_screen.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 import 'package:wbrs/shared/translatable_text.dart';
+import 'package:wbrs/app/helper/chat_wallpaper_helper.dart';
+import 'package:wbrs/app/widgets/chat_wallpaper_picker.dart';
 import 'package:wbrs/presentation/screens/shop/timeweb_gifts_page.dart';
 import 'timeweb_chat_avatar.dart';
 
@@ -557,9 +559,18 @@ class _TimewebChatPageState extends State<TimewebChatPage>
   late final ContentTranslationService _translator;
   bool _invalid = false, _sending = false, _reading = false;
   String? _notice;
+  String _wallpaper = ChatWallpaperHelper.defaultWallpaper;
+
+  Future<void> _loadWallpaper() async {
+    final chatId = widget.flow.chatId ?? 'timeweb-chat';
+    final wp = await ChatWallpaperHelper.getWallpaper(chatId);
+    if (mounted) setState(() => _wallpaper = wp);
+  }
+
   @override
   void initState() {
     super.initState();
+    _loadWallpaper();
     String? owner() => _current ? widget.flow.ownerUid : null;
     _translator =
         widget.translationFactory?.call(owner) ??
@@ -789,7 +800,7 @@ class _TimewebChatPageState extends State<TimewebChatPage>
     final pending = current && widget.flow.sendNeedsCheck;
     final messages = current ? widget.flow.messages : <TimewebCurrentMessage>[];
     return ClrsScaffold(
-      backgroundAsset: 'assets/wallpaper/8.jpg',
+      backgroundAsset: _wallpaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(
@@ -798,6 +809,16 @@ class _TimewebChatPageState extends State<TimewebChatPage>
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          IconButton(
+            tooltip: context.tr('Изменить обои чата'),
+            icon: const Icon(Icons.wallpaper),
+            onPressed: () => showChatWallpaperPicker(
+              context,
+              widget.flow.chatId ?? 'timeweb-chat',
+              _loadWallpaper,
+              runtime: widget.runtime,
+            ),
+          ),
           IconButton(
             key: const ValueKey('timeweb-chat-refresh'),
             tooltip: context.tr('Обновить'),

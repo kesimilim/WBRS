@@ -968,7 +968,8 @@
   "Обои изменены на этом устройстве": "Tapeta zaktualizowana na tym urządzeniu",
   "Обои успешно сброшены": "Tapeta pomyślnie zresetowana",
   "Обои сброшены на этом устройстве": "Tapeta zresetowana na tym urządzeniu",
-  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Publikacja zaplanowana jest tymczasowo niedostępna na serwerze. Spróbuj opublikować teraz.",
+  "Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.": "Publikacja zaplanowana jest tymczasowo niedostępna. Spróbuj opublikować teraz.",
   "Опубликовать сейчас": "Opublikuj teraz",
-  "Запланировано на:": "Zaplanowano na:"
+  "Запланировано на:": "Zaplanowano na:",
+  "Время публикации": "Czas publikacji"
 }

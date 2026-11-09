@@ -80,6 +80,15 @@ class _PostEditorPageState extends State<PostEditorPage> {
     });
   }
 
+  String _formatRussianDateTime(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
+  }
+
   bool get _isEditing => widget.postId != null;
   bool get _locked => _restoring || _sending || _submission != null;
 
@@ -286,8 +295,8 @@ class _PostEditorPageState extends State<PostEditorPage> {
                       icon: const Icon(Icons.access_time),
                       label: Text(
                         _scheduledAt == null
-                            ? context.tr('Время публикации')
-                            : '${context.tr('Запланировано на:')} ${_scheduledAt.toString().substring(0, 16)}',
+                            ? context.tr('Выберите время публикации')
+                            : '${context.tr('Запланировано на:')} ${_formatRussianDateTime(_scheduledAt!)}',
                       ),
                     ),
                   ),

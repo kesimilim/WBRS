@@ -1,14 +1,10 @@
-<<<<<<< HEAD
-import 'dart:io';
-=======
-import 'dart:async';
-import 'clrs_background.dart';
->>>>>>> refs/heads/feature/animate-wallpaper
-import 'clrs_brand.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'lrs_theme.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
+
+import 'clrs_background.dart';
+import 'clrs_brand.dart';
+import 'lrs_theme.dart';
 import 'timeweb_bottom_navigation.dart';
 
 /// Live widgets over an unblurred photograph; never a screenshot used as UI.

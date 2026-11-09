@@ -38,6 +38,15 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
       );
     });
   }
+
+  String _formatRussianDateTime(DateTime dt) {
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    final hour = dt.hour.toString().padLeft(2, '0');
+    final minute = dt.minute.toString().padLeft(2, '0');
+    return '$day.$month.$year $hour:$minute';
+  }
   TimewebAppRuntime get _runtime => widget.runtime!;
   bool get _current => mounted && _lease.isCurrent;
   bool get _pending => _flow?.needsCheck ?? false;
@@ -255,7 +264,7 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
       if (_current) {
         setState(
           () => _notice = _scheduledAt != null
-              ? 'Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.'
+              ? 'Публикация по расписанию временно недоступна. Попробуйте опубликовать без расписания.'
               : (_pending
                   ? 'Подтверждение ещё не получено. Проверьте результат без повторной отправки.'
                   : 'Не удалось сохранить изменения. Попробуйте ещё раз.'),
@@ -395,8 +404,8 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
                       icon: const Icon(Icons.access_time),
                       label: Text(
                         _scheduledAt == null
-                            ? context.tr('Время публикации')
-                            : '${context.tr('Запланировано на:')} ${_scheduledAt.toString().substring(0, 16)}',
+                            ? context.tr('Выберите время публикации')
+                            : '${context.tr('Запланировано на:')} ${_formatRussianDateTime(_scheduledAt!)}',
                       ),
                     ),
                   ),

@@ -40,17 +40,22 @@ void nextScreenReplace(context, page) {
 }
 
 void showSnackbar(BuildContext context, Color color, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.clearSnackBars();
+  messenger.showSnackBar(
     SnackBar(
       content: Text(
         message,
         style: const TextStyle(fontSize: 14, color: Colors.white),
       ),
       backgroundColor: color,
-      duration: const Duration(seconds: 2),
+      duration: const Duration(seconds: 3),
       action: SnackBarAction(
         label: context.tr('ОК'),
-        onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+        onPressed: () {
+          messenger.hideCurrentSnackBar();
+          messenger.clearSnackBars();
+        },
         textColor: Colors.white,
       ),
     ),

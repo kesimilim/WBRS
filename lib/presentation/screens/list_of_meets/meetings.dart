@@ -81,7 +81,6 @@ class _MeetingPageState extends State<MeetingPage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/family_front.png',
     drawer: MyDrawer(),
     bottomNavigationBar: MyBottomNavigationBar(),
     appBar: AppBar(

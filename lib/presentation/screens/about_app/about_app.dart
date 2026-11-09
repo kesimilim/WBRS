@@ -48,7 +48,6 @@ class About_App extends StatelessWidget {
       ),
     );
     return ClrsScaffold(
-      backgroundAsset: 'assets/family_main.jpg',
       backgroundScale: 1.42,
       appBar: AppBar(
         actions: const [

@@ -257,6 +257,7 @@ class _TimewebChatsPageState extends State<TimewebChatsPage>
       }
     }
     return ClrsScaffold(
+      backgroundAsset: 'assets/wallpaper/8.jpg',
       appBar: AppBar(
         leading: TimewebMenuButton.forRoot(context),
         backgroundColor: Colors.transparent,
@@ -788,6 +789,7 @@ class _TimewebChatPageState extends State<TimewebChatPage>
     final pending = current && widget.flow.sendNeedsCheck;
     final messages = current ? widget.flow.messages : <TimewebCurrentMessage>[];
     return ClrsScaffold(
+      backgroundAsset: 'assets/wallpaper/8.jpg',
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         title: Text(

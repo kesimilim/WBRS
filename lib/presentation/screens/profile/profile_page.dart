@@ -980,7 +980,6 @@ class _ProfileSettingsState extends State<ProfileSettingsPage> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
-    backgroundAsset: 'assets/final_design/house.png',
     bottomNavigationBar: const MyBottomNavigationBar(),
     body: Column(
       children: [

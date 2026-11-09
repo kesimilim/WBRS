@@ -337,9 +337,6 @@ class _TimewebFeedPageState extends State<TimewebFeedPage> {
     }
     final pending = _flow?.needsCheck ?? false;
     return ClrsScaffold(
-      backgroundAsset: _comments || widget.wallUid != null
-          ? 'assets/final_design/family_right.png'
-          : 'assets/final_design/feed_family.png',
       appBar: AppBar(
         leading: TimewebMenuButton.forRoot(context),
         backgroundColor: Colors.transparent,

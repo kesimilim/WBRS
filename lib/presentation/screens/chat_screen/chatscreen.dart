@@ -365,6 +365,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) => ClrsScaffold(
+      backgroundAsset: 'assets/wallpaper/8.jpg',
       appBar: AppBar(
           title: Text(widget.chatWithUsername,
               maxLines: 1, overflow: TextOverflow.ellipsis),

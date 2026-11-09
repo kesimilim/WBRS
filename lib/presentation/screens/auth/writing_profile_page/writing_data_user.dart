@@ -197,7 +197,6 @@ class _AboutUserWritingState extends State<AboutUserWriting> {
           if (!didPop) _returnToLogin();
         },
         child: ClrsScaffold(
-          backgroundAsset: 'assets/final_design/family_back.png',
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             foregroundColor: LrsTheme.text,

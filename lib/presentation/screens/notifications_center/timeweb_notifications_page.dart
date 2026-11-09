@@ -188,7 +188,6 @@ class _TimewebNotificationsPageState extends State<TimewebNotificationsPage> {
   @override
   Widget build(BuildContext context) => ClrsScaffold(
     key: const ValueKey('timeweb-notifications-page'),
-    backgroundAsset: 'assets/final_design/family_right.png',
     bottomNavigationBar: const TimewebBottomNavigationBar(),
     appBar: AppBar(
       title: const ClrsLogo(size: 34),

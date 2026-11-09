@@ -856,9 +856,11 @@ class _ChatPageState extends State<ChatPage> {
         IconButton(
           tooltip: context.tr('Изменить обои чата'),
           icon: const Icon(Icons.wallpaper),
-          onPressed: () => showChatWallpaperPicker(context, widget.groupId, () {
-            _loadWallpaper();
-          }),
+          onPressed: () => showChatWallpaperPicker(
+            context,
+            widget.groupId,
+            _loadWallpaper,
+          ),
         ),
         IconButton(
           tooltip: context.tr(

@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:wbrs/service/timeweb_app_runtime.dart';
 
 class ChatWallpaperHelper {
   static const String defaultWallpaper = 'assets/wallpaper/8.jpg';
@@ -22,19 +23,23 @@ class ChatWallpaperHelper {
     return prefs.getString('chat_wallpaper_$chatId') ?? defaultWallpaper;
   }
 
-  static Future<void> setWallpaper(String chatId, String assetPath) async {
+  static Future<bool> setWallpaper(
+    String chatId,
+    String assetPath, {
+    TimewebAppRuntime? runtime,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('chat_wallpaper_$chatId', assetPath);
-    try {
-      // Attempt immediate server synchronization (silently ignored if server endpoint doesn't exist yet)
-    } catch (_) {}
+    // Local fallback persistence is active; server sync will activate once deployed.
+    return false;
   }
 
-  static Future<void> resetWallpaper(String chatId) async {
+  static Future<bool> resetWallpaper(
+    String chatId, {
+    TimewebAppRuntime? runtime,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('chat_wallpaper_$chatId');
-    try {
-      // Attempt server reset sync (silently ignored if not implemented)
-    } catch (_) {}
+    return false;
   }
 }

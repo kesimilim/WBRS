@@ -254,9 +254,11 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
     } catch (_) {
       if (_current) {
         setState(
-          () => _notice = _pending
-              ? 'Подтверждение ещё не получено. Проверьте результат без повторной отправки.'
-              : 'Не удалось сохранить изменения. Попробуйте ещё раз.',
+          () => _notice = _scheduledAt != null
+              ? 'Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.'
+              : (_pending
+                  ? 'Подтверждение ещё не получено. Проверьте результат без повторной отправки.'
+                  : 'Не удалось сохранить изменения. Попробуйте ещё раз.'),
         );
       }
     } finally {
@@ -365,27 +367,6 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
                   ],
                 ),
               const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _locked ? null : _pickScheduleTime,
-                      icon: const Icon(Icons.access_time),
-                      label: Text(
-                        _scheduledAt == null
-                            ? context.tr('Опубликовать сейчас')
-                            : context.tr('Запланировано на: ${_scheduledAt.toString().substring(0, 16)}'),
-                      ),
-                    ),
-                  ),
-                  if (_scheduledAt != null)
-                    IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () => setState(() => _scheduledAt = null),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 12),
               ImagePickerGrid(
                 existingUrls: const [],
                 maxImages: 10 - _media.length,
@@ -404,6 +385,27 @@ class _TimewebPostEditorState extends State<PostEditorPage> {
                   }
                 },
                 onAddPressed: _pick,
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _locked ? null : _pickScheduleTime,
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        _scheduledAt == null
+                            ? context.tr('Время публикации')
+                            : '${context.tr('Запланировано на:')} ${_scheduledAt.toString().substring(0, 16)}',
+                      ),
+                    ),
+                  ),
+                  if (_scheduledAt != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _scheduledAt = null),
+                    ),
+                ],
               ),
               if (_restoring || _busy)
                 const LinearProgressIndicator(

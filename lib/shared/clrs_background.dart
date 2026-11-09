@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 
 class ClrsBackgroundController extends ChangeNotifier {
@@ -129,12 +130,19 @@ class _ClrsAnimatedBackgroundState extends State<ClrsAnimatedBackground> {
       return Transform.scale(
         scale: widget.scale,
         alignment: Alignment.bottomCenter,
-        child: Image.asset(
-          widget.backgroundAsset!,
-          fit: BoxFit.cover,
-          width: double.infinity,
-          height: double.infinity,
-        ),
+        child: widget.backgroundAsset!.startsWith('assets/')
+            ? Image.asset(
+                widget.backgroundAsset!,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              )
+            : Image.file(
+                File(widget.backgroundAsset!),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+              ),
       );
     }
 

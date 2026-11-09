@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:wbrs/app/helper/chat_wallpaper_helper.dart';
+import 'package:wbrs/app/widgets/widgets.dart';
 import 'package:wbrs/localization/clrs_localizations.dart';
+import 'package:wbrs/service/timeweb_app_runtime.dart';
 import 'package:wbrs/shared/lrs_theme.dart';
 
 Future<void> showChatWallpaperPicker(
-    BuildContext context, String chatId, VoidCallback onSelected) async {
+  BuildContext context,
+  String chatId,
+  VoidCallback onSelected, {
+  TimewebAppRuntime? runtime,
+}) async {
   await showModalBottomSheet<void>(
     context: context,
     backgroundColor: LrsTheme.surface,
@@ -40,9 +46,24 @@ Future<void> showChatWallpaperPicker(
                   final picked =
                       await picker.pickImage(source: ImageSource.gallery);
                   if (picked != null) {
-                    await ChatWallpaperHelper.setWallpaper(chatId, picked.path);
-                    Navigator.pop(ctx);
+                    final synced = await ChatWallpaperHelper.setWallpaper(
+                      chatId,
+                      picked.path,
+                      runtime: runtime,
+                    );
                     onSelected();
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      showSnackbar(
+                        ctx,
+                        LrsTheme.peach,
+                        ctx.tr(
+                          synced
+                              ? 'Обои успешно изменены'
+                              : 'Обои изменены на этом устройстве',
+                        ),
+                      );
+                    }
                   }
                 } catch (_) {}
               },
@@ -63,9 +84,24 @@ Future<void> showChatWallpaperPicker(
                   final path = ChatWallpaperHelper.availableWallpapers[index];
                   return GestureDetector(
                     onTap: () async {
-                      await ChatWallpaperHelper.setWallpaper(chatId, path);
-                      Navigator.pop(ctx);
+                      final synced = await ChatWallpaperHelper.setWallpaper(
+                        chatId,
+                        path,
+                        runtime: runtime,
+                      );
                       onSelected();
+                      if (ctx.mounted) {
+                        Navigator.pop(ctx);
+                        showSnackbar(
+                          ctx,
+                          LrsTheme.peach,
+                          ctx.tr(
+                            synced
+                                ? 'Обои успешно изменены'
+                                : 'Обои изменены на этом устройстве',
+                          ),
+                        );
+                      }
                     },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
@@ -81,9 +117,23 @@ Future<void> showChatWallpaperPicker(
             const SizedBox(height: 12),
             TextButton(
               onPressed: () async {
-                await ChatWallpaperHelper.resetWallpaper(chatId);
-                Navigator.pop(ctx);
+                final synced = await ChatWallpaperHelper.resetWallpaper(
+                  chatId,
+                  runtime: runtime,
+                );
                 onSelected();
+                if (ctx.mounted) {
+                  Navigator.pop(ctx);
+                  showSnackbar(
+                    ctx,
+                    LrsTheme.peach,
+                    ctx.tr(
+                      synced
+                          ? 'Обои успешно сброшены'
+                          : 'Обои сброшены на этом устройстве',
+                    ),
+                  );
+                }
               },
               child: Text(ctx.tr('Сбросить (по умолчанию)')),
             ),

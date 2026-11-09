@@ -954,5 +954,14 @@
   "Проверить": "Proveri rezultat",
   "Проверить исходную операцию": "Proveri rezultat",
   "Подарить Подарок ❤️": "Pokloni poklon ❤️",
-  "Автоматический перевод": "Automatski prevod"
+  "Автоматический перевод": "Automatski prevod",
+  "Выберите обои для чата": "Choose chat wallpaper",
+  "Выбрать из галереи": "Choose from gallery",
+  "Обои успешно изменены": "Wallpaper successfully updated",
+  "Обои изменены на этом устройстве": "Wallpaper updated on this device",
+  "Обои успешно сброшены": "Wallpaper successfully reset",
+  "Обои сброшены на этом устройстве": "Wallpaper reset on this device",
+  "Публикация по расписанию временно недоступна на сервере. Попробуйте опубликовать без расписания.": "Scheduled posting is temporarily unavailable on the server. Try publishing immediately.",
+  "Опубликовать сейчас": "Publish now",
+  "Запланировано на:": "Scheduled for:"
 }

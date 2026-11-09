@@ -53,6 +53,32 @@ class _PostEditorPageState extends State<PostEditorPage> {
   bool _restoring = true;
   PostSubmission? _submission;
   String? _notice;
+  DateTime? _scheduledAt;
+
+  Future<void> _pickScheduleTime() async {
+    final now = DateTime.now();
+    final date = await showDatePicker(
+      context: context,
+      initialDate: now,
+      firstDate: now,
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(now.add(const Duration(hours: 1))),
+    );
+    if (time == null || !mounted) return;
+    setState(() {
+      _scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
 
   bool get _isEditing => widget.postId != null;
   bool get _locked => _restoring || _sending || _submission != null;
@@ -252,13 +278,34 @@ class _PostEditorPageState extends State<PostEditorPage> {
                 onAddPressed: _pickImages,
               ),
               const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _locked ? null : _pickScheduleTime,
+                      icon: const Icon(Icons.access_time),
+                      label: Text(
+                        _scheduledAt == null
+                            ? context.tr('Время публикации')
+                            : '${context.tr('Запланировано на:')} ${_scheduledAt.toString().substring(0, 16)}',
+                      ),
+                    ),
+                  ),
+                  if (_scheduledAt != null)
+                    IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _scheduledAt = null),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
               if (_restoring) const LinearProgressIndicator(),
               if (_notice != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: Text(context.tr(_notice!)),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               FilledButton(
                 key: const ValueKey('timeweb-social-send'),
                 style: FilledButton.styleFrom(
